@@ -164,12 +164,14 @@ The logical cube engine supports arbitrary cube dimensions ($N = 2, 3, 4$) throu
   - `applyMove(notation)`: Applies single or compound algorithm steps.
   - `clone()`: Creates deep clones for search or solver simulation.
 
-### Tetrahedral Engine (`pyraminxState.ts`)
+### Tetrahedral Engine (`pyraminxState.ts` & `PyraminxScene.ts`)
 
 Tracks 36 triangular sticker positions across 4 faces (Green, Red, Blue, Yellow):
-- **Tip Rotations**: `u, l, r, b` (single-piece corner rotations).
+- **Tip Rotations**: `u, l, r, b` (single-piece corner rotations around vertex axes by $\pm 120^\circ$).
 - **Axial Layer Rotations**: `U, L, R, B` (double-layer rotations affecting corner tips, centers, and edge pieces).
-- **Scramble Generator**: Produces 14-move scrambles compliant with World Cube Association (WCA) regulations.
+- **Dynamic 3D Layer Animation**: Eased cubic interpolation rotating affected piece groups around normalized tetrahedral vertex axes ($\vec{A}_U, \vec{A}_L, \vec{A}_R, \vec{A}_B$) attached to a dynamic pivot group.
+- **Direct Touch & Mouse Layer Drag**: Direct swipe interaction on any piece with automatic screen tangent projection, camera perspective freezing on contact, and dynamic hand cursor (`grab` / `grabbing`).
+- **Scramble Generator**: Produces 14-move scrambles compliant with World Cube Association (WCA) regulations with high-speed animation.
 
 ### Cross-Tab Puzzle Dispatcher
 

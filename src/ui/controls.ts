@@ -13,7 +13,8 @@ export class ControlsManager {
   private settings: SettingsManager;
   private activePuzzle: TrainerPuzzleType = '3x3';
   private onPuzzleChange?: (puzzle: TrainerPuzzleType) => void;
-  private onExecuteMoveDirect?: (move: string) => void;
+  private onExecuteMoveDirect?: (move: string, isScramble?: boolean) => void;
+  private onSpeedChange?: (speedMs: number) => void;
   private moveHistory: string[] = [];
 
   // Timer state
@@ -29,7 +30,8 @@ export class ControlsManager {
     settings: SettingsManager,
     callbacks?: {
       onPuzzleChange?: (puzzle: TrainerPuzzleType) => void;
-      onExecuteMoveDirect?: (move: string) => void;
+      onExecuteMoveDirect?: (move: string, isScramble?: boolean) => void;
+      onSpeedChange?: (speedMs: number) => void;
     }
   ) {
     this.container = container;
@@ -37,6 +39,7 @@ export class ControlsManager {
     this.settings = settings;
     this.onPuzzleChange = callbacks?.onPuzzleChange;
     this.onExecuteMoveDirect = callbacks?.onExecuteMoveDirect;
+    this.onSpeedChange = callbacks?.onSpeedChange;
     this.render();
   }
 
@@ -444,6 +447,7 @@ export class ControlsManager {
     speedSlider?.addEventListener('input', (e) => {
       const val = parseInt((e.target as HTMLInputElement).value, 10);
       this.scene.setSpeed(val);
+      this.onSpeedChange?.(val);
       if (speedVal) speedVal.textContent = `${val}ms`;
     });
 
@@ -582,7 +586,7 @@ export class ControlsManager {
     if (this.activePuzzle === 'pyraminx') {
       scramble = generatePyraminxScramble(14);
       const moves = scramble.split(' ');
-      moves.forEach((m) => this.onExecuteMoveDirect?.(m));
+      moves.forEach((m) => this.onExecuteMoveDirect?.(m, true));
     } else {
       const len = this.activePuzzle === '2x2' ? 14 : this.activePuzzle === '4x4' ? 24 : 22;
       scramble = generateScramble(len);
@@ -637,8 +641,7 @@ export class ControlsManager {
     }
 
     if (this.activePuzzle === 'pyraminx') {
-      this.onExecuteMoveDirect?.(notation);
-      this.recordMove(notation);
+      this.onExecuteMoveDirect?.(notation, false);
     } else {
       this.scene.executeMove(notation, viewRelative);
     }

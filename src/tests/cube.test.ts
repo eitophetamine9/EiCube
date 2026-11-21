@@ -46,6 +46,14 @@ describe("Rubik's Cube Pure Logic", () => {
     pyra.applyMove("u'");
     expect(pyra.isSolved()).toBe(true);
 
+    // Verify all 4 axes cycle periodicity: 3 turns return to solved
+    for (const move of ['L', 'R', 'B', 'l', 'r', 'b']) {
+      pyra.applyMove(move);
+      pyra.applyMove(move);
+      pyra.applyMove(move);
+      expect(pyra.isSolved()).toBe(true);
+    }
+
     const sc = generatePyraminxScramble(10);
     expect(sc.length).toBeGreaterThan(0);
   });

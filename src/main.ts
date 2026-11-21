@@ -48,6 +48,9 @@ document.addEventListener('DOMContentLoaded', () => {
           onSolvedChange: (isSolved) => {
             controls?.updateSolvedState(isSolved);
           },
+          onMoveExecuted: (notation) => {
+            controls?.recordMove(notation);
+          },
         });
       } else {
         pyraScene['renderer'].domElement.style.display = 'block';
@@ -75,12 +78,15 @@ document.addEventListener('DOMContentLoaded', () => {
     onPuzzleChange: (puzzle) => {
       switchTrainerPuzzle(puzzle);
     },
-    onExecuteMoveDirect: (move) => {
+    onExecuteMoveDirect: (move, isScramble) => {
       if (move === 'RESET') {
         pyraScene?.reset();
       } else {
-        pyraScene?.executeMove(move);
+        pyraScene?.executeMove(move, isScramble);
       }
+    },
+    onSpeedChange: (val) => {
+      pyraScene?.setSpeed(val);
     },
   });
 

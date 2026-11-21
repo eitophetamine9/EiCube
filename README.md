@@ -39,7 +39,7 @@ Unlike conventional digital cube simulators that lock rotations to static world 
 - **Player-Centric Move History**: Scramble turns are cleanly filtered out; timer automatically starts on the player's first manual turn.
 - **Multi-Puzzle Support**: Universal trainer for 3x3x3, 2x2x2, 4x4x4, and regular tetrahedron Pyraminx.
 - **"Solve This Version"**: Explore puzzles in dedicated 3D interactive sandboxes and load them directly into the solver with one click.
-- **Realistic 3D Pyraminx Model**: Regular tetrahedron geometry with signature 20% speedcube black borders and solid inner core.
+- **Realistic 3D Pyraminx Model**: Regular tetrahedron geometry with signature 20% speedcube black borders, dynamic 3D layer turning animation, and direct mouse/touch swipe interaction.
 - **Embedded Video Guides**: Curated YouTube tutorials with interactive chapter bookmark pills linking to specific algorithm timestamps.
 - **Mobile Ergonomics**: Floating thumb dock with quick access to Moves, Scramble, Undo, and History, plus responsive off-canvas drawers.
 - **Custom Keybindings**: Fully rebindable keys with dedicated single-key prime moves (`R'`, `U'`, `L'`, `D'`, `F'`, `B'`) and speedcubing presets.
