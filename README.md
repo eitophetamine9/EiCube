@@ -1,6 +1,6 @@
 # EiCube
 
-Interactive 3D Rubik's Cube trainer and solving guide built with Three.js, TypeScript, and Vite. Designed with camera-relative rotational controls, real-time animation queuing, customizable keybindings, and an interactive step-by-step beginner solving guide.
+Interactive 3D Rubik's Cube trainer and multi-puzzle guide built with Three.js, TypeScript, and Vite. Features camera-relative rotational controls, vertical move history, direct prime keybindings, diagnostic solving hints, and comprehensive guides for 3x3, 2x2, 4x4, and Pyraminx.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Three.js](https://img.shields.io/badge/Three.js-000000?style=flat&logo=three.js&logoColor=white)](https://threejs.org/)
@@ -12,26 +12,39 @@ Interactive 3D Rubik's Cube trainer and solving guide built with Three.js, TypeS
 
 ## Overview
 
-EiCube provides a digital training environment for both beginner and experienced speedcubers. Unlike traditional digital cubes that enforce fixed world axes, EiCube resolves all moves relative to your current camera viewpoint.
+EiCube provides a digital training environment for both beginner and competitive speedcubers. Unlike traditional digital cubes that enforce fixed global world axes, EiCube dynamically resolves all moves relative to your current camera viewpoint.
 
 > [!IMPORTANT]
-> **Camera-Relative Rotations**: Turning the **R** face always turns whichever face is currently positioned on the viewer's right side, regardless of how the cube is orbited. If you rotate the view 180 degrees, pressing R will act on the face currently on your right, preserving intuitive tactile execution.
+> **Camera-Relative Rotations**: Turning the **R** face always turns whichever face is currently positioned on the viewer's right side, regardless of camera orbit angle. If you rotate the view 180 degrees, pressing R acts on the face now on your right, preserving intuitive tactile execution.
 
 ---
 
 ## Key Features
 
-- **Physically Modeled 3D Cube**: 26 individual cubies featuring dark rounded-edge bodies and standard WCA vinyl sticker planes (White, Yellow, Green, Blue, Red, Orange).
-- **Camera-Relative Move Resolver**: Evaluates camera view vectors against face normals using dot-product maximization to map view commands (`U`, `D`, `L`, `R`, `F`, `B`, slices `M`/`E`/`S`, rotations `x`/`y`/`z`, wide moves `r`/`l`/`u`/`d`/`f`/`b`) to the correct layer in real time.
-- **Queued Interpolation Engine**: Smooth eased turn animations (customizable from 60ms to 400ms) with automatic queue acceleration under rapid input to prevent desynchronization or dropped inputs. Cubie positions and quaternions automatically snap to exact coordinate planes upon completion.
-- **Layer-by-Layer Beginner Guide**: Comprehensive 7-step guide covering the White Cross, First Layer Corners, Middle Layer Edges, Yellow Cross, Yellow Edge Permutation, Yellow Corner Positioning, and Yellow Corner Orientation.
-- **Interactive Execution**: Every algorithm in the guide includes a "Try it on the cube" action that switches to the 3D viewport and demonstrates the algorithm sequence directly on the cube.
-- **Scramble & Timer**: Generates valid 20 to 25 move random sequences obeying WCA consecutive-move separation rules. Includes an automatic inspection/solve timer that starts on your first move after a scramble and stops upon reaching the solved state.
-- **Customizable Keybindings**: Full keyboard shortcut configuration with conflict detection and `localStorage` persistence.
-- **Reduced Motion Support**: Detects and respects system `prefers-reduced-motion` settings for instantaneous animations.
+- **Ergonomic Studio Layout**:
+  - **Left Sidebar**: Move controls with inline keybinding display and click-to-rebind capability.
+  - **Right Sidebar**: Vertical move history log with step numbers and auto-scrolling.
+  - **Top Floating Bar**: Solved indicator badge, stopwatch timer (`00:00.00`), scramble, reset, undo, and animation speed slider.
+  - **Unobstructed 3D Stage**: The 3D puzzle remains completely clear in the center viewport.
+- **Dedicated Prime & Custom Keybindings**:
+  - Rebind any action directly (e.g. set physical key `D` to perform `R`).
+  - Assign single dedicated keyboard keys for prime moves (`R'`, `U'`, `L'`, `D'`, `F'`, `B'`) without holding Shift or clicking modifier toggles.
+  - One-click presets: Standard layout or Two-Hand Pro Speedcubing layout.
+- **Diagnostic Tips & Guidance**:
+  - Contextual question mark (`?`) button in header opening a quick solving diagnostic to troubleshoot common beginner mistakes (flipped edges, trapped corners, inverted middle edges, final D-move omission).
+- **Multi-Puzzle Support (Other Cubes Tab)**:
+  - **2x2 Pocket Cube**: Full 3D model, scramble, and Ortega / Beginner solving guide.
+  - **4x4 Rubik's Revenge**: Full 3D model, outer and wide turns (`Rw, Uw, Fw`), and Yau / Reduction guide with OLL and PLL parity algorithms.
+  - **Pyraminx**: Real 3D regular tetrahedron with 4 color faces (Yellow, Red, Green, Blue), tip rotations (`u, l, r, b`), layer turns (`U, L, R, B`), scramble generator, and V-First solving guide.
+- **Beginner 3x3 Layer-by-Layer Guide**:
+  - 7 structured steps with goals, case recognition, and one-click "Try it on the cube" interactive algorithm execution.
+- **Performance & Smooth Motion**:
+  - Smooth page transitions and native smooth scrolling.
+  - Eased animation queuing with dynamic speed acceleration under rapid input.
+  - System `prefers-reduced-motion` compliance.
 
 > [!NOTE]
-> The app is built with vanilla DOM APIs for zero UI overhead, using Three.js as the sole runtime dependency.
+> The app is built with vanilla DOM APIs for zero UI framework bloat, using Three.js as the sole runtime dependency.
 
 ---
 
@@ -40,28 +53,33 @@ EiCube provides a digital training environment for both beginner and experienced
 ```
 src/
 ├── cube/
-│   ├── types.ts            # Type definitions, face normals, standard color constants
-│   ├── CubeState.ts        # Pure logical representation supporting arbitrary cube size
+│   ├── types.ts            # Type definitions, face normals, Pyraminx color constants
+│   ├── CubeState.ts        # Pure logical representation supporting arbitrary cube sizes (2x2, 3x3, 4x4)
+│   ├── pyraminxState.ts    # Pure logical representation, moves, and scramble for Pyraminx
 │   ├── moves.ts            # Physical layer and axis rotation mappings
 │   ├── notation.ts         # Parser for notation strings, multipliers, and inversions
 │   ├── scramble.ts         # Random scramble and inverse sequence generator
 │   └── cameraResolver.ts   # Vector math for resolving camera view to cube faces
 ├── render/
-│   ├── RubiksCubeScene.ts  # Three.js scene, lighting, materials, and orbit controls
+│   ├── RubiksCubeScene.ts  # Three.js scene, lighting, materials, dynamic size switching
+│   ├── PyraminxScene.ts    # Three.js regular tetrahedron puzzle renderer
 │   └── AnimationQueue.ts   # Eased animation queue with dynamic speed scaling
 ├── content/
-│   └── guideData.ts        # Structured data for beginner method, notation, and CFOP
+│   ├── guideData.ts        # 3x3 beginner method, notation guide, and CFOP data
+│   └── otherCubesData.ts   # Structured guides and algorithms for 2x2, 4x4, and Pyraminx
 ├── ui/
-│   ├── tabs.ts             # Tab switching between 3D Viewport and Guide
-│   ├── controls.ts         # Scramble, reset, undo, timer, speed slider, and move pad
-│   ├── settings.ts         # Keyboard rebinding modal with conflict detection
+│   ├── tabs.ts             # 3-way tab manager (3x3 Cube, Other Cubes, Learn Guide)
+│   ├── controls.ts         # Left keybind pad, right vertical history, and top floating bar
+│   ├── settings.ts         # Keybind rebinding modal, direct prime binds, presets
 │   ├── tutorial.ts         # Multi-step onboarding overlay
-│   ├── guideRenderer.ts    # Guide rendering with one-click algorithm execution
+│   ├── tipsModal.ts        # Solving diagnostic and quick tips modal
+│   ├── otherCubes.ts       # Other Cubes tab manager with puzzle switcher and 3D scenes
+│   ├── guideRenderer.ts    # 3x3 guide rendering with one-click algorithm execution
 │   └── toast.ts            # Notification manager
 ├── tests/
-│   └── cube.test.ts        # Unit test suite for pure cube logic and invariants
+│   └── cube.test.ts        # Vitest suite covering 3x3, 2x2, 4x4, Pyraminx, and keybindings
 ├── main.ts                 # Application entry point
-└── style.css               # Clean styling and responsive design
+└── style.css               # Styling, smooth transitions, and responsive layout
 ```
 
 ---
