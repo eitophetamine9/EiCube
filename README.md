@@ -62,6 +62,43 @@ For detailed technical specifications, mathematical equations, raycasting logic,
 
 ---
 
+## Project Structure
+
+```
+src/
+├── cube/
+│   ├── types.ts            # Type definitions, face normals, Pyraminx color constants
+│   ├── CubeState.ts        # Pure logical representation supporting arbitrary cube sizes (2x2, 3x3, 4x4)
+│   ├── pyraminxState.ts    # Pure logical representation, moves, and scramble for Pyraminx
+│   ├── moves.ts            # Physical layer and axis rotation mappings
+│   ├── notation.ts         # Parser for notation strings, multipliers, and inversions
+│   ├── scramble.ts         # Random scramble and inverse sequence generator
+│   └── cameraResolver.ts   # Vector math for resolving camera view to cube faces
+├── render/
+│   ├── RubiksCubeScene.ts  # Three.js cube scene, raycasting, touch drag, dynamic sizes
+│   ├── PyraminxScene.ts    # Three.js regular tetrahedron puzzle renderer with speedcube borders
+│   └── AnimationQueue.ts   # Eased animation queue with dynamic speed scaling
+├── content/
+│   ├── guideData.ts        # 3x3 beginner method, notation guide, and CFOP data
+│   ├── otherCubesData.ts   # Structured guides and algorithms for 3x3, 2x2, 4x4, and Pyraminx
+│   └── videoData.ts        # Curated YouTube video tutorials with metadata and chapter timestamps
+├── ui/
+│   ├── tabs.ts             # 3-way tab manager (Puzzle, Other Puzzles, Learn Puzzles)
+│   ├── controls.ts         # Top floating bar with mini picker, left keybind pad, right history, mobile dock
+│   ├── settings.ts         # Keybind rebinding modal, direct prime binds, presets
+│   ├── tutorial.ts         # Multi-step onboarding overlay
+│   ├── tipsModal.ts        # Solving diagnostic and quick tips modal
+│   ├── otherCubes.ts       # Other Puzzles manager with "Solve this version" button
+│   ├── guideRenderer.ts    # Learn Puzzles guide with embedded YouTube video players
+│   └── toast.ts            # Notification and toast alert manager
+├── tests/
+│   └── cube.test.ts        # Vitest suite covering all puzzles, algorithms, keybinds, and videos
+├── main.ts                 # Application entry point and tab orchestration
+└── style.css               # Clean dark-mode stylesheet, responsive dock, and drawer transitions
+```
+
+---
+
 ## Local Development
 
 ### Prerequisites
