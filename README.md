@@ -1,6 +1,8 @@
 <h1 align="center">EiCube</h1>
 
 <p align="center">
+  <a href="https://github.com/eitophetamine9/EiCube/releases/tag/v1.0.0"><img src="https://img.shields.io/badge/Release-v1.0.0-007acc?style=flat&logo=github&logoColor=white" alt="Release v1.0.0" /></a>
+  <a href="https://eicube.vercel.app"><img src="https://img.shields.io/badge/Deployment-Vercel-black?style=flat&logo=vercel&logoColor=white" alt="Live Deployment" /></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white" alt="TypeScript" /></a>
   <a href="https://threejs.org/"><img src="https://img.shields.io/badge/Three.js-000000?style=flat&logo=three.js&logoColor=white" alt="Three.js" /></a>
   <a href="https://vite.dev/"><img src="https://img.shields.io/badge/Vite-646CFF?style=flat&logo=vite&logoColor=white" alt="Vite" /></a>
@@ -21,9 +23,18 @@ Unlike conventional digital cube simulators that lock rotations to static world 
 
 ---
 
+## Live Deployment & Release
+
+- **Live Production Deployment**: [https://eicube.vercel.app](https://eicube.vercel.app)
+- **GitHub Release**: [v1.0.0 - Interactive 3D Twisty Puzzle Trainer](https://github.com/eitophetamine9/EiCube/releases/tag/v1.0.0)
+- **Source Code Repository**: [https://github.com/eitophetamine9/EiCube](https://github.com/eitophetamine9/EiCube)
+
+---
+
 ## Table of Contents
 
 - [Overview](#overview)
+- [Live Deployment & Release](#live-deployment--release)
 - [Key Features](#key-features)
 - [Architectural Deep Dive](#architectural-deep-dive)
   - [1. Mathematical & Kinematic Model](#1-mathematical--kinematic-model)
