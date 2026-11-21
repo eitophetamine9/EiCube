@@ -1,13 +1,19 @@
 import { RubiksCubeScene } from '../render/RubiksCubeScene';
 import { generateScramble } from '../cube/scramble';
+import { generatePyraminxScramble } from '../cube/pyraminxState';
 import { invertMove, parseAlgorithm } from '../cube/notation';
 import { SettingsManager, formatKeyCode } from './settings';
 import { toast } from './toast';
+
+export type TrainerPuzzleType = '3x3' | '2x2' | '4x4' | 'pyraminx';
 
 export class ControlsManager {
   private container: HTMLElement;
   private scene: RubiksCubeScene;
   private settings: SettingsManager;
+  private activePuzzle: TrainerPuzzleType = '3x3';
+  private onPuzzleChange?: (puzzle: TrainerPuzzleType) => void;
+  private onExecuteMoveDirect?: (move: string) => void;
   private moveHistory: string[] = [];
 
   // Timer state
@@ -17,11 +23,36 @@ export class ControlsManager {
   private isTimerRunning: boolean = false;
   private isAwaitingFirstMoveAfterScramble: boolean = false;
 
-  constructor(container: HTMLElement, scene: RubiksCubeScene, settings: SettingsManager) {
+  constructor(
+    container: HTMLElement,
+    scene: RubiksCubeScene,
+    settings: SettingsManager,
+    callbacks?: {
+      onPuzzleChange?: (puzzle: TrainerPuzzleType) => void;
+      onExecuteMoveDirect?: (move: string) => void;
+    }
+  ) {
     this.container = container;
     this.scene = scene;
     this.settings = settings;
+    this.onPuzzleChange = callbacks?.onPuzzleChange;
+    this.onExecuteMoveDirect = callbacks?.onExecuteMoveDirect;
     this.render();
+  }
+
+  getActivePuzzle(): TrainerPuzzleType {
+    return this.activePuzzle;
+  }
+
+  setTrainerPuzzle(puzzle: TrainerPuzzleType, skipNotify: boolean = false): void {
+    if (this.activePuzzle === puzzle) return;
+    this.activePuzzle = puzzle;
+    this.clearHistory();
+    this.resetTimer();
+    this.render();
+    if (!skipNotify) {
+      this.onPuzzleChange?.(puzzle);
+    }
   }
 
   private render(): void {
@@ -42,6 +73,15 @@ export class ControlsManager {
       <div class="trainer-viewport-overlay">
         <!-- Top Floating Status Bar -->
         <div class="floating-top-bar">
+          <!-- Puzzle Selector inside Trainer -->
+          <div class="puzzle-mini-picker">
+            <span class="picker-label">Puzzle:</span>
+            <button class="btn-picker ${this.activePuzzle === '3x3' ? 'is-active' : ''}" data-trainer-puzzle="3x3">3×3</button>
+            <button class="btn-picker ${this.activePuzzle === '2x2' ? 'is-active' : ''}" data-trainer-puzzle="2x2">2×2</button>
+            <button class="btn-picker ${this.activePuzzle === '4x4' ? 'is-active' : ''}" data-trainer-puzzle="4x4">4×4</button>
+            <button class="btn-picker ${this.activePuzzle === 'pyraminx' ? 'is-active' : ''}" data-trainer-puzzle="pyraminx">▲ Pyra</button>
+          </div>
+
           <div class="status-group">
             <div id="solved-badge" class="badge-solved">
               <span class="badge-dot"></span>
@@ -112,68 +152,12 @@ export class ControlsManager {
         <!-- LEFT SIDEBAR: Keybinds & Move Controls -->
         <aside class="controls-sidebar-left">
           <div class="sidebar-header">
-            <span class="sidebar-title">Controls & Keys</span>
+            <span class="sidebar-title">${this.getPuzzleDisplayName()} Moves</span>
             <button id="btn-edit-keybinds" class="btn-text-sm" title="Rebind any key">Edit Keys</button>
           </div>
 
-          <!-- Face moves grid (regular and direct primes side-by-side) -->
-          <div class="moves-section">
-            <div class="moves-section-label">Face Moves</div>
-            <div class="moves-vertical-grid">
-              ${[
-                { move: 'R', prime: "R'" },
-                { move: 'L', prime: "L'" },
-                { move: 'U', prime: "U'" },
-                { move: 'D', prime: "D'" },
-                { move: 'F', prime: "F'" },
-                { move: 'B', prime: "B'" },
-              ]
-                .map(
-                  (pair) => `
-                <div class="move-pair-row">
-                  <button class="btn-sidebar-move" data-move="${pair.move}" title="Execute ${pair.move}">
-                    <span class="move-name">${pair.move}</span>
-                    <kbd class="key-tag" data-rebind-action="${pair.move}">${getBindDisplay(pair.move)}</kbd>
-                  </button>
-                  <button class="btn-sidebar-move btn-prime" data-move="${pair.prime}" title="Execute ${pair.prime}">
-                    <span class="move-name">${pair.prime}</span>
-                    <kbd class="key-tag" data-rebind-action="${pair.prime}">${getBindDisplay(pair.prime)}</kbd>
-                  </button>
-                </div>
-              `
-                )
-                .join('')}
-            </div>
-          </div>
-
-          <!-- Slices & Rotations -->
-          <div class="moves-section">
-            <div class="moves-section-label">Slices & Rotations</div>
-            <div class="moves-inline-row">
-              ${['M', 'E', 'S']
-                .map(
-                  (m) => `
-                <button class="btn-sec-pill" data-move="${m}" title="Slice ${m}">
-                  <span>${m}</span>
-                  <kbd>${getBindDisplay(m)}</kbd>
-                </button>
-              `
-                )
-                .join('')}
-            </div>
-            <div class="moves-inline-row" style="margin-top: 6px;">
-              ${['x', 'y', 'z']
-                .map(
-                  (r) => `
-                <button class="btn-sec-pill" data-move="${r}" title="Rotate ${r}">
-                  <span>${r}</span>
-                  <kbd>${getBindDisplay(r)}</kbd>
-                </button>
-              `
-                )
-                .join('')}
-            </div>
-          </div>
+          <!-- Moves Pad according to active puzzle -->
+          ${this.renderMovesPad(getBindDisplay)}
         </aside>
 
         <!-- RIGHT SIDEBAR: Vertical Move History -->
@@ -199,7 +183,187 @@ export class ControlsManager {
     this.attachEventListeners();
   }
 
+  private getPuzzleDisplayName(): string {
+    switch (this.activePuzzle) {
+      case '3x3': return '3×3';
+      case '2x2': return '2×2';
+      case '4x4': return '4×4';
+      case 'pyraminx': return 'Pyraminx';
+    }
+  }
+
+  private renderMovesPad(getBindDisplay: (act: string) => string): string {
+    if (this.activePuzzle === 'pyraminx') {
+      return `
+        <div class="moves-section">
+          <div class="moves-section-label">Layer Turns</div>
+          <div class="moves-vertical-grid">
+            ${[
+              { move: 'U', prime: "U'" },
+              { move: 'L', prime: "L'" },
+              { move: 'R', prime: "R'" },
+              { move: 'B', prime: "B'" },
+            ]
+              .map(
+                (p) => `
+              <div class="move-pair-row">
+                <button class="btn-sidebar-move" data-move="${p.move}" title="Turn ${p.move}">
+                  <span class="move-name">${p.move}</span>
+                  <kbd class="key-tag" data-rebind-action="${p.move}">${getBindDisplay(p.move)}</kbd>
+                </button>
+                <button class="btn-sidebar-move btn-prime" data-move="${p.prime}" title="Turn ${p.prime}">
+                  <span class="move-name">${p.prime}</span>
+                  <kbd class="key-tag" data-rebind-action="${p.prime}">${getBindDisplay(p.prime)}</kbd>
+                </button>
+              </div>
+            `
+              )
+              .join('')}
+          </div>
+        </div>
+
+        <div class="moves-section">
+          <div class="moves-section-label">Tip Rotations</div>
+          <div class="moves-vertical-grid">
+            ${[
+              { move: 'u', prime: "u'" },
+              { move: 'l', prime: "l'" },
+              { move: 'r', prime: "r'" },
+              { move: 'b', prime: "b'" },
+            ]
+              .map(
+                (p) => `
+              <div class="move-pair-row">
+                <button class="btn-sidebar-move" data-move="${p.move}">
+                  <span class="move-name">${p.move}</span>
+                </button>
+                <button class="btn-sidebar-move btn-prime" data-move="${p.prime}">
+                  <span class="move-name">${p.prime}</span>
+                </button>
+              </div>
+            `
+              )
+              .join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // 2x2, 3x3, 4x4
+    const pairs =
+      this.activePuzzle === '2x2'
+        ? [
+            { move: 'R', prime: "R'" },
+            { move: 'U', prime: "U'" },
+            { move: 'F', prime: "F'" },
+            { move: 'L', prime: "L'" },
+          ]
+        : [
+            { move: 'R', prime: "R'" },
+            { move: 'L', prime: "L'" },
+            { move: 'U', prime: "U'" },
+            { move: 'D', prime: "D'" },
+            { move: 'F', prime: "F'" },
+            { move: 'B', prime: "B'" },
+          ];
+
+    return `
+      <div class="moves-section">
+        <div class="moves-section-label">Face Moves</div>
+        <div class="moves-vertical-grid">
+          ${pairs
+            .map(
+              (pair) => `
+            <div class="move-pair-row">
+              <button class="btn-sidebar-move" data-move="${pair.move}" title="Execute ${pair.move}">
+                <span class="move-name">${pair.move}</span>
+                <kbd class="key-tag" data-rebind-action="${pair.move}">${getBindDisplay(pair.move)}</kbd>
+              </button>
+              <button class="btn-sidebar-move btn-prime" data-move="${pair.prime}" title="Execute ${pair.prime}">
+                <span class="move-name">${pair.prime}</span>
+                <kbd class="key-tag" data-rebind-action="${pair.prime}">${getBindDisplay(pair.prime)}</kbd>
+              </button>
+            </div>
+          `
+            )
+            .join('')}
+        </div>
+      </div>
+
+      ${
+        this.activePuzzle === '4x4'
+          ? `<div class="moves-section">
+              <div class="moves-section-label">Wide Layer Turns</div>
+              <div class="moves-vertical-grid">
+                ${[
+                  { move: 'Rw', prime: "Rw'" },
+                  { move: 'Uw', prime: "Uw'" },
+                  { move: 'Fw', prime: "Fw'" },
+                ]
+                  .map(
+                    (p) => `
+                  <div class="move-pair-row">
+                    <button class="btn-sidebar-move" data-move="${p.move}">
+                      <span class="move-name">${p.move}</span>
+                    </button>
+                    <button class="btn-sidebar-move btn-prime" data-move="${p.prime}">
+                      <span class="move-name">${p.prime}</span>
+                    </button>
+                  </div>
+                `
+                  )
+                  .join('')}
+              </div>
+            </div>`
+          : ''
+      }
+
+      ${
+        this.activePuzzle === '3x3'
+          ? `<div class="moves-section">
+              <div class="moves-section-label">Slices & Rotations</div>
+              <div class="moves-inline-row">
+                ${['M', 'E', 'S']
+                  .map(
+                    (m) => `
+                  <button class="btn-sec-pill" data-move="${m}" title="Slice ${m}">
+                    <span>${m}</span>
+                    <kbd>${getBindDisplay(m)}</kbd>
+                  </button>
+                `
+                  )
+                  .join('')}
+              </div>
+              <div class="moves-inline-row" style="margin-top: 6px;">
+                ${['x', 'y', 'z']
+                  .map(
+                    (r) => `
+                  <button class="btn-sec-pill" data-move="${r}" title="Rotate ${r}">
+                    <span>${r}</span>
+                    <kbd>${getBindDisplay(r)}</kbd>
+                  </button>
+                `
+                  )
+                  .join('')}
+              </div>
+            </div>`
+          : ''
+      }
+    `;
+  }
+
   private attachEventListeners(): void {
+    // Puzzle mini-picker tabs
+    const pickers = this.container.querySelectorAll<HTMLButtonElement>('[data-trainer-puzzle]');
+    pickers.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const pz = btn.getAttribute('data-trainer-puzzle') as TrainerPuzzleType;
+        if (pz && pz !== this.activePuzzle) {
+          this.setTrainerPuzzle(pz);
+        }
+      });
+    });
+
     // Scramble button
     this.container.querySelector('#btn-scramble')?.addEventListener('click', () => {
       this.handleScramble();
@@ -228,7 +392,6 @@ export class ControlsManager {
     const moveButtons = this.container.querySelectorAll<HTMLButtonElement>('[data-move]');
     moveButtons.forEach((btn) => {
       btn.addEventListener('click', (e) => {
-        // If clicking on kbd tag directly, don't execute move; open rebind instead!
         const target = e.target as HTMLElement;
         if (target && target.classList.contains('key-tag')) {
           const action = target.getAttribute('data-rebind-action');
@@ -307,8 +470,19 @@ export class ControlsManager {
   }
 
   handleScramble(): void {
-    const scramble = generateScramble(22);
-    const moves = parseAlgorithm(scramble);
+    let scramble = '';
+    if (this.activePuzzle === 'pyraminx') {
+      scramble = generatePyraminxScramble(14);
+      const moves = scramble.split(' ');
+      moves.forEach((m) => this.onExecuteMoveDirect?.(m));
+    } else {
+      const len = this.activePuzzle === '2x2' ? 14 : this.activePuzzle === '4x4' ? 24 : 22;
+      scramble = generateScramble(len);
+      const moves = parseAlgorithm(scramble);
+      this.scene.executeAlgorithm(moves, false, true, () => {
+        toast.show('Puzzle scrambled! Timer starts on your next move.');
+      });
+    }
 
     const banner = this.container.querySelector<HTMLElement>('#scramble-banner');
     const notation = this.container.querySelector<HTMLElement>('#scramble-notation');
@@ -320,20 +494,20 @@ export class ControlsManager {
     this.stopTimer();
     this.resetTimer();
     this.isAwaitingFirstMoveAfterScramble = true;
-
-    this.scene.executeAlgorithm(moves, false, true, () => {
-      toast.show('Cube scrambled! Timer starts on your next move.');
-    });
   }
 
   handleReset(): void {
-    this.scene.resetCube();
+    if (this.activePuzzle === 'pyraminx') {
+      this.onExecuteMoveDirect?.('RESET');
+    } else {
+      this.scene.resetCube();
+    }
     this.stopTimer();
     this.resetTimer();
     this.isAwaitingFirstMoveAfterScramble = false;
     const banner = this.container.querySelector<HTMLElement>('#scramble-banner');
     if (banner) banner.style.display = 'none';
-    toast.show('Cube reset to solved state.');
+    toast.show('Puzzle reset to solved state.');
   }
 
   handleUndo(): void {
@@ -344,7 +518,7 @@ export class ControlsManager {
 
     const lastMove = this.moveHistory.pop()!;
     const inverse = invertMove(lastMove);
-    this.scene.executeMove(inverse, false);
+    this.executeMove(inverse, false);
     this.renderHistory();
   }
 
@@ -354,7 +528,12 @@ export class ControlsManager {
       this.startTimer();
     }
 
-    this.scene.executeMove(notation, viewRelative);
+    if (this.activePuzzle === 'pyraminx') {
+      this.onExecuteMoveDirect?.(notation);
+      this.recordMove(notation);
+    } else {
+      this.scene.executeMove(notation, viewRelative);
+    }
   }
 
   recordMove(notation: string): void {
@@ -395,7 +574,6 @@ export class ControlsManager {
       )
       .join('');
 
-    // Smoothly auto-scroll to bottom of vertical history
     list.scrollTop = list.scrollHeight;
   }
 
@@ -411,7 +589,7 @@ export class ControlsManager {
 
         if (this.isTimerRunning) {
           this.stopTimer();
-          toast.show(`Cube Solved in ${this.formatTime(this.timerElapsedMs)}!`);
+          toast.show(`Puzzle Solved in ${this.formatTime(this.timerElapsedMs)}!`);
         }
       } else {
         badge.classList.remove('is-solved');

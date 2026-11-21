@@ -1,7 +1,7 @@
 export interface PuzzleGuide {
   id: string;
   name: string;
-  category: '2x2' | '4x4' | 'pyraminx';
+  category: '3x3' | '2x2' | '4x4' | 'pyraminx';
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
   summary: string;
   steps: {
@@ -17,6 +17,50 @@ export interface PuzzleGuide {
 }
 
 export const OTHER_CUBES_GUIDES: Record<string, PuzzleGuide> = {
+  '3x3': {
+    id: '3x3',
+    name: "3x3 Rubik's Cube",
+    category: '3x3',
+    difficulty: 'Beginner',
+    summary:
+      'The original and most iconic 3D twisty puzzle invented by Ernő Rubik in 1974. Mastered using the 7-step Layer-by-Layer beginner method or the competitive CFOP speedsolving system.',
+    steps: [
+      {
+        title: 'Step 1: The White Cross',
+        description: 'Build a white plus on the bottom face with each white edge side color matching its adjacent side center.',
+        recognition: 'Bring edges to top daisy or insert directly.',
+        algorithms: [
+          { name: 'Flip Inverted Edge', notation: "F' U' R U", desc: 'Flips front edge so white faces the right direction.' },
+        ],
+      },
+      {
+        title: 'Step 2: First Layer Corners',
+        description: 'Insert all 4 white corners between matching colored centers using sexy move triggers.',
+        recognition: 'Position corner directly above target slot.',
+        algorithms: [
+          { name: 'Right-Hand Sexy Move', notation: "R U R' U'", desc: 'Inserts corner into bottom right slot.' },
+        ],
+      },
+      {
+        title: 'Step 3: Middle Layer Edges',
+        description: 'Insert the 4 equator edges without disturbing the white first layer.',
+        recognition: 'Match front edge color to form a vertical T.',
+        algorithms: [
+          { name: 'Insert Right', notation: "U R U' R' U' F' U F", desc: 'Moves top-front edge to front-right slot.' },
+          { name: 'Insert Left', notation: "U' L' U L U F U' F'", desc: 'Moves top-front edge to front-left slot.' },
+        ],
+      },
+      {
+        title: 'Step 4: Yellow Cross & Final Corners',
+        description: 'Orient top yellow edges into a cross and twist the final yellow corners to complete the puzzle.',
+        recognition: 'Line or angle case -> Sune -> Niklas -> (R\' D\' R D).',
+        algorithms: [
+          { name: 'Yellow Cross Line', notation: "F R U R' U' F'", desc: 'Creates yellow cross.' },
+          { name: 'Niklas Corner Permutation', notation: "U R U' L' U R' U' L", desc: 'Cycles top corners.' },
+        ],
+      },
+    ],
+  },
   '2x2': {
     id: '2x2',
     name: '2x2 Pocket Cube',

@@ -6,20 +6,31 @@ import { parseAlgorithm } from '../cube/notation';
 import { generateScramble } from '../cube/scramble';
 import { toast } from './toast';
 
-export type OtherPuzzleType = '2x2' | '4x4' | 'pyraminx';
+export type OtherPuzzleType = '3x3' | '2x2' | '4x4' | 'pyraminx';
 
 export class OtherCubesManager {
   private container: HTMLElement;
-  private currentPuzzle: OtherPuzzleType = '2x2';
+  private currentPuzzle: OtherPuzzleType = '3x3';
+  private onSolveVersion?: (puzzle: OtherPuzzleType) => void;
 
   // 3D Scenes
   private cubeScene: RubiksCubeScene | null = null;
   private pyraScene: PyraminxScene | null = null;
   private cubeState: CubeState;
 
-  constructor(container: HTMLElement) {
+  constructor(
+    container: HTMLElement,
+    callbacks?: { onSolveVersion?: (puzzle: OtherPuzzleType) => void }
+  ) {
     this.container = container;
-    this.cubeState = new CubeState(2);
+    this.onSolveVersion = callbacks?.onSolveVersion;
+    this.cubeState = new CubeState(3);
+    this.render();
+  }
+
+  setPuzzle(puzzle: OtherPuzzleType): void {
+    if (this.currentPuzzle === puzzle) return;
+    this.currentPuzzle = puzzle;
     this.render();
   }
 
@@ -35,6 +46,10 @@ export class OtherCubesManager {
             <span class="selector-title">Select Puzzle:</span>
           </div>
           <div class="puzzle-tabs-group" role="tablist">
+            <button class="btn-puzzle-tab ${this.currentPuzzle === '3x3' ? 'is-active' : ''}" data-puzzle="3x3">
+              <span class="puzzle-tab-icon">3×3</span>
+              <span>Rubik's Cube</span>
+            </button>
             <button class="btn-puzzle-tab ${this.currentPuzzle === '2x2' ? 'is-active' : ''}" data-puzzle="2x2">
               <span class="puzzle-tab-icon">2×2</span>
               <span>Pocket Cube</span>
@@ -58,6 +73,14 @@ export class OtherCubesManager {
               <span class="difficulty-pill ${guide.difficulty.toLowerCase()}">${guide.difficulty}</span>
             </div>
             <div class="playground-actions">
+              <!-- Primary CTA: Solve this version -->
+              <button id="btn-solve-this-version" class="btn btn-sm btn-solve-version" title="Load this puzzle into the main Puzzle Trainer">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                Solve this version
+              </button>
+
               <button id="btn-other-scramble" class="btn btn-sm btn-scramble">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="16 3 21 3 21 8"></polyline>
@@ -81,7 +104,7 @@ export class OtherCubesManager {
         <!-- Dedicated Solving Guide for Selected Puzzle -->
         <div class="other-guide-section">
           <div class="other-guide-header">
-            <h3 class="other-guide-title">${guide.name} Complete Solving Guide</h3>
+            <h3 class="other-guide-title">${guide.name} Step-by-Step Guide</h3>
             <p class="other-guide-desc">${guide.summary}</p>
           </div>
 
@@ -97,7 +120,14 @@ export class OtherCubesManager {
   }
 
   private renderQuickMoveButtons(): string {
-    if (this.currentPuzzle === '2x2') {
+    if (this.currentPuzzle === '3x3') {
+      return `
+        <span class="quick-move-label">Turns:</span>
+        ${['R', "R'", 'U', "U'", 'F', "F'", 'L', "L'", 'D', "D'", 'B', "B'"]
+          .map((m) => `<button class="btn-sec-move" data-other-move="${m}">${m}</button>`)
+          .join('')}
+      `;
+    } else if (this.currentPuzzle === '2x2') {
       return `
         <span class="quick-move-label">Turns:</span>
         ${['R', "R'", 'U', "U'", 'F', "F'", 'L', "L'"]
@@ -205,7 +235,7 @@ export class OtherCubesManager {
         },
       });
     } else {
-      const size = this.currentPuzzle === '2x2' ? 2 : 4;
+      const size = this.currentPuzzle === '2x2' ? 2 : this.currentPuzzle === '4x4' ? 4 : 3;
       this.cubeState = new CubeState(size);
       this.cubeScene = new RubiksCubeScene(mount, this.cubeState, {
         onSolvedChange: (solved) => {
@@ -228,13 +258,18 @@ export class OtherCubesManager {
       });
     });
 
+    // "Solve this version" button
+    this.container.querySelector('#btn-solve-this-version')?.addEventListener('click', () => {
+      this.onSolveVersion?.(this.currentPuzzle);
+    });
+
     // Scramble button
     this.container.querySelector('#btn-other-scramble')?.addEventListener('click', () => {
       if (this.currentPuzzle === 'pyraminx') {
         const sc = this.pyraScene?.scramble();
         if (sc) toast.show(`Scrambled Pyraminx: ${sc}`);
       } else {
-        const length = this.currentPuzzle === '2x2' ? 14 : 24;
+        const length = this.currentPuzzle === '2x2' ? 14 : this.currentPuzzle === '4x4' ? 24 : 22;
         const sc = generateScramble(length);
         const moves = parseAlgorithm(sc);
         this.cubeScene?.executeAlgorithm(moves, false, true);
@@ -277,7 +312,7 @@ export class OtherCubesManager {
         this.container.querySelector('.other-playground-card')?.scrollIntoView({ behavior: 'smooth' });
 
         if (this.currentPuzzle === 'pyraminx') {
-          const tokens = alg.split(/[\s()]+/ ).filter(Boolean);
+          const tokens = alg.split(/[\s()]+/).filter(Boolean);
           tokens.forEach((t) => this.pyraScene?.executeMove(t));
           toast.show(`Ran algorithm on Pyraminx: ${alg}`);
         } else {

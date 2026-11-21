@@ -350,6 +350,49 @@ body {
   justify-content: center;
 }
 
+/* Mini Puzzle Picker in Floating Top Bar */
+.puzzle-mini-picker {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.picker-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-right: 2px;
+}
+
+.btn-picker {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-picker:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface-elevated);
+}
+
+.btn-picker.is-active {
+  background: var(--accent-emerald);
+  color: #ffffff;
+  box-shadow: 0 1px 4px var(--accent-emerald-glow);
+}
+
 .status-group {
   display: flex;
   align-items: center;
@@ -1913,4 +1956,235 @@ body {
 .btn-icon-subtle:hover {
   background: var(--bg-surface-elevated);
   color: var(--text-primary);
+}
+
+/* ==========================================================================
+   SOLVE THIS VERSION BUTTON
+   ========================================================================== */
+.btn-solve-version {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-solve-version:hover {
+  background: linear-gradient(135deg, #34d399 0%, #059669 100%);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.45);
+  transform: translateY(-1px);
+  color: #ffffff;
+}
+
+.btn-solve-version:active {
+  transform: translateY(0);
+}
+
+/* ==========================================================================
+   LEARN PUZZLES TABS & VIDEO TUTORIALS
+   ========================================================================== */
+.guide-tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.btn-guide-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-guide-tab:hover {
+  background: var(--bg-surface-elevated);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.btn-guide-tab.is-active {
+  background: var(--accent-sky);
+  border-color: var(--accent-sky);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(14, 165, 233, 0.35);
+}
+
+.guide-tab-icon {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.video-tutorials-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.section-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.video-badge-pill {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
+}
+
+.video-tutorials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 24px;
+}
+
+.video-tutorial-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  transition: all var(--transition-fast);
+}
+
+.video-tutorial-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  transform: translateY(-2px);
+}
+
+.video-embed-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000000;
+}
+
+.video-embed-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.video-info-box {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.video-meta-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.video-creator {
+  font-weight: 700;
+  color: var(--accent-emerald);
+}
+
+.video-views,
+.video-duration {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.video-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+
+.video-desc {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.video-chapters-box {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chapters-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.chapters-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chapter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.chapter-pill:hover {
+  background: var(--bg-surface-elevated);
+  border-color: var(--accent-sky);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.chapter-time {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--accent-sky);
+  font-size: 0.72rem;
+}
+
+.chapter-name {
+  font-weight: 500;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

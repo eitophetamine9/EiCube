@@ -1,7 +1,8 @@
 import { CubeState } from './cube/CubeState';
 import { RubiksCubeScene } from './render/RubiksCubeScene';
+import { PyraminxScene } from '../src/render/PyraminxScene';
 import { TabManager } from './ui/tabs';
-import { ControlsManager } from './ui/controls';
+import { ControlsManager, TrainerPuzzleType } from './ui/controls';
 import { GuideRenderer } from './ui/guideRenderer';
 import { SettingsManager } from './ui/settings';
 import { TutorialOverlay } from './ui/tutorial';
@@ -11,10 +12,7 @@ import { parseAlgorithm } from './cube/notation';
 import { toast } from './ui/toast';
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Initialize Logical Cube State
-  const cubeState = new CubeState(3);
-
-  // 2. Containers
+  // 1. Containers
   const viewportContainer = document.getElementById('cube-viewport-container') as HTMLElement;
   const controlsMount = document.getElementById('controls-mount') as HTMLElement;
   const otherMount = document.getElementById('other-mount') as HTMLElement;
@@ -25,9 +23,12 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  // 3. Initialize 3D Scene for 3x3
+  // 2. Initialize 3D Scenes for Trainer Viewport
+  const cubeState = new CubeState(3);
   let controls: ControlsManager;
-  const scene = new RubiksCubeScene(viewportContainer, cubeState, {
+  let pyraScene: PyraminxScene | null = null;
+
+  const cubeScene = new RubiksCubeScene(viewportContainer, cubeState, {
     onSolvedChange: (isSolved) => {
       controls?.updateSolvedState(isSolved);
     },
@@ -36,43 +37,98 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   });
 
-  // 4. Initialize Settings Manager
+  // Switch puzzle helper in Trainer
+  const switchTrainerPuzzle = (puzzle: TrainerPuzzleType) => {
+    if (puzzle === 'pyraminx') {
+      // Hide cube canvas
+      cubeScene['renderer'].domElement.style.display = 'none';
+
+      if (!pyraScene) {
+        pyraScene = new PyraminxScene(viewportContainer, {
+          onSolvedChange: (isSolved) => {
+            controls?.updateSolvedState(isSolved);
+          },
+        });
+      } else {
+        pyraScene['renderer'].domElement.style.display = 'block';
+        pyraScene.reset();
+      }
+    } else {
+      // Hide pyraminx canvas if active
+      if (pyraScene) {
+        pyraScene['renderer'].domElement.style.display = 'none';
+      }
+      cubeScene['renderer'].domElement.style.display = 'block';
+
+      const size = puzzle === '2x2' ? 2 : puzzle === '4x4' ? 4 : 3;
+      cubeScene.setSize(size);
+    }
+  };
+
+  // 3. Settings Manager
   const settings = new SettingsManager(() => {
     controls?.refreshKeybindLabels();
   });
 
-  // 5. Initialize Controls UI
-  controls = new ControlsManager(controlsMount, scene, settings);
+  // 4. Controls UI
+  controls = new ControlsManager(controlsMount, cubeScene, settings, {
+    onPuzzleChange: (puzzle) => {
+      switchTrainerPuzzle(puzzle);
+    },
+    onExecuteMoveDirect: (move) => {
+      if (move === 'RESET') {
+        pyraScene?.reset();
+      } else {
+        pyraScene?.executeMove(move);
+      }
+    },
+  });
 
-  // 6. Initialize Tabs
+  // 5. Tab Manager
   const tabManager = new TabManager((tab) => {
     if (tab === 'cube') {
       window.dispatchEvent(new Event('resize'));
     }
   });
 
-  // 7. Initialize Other Cubes (2x2, 4x4, Pyraminx)
-  new OtherCubesManager(otherMount);
+  // 6. Other Puzzles Tab Manager with "Solve this version" button support!
+  const otherCubes = new OtherCubesManager(otherMount, {
+    onSolveVersion: (puzzle) => {
+      controls.setTrainerPuzzle(puzzle);
+      switchTrainerPuzzle(puzzle);
+      tabManager.setTab('cube');
+      toast.show(`Loaded ${puzzle} into Puzzle Trainer!`);
+    },
+  });
+  void otherCubes;
 
-  // 8. Initialize Guide UI
-  new GuideRenderer(guideMount, (notation) => {
-    // Switch to cube tab
+  // 7. Learn Puzzles Guide UI with Video Tutorials
+  const guideRenderer = new GuideRenderer(guideMount, (notation, category) => {
+    // Switch to trainer and load that puzzle!
+    controls.setTrainerPuzzle(category);
+    switchTrainerPuzzle(category);
     tabManager.setTab('cube');
 
-    // Parse and run algorithm on the 3D scene
-    const moves = parseAlgorithm(notation);
-    if (moves.length > 0) {
-      toast.show(`Running: ${notation}`);
-      scene.executeAlgorithm(moves, false, false, () => {
-        toast.show(`Completed: ${notation}`);
-      });
+    if (category === 'pyraminx') {
+      const tokens = notation.split(/[\s()]+/).filter(Boolean);
+      tokens.forEach((t) => pyraScene?.executeMove(t));
+      toast.show(`Ran algorithm on Pyraminx: ${notation}`);
+    } else {
+      const moves = parseAlgorithm(notation);
+      if (moves.length > 0) {
+        toast.show(`Running: ${notation}`);
+        cubeScene.executeAlgorithm(moves, false, false, () => {
+          toast.show(`Completed: ${notation}`);
+        });
+      }
     }
   });
 
-  // 9. Onboarding & Tips Modals
+  // 8. Onboarding & Tips Modals
   const tutorial = new TutorialOverlay();
   const tipsModal = new TipsModal((stepId) => {
     tabManager.setTab('learn');
+    guideRenderer.setCategory('3x3');
     setTimeout(() => {
       const stepEl = document.getElementById(stepId);
       stepEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -92,9 +148,8 @@ document.addEventListener('DOMContentLoaded', () => {
     settings.open();
   });
 
-  // 10. Global Keyboard Listener for Cube Moves
+  // 9. Global Keyboard Listener for Cube Moves
   window.addEventListener('keydown', (e) => {
-    // If typing in input, textarea, or any modal is open, ignore
     if (settings.isOpen() || tipsModal.isOpen()) return;
 
     const target = e.target as HTMLElement;
@@ -107,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Only handle cube keyboard shortcuts if on Cube tab
+    // Only handle keyboard shortcuts if on Puzzle Trainer tab
     if (tabManager.getActiveTab() !== 'cube') return;
 
     // Check bound keys
@@ -119,7 +174,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       let move = action;
       if (action.endsWith("'")) {
-        // Direct prime binding (e.g. user assigned dedicated key for R')
         move = action;
       } else if (e.shiftKey) {
         move += "'";
@@ -127,7 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
         move += '2';
       }
 
-      // Execute view-relative move!
       controls.executeMove(move, true);
     }
   });

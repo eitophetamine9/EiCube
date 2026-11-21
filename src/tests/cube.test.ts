@@ -8,6 +8,7 @@ import { CameraVectors } from '../cube/types';
 import { GUIDE_DATA } from '../content/guideData';
 import { PyraminxState, generatePyraminxScramble } from '../cube/pyraminxState';
 import { OTHER_CUBES_GUIDES } from '../content/otherCubesData';
+import { PUZZLE_VIDEOS } from '../content/videoData';
 import { SettingsManager, DEFAULT_KEYBINDS, TWOHAND_SPEEDCUBE_KEYBINDS } from '../ui/settings';
 
 describe("Rubik's Cube Pure Logic", () => {
@@ -105,6 +106,26 @@ describe("Rubik's Cube Pure Logic", () => {
     }
 
     expect(cube.isSolved()).toBe(true);
+  });
+
+  it('verifies YouTube video tutorials data integrity for all puzzles (3x3, 2x2, 4x4, Pyraminx)', () => {
+    const requiredPuzzles = ['3x3', '2x2', '4x4', 'pyraminx'];
+    for (const p of requiredPuzzles) {
+      const vids = PUZZLE_VIDEOS[p];
+      expect(vids).toBeDefined();
+      expect(vids.length).toBeGreaterThan(0);
+      for (const v of vids) {
+        expect(v.videoId.length).toBeGreaterThan(5);
+        expect(v.title.length).toBeGreaterThan(5);
+        expect(v.creator.length).toBeGreaterThan(2);
+        expect(v.chapters.length).toBeGreaterThan(0);
+        for (const ch of v.chapters) {
+          expect(typeof ch.seconds).toBe('number');
+          expect(ch.time).toMatch(/^\d+:\d{2}$/);
+          expect(ch.title.length).toBeGreaterThan(2);
+        }
+      }
+    }
   });
 
   it('scramble followed by its inverse returns to solved', () => {

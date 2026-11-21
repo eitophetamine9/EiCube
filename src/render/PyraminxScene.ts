@@ -25,7 +25,7 @@ export class PyraminxScene {
     const height = container.clientHeight || 600;
 
     this.camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
-    this.camera.position.set(0, 1.2, 5.0);
+    this.camera.position.set(0, 0.8, 5.2);
 
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
@@ -34,6 +34,8 @@ export class PyraminxScene {
     });
     this.renderer.setSize(width, height);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.15;
     this.container.appendChild(this.renderer.domElement);
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -41,24 +43,16 @@ export class PyraminxScene {
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.08;
     this.controls.minDistance = 3.5;
-    this.controls.maxDistance = 10.0;
+    this.controls.maxDistance = 11.0;
+    this.controls.rotateSpeed = 0.85;
 
-    // Lighting
-    const ambient = new THREE.AmbientLight(0xffffff, 1.2);
-    this.scene.add(ambient);
-
-    const dirLight1 = new THREE.DirectionalLight(0xffffff, 2.0);
-    dirLight1.position.set(5, 7, 5);
-    this.scene.add(dirLight1);
-
-    const dirLight2 = new THREE.DirectionalLight(0x94a3b8, 1.0);
-    dirLight2.position.set(-5, -5, -5);
-    this.scene.add(dirLight2);
+    // Three-point studio lighting matching the 3x3 cube
+    this.setupLighting();
 
     this.mainGroup = new THREE.Group();
     this.scene.add(this.mainGroup);
 
-    this.buildPyraminx();
+    this.buildSolidPyraminx();
 
     this.resizeObserver = new ResizeObserver(() => this.handleResize());
     this.resizeObserver.observe(this.container);
@@ -67,8 +61,25 @@ export class PyraminxScene {
     requestAnimationFrame(this.animate);
   }
 
-  private buildPyraminx(): void {
-    // Clear
+  private setupLighting(): void {
+    const ambient = new THREE.AmbientLight(0xffffff, 1.1);
+    this.scene.add(ambient);
+
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 2.2);
+    dirLight1.position.set(5, 7, 6);
+    this.scene.add(dirLight1);
+
+    const dirLight2 = new THREE.DirectionalLight(0x94a3b8, 1.2);
+    dirLight2.position.set(-6, -5, -5);
+    this.scene.add(dirLight2);
+
+    const rimLight = new THREE.DirectionalLight(0xe2e8f0, 0.9);
+    rimLight.position.set(0, 6, -7);
+    this.scene.add(rimLight);
+  }
+
+  private buildSolidPyraminx(): void {
+    // Clear existing
     while (this.mainGroup.children.length > 0) {
       const obj = this.mainGroup.children[0];
       this.mainGroup.remove(obj);
@@ -91,11 +102,42 @@ export class PyraminxScene {
     const vFrontRight = new THREE.Vector3(s / 2, -h / 4, r);
     const vBack = new THREE.Vector3(0, -h / 4, -R);
 
+    // Solid dark plastic core
+    const coreGeom = new THREE.BufferGeometry();
+    const coreVertices = new Float32Array([
+      // Face 0: Front
+      vTop.x, vTop.y, vTop.z,
+      vFrontLeft.x, vFrontLeft.y, vFrontLeft.z,
+      vFrontRight.x, vFrontRight.y, vFrontRight.z,
+      // Face 1: Right
+      vTop.x, vTop.y, vTop.z,
+      vFrontRight.x, vFrontRight.y, vFrontRight.z,
+      vBack.x, vBack.y, vBack.z,
+      // Face 2: Left
+      vTop.x, vTop.y, vTop.z,
+      vBack.x, vBack.y, vBack.z,
+      vFrontLeft.x, vFrontLeft.y, vFrontLeft.z,
+      // Face 3: Bottom
+      vFrontLeft.x, vFrontLeft.y, vFrontLeft.z,
+      vBack.x, vBack.y, vBack.z,
+      vFrontRight.x, vFrontRight.y, vFrontRight.z,
+    ]);
+    coreGeom.setAttribute('position', new THREE.BufferAttribute(coreVertices, 3));
+    coreGeom.computeVertexNormals();
+
+    const coreMat = new THREE.MeshStandardMaterial({
+      color: 0x111317,
+      roughness: 0.35,
+      metalness: 0.1,
+    });
+    const coreMesh = new THREE.Mesh(coreGeom, coreMat);
+    this.mainGroup.add(coreMesh);
+
     // Faces:
-    // Face 0: Front face (vTop, vFrontLeft, vFrontRight) -> Green
-    // Face 1: Right face (vTop, vFrontRight, vBack) -> Red
-    // Face 2: Left face  (vTop, vBack, vFrontLeft) -> Blue
-    // Face 3: Bottom face (vFrontLeft, vBack, vFrontRight) -> Yellow
+    // Face 0: Front (Green)
+    // Face 1: Right (Red)
+    // Face 2: Left (Blue)
+    // Face 3: Bottom (Yellow)
     const faceDefinitions = [
       { a: vTop, b: vFrontLeft, c: vFrontRight, colorKey: 'G' },
       { a: vTop, b: vFrontRight, c: vBack, colorKey: 'R' },
@@ -104,80 +146,151 @@ export class PyraminxScene {
     ];
 
     faceDefinitions.forEach((def, faceIdx) => {
-      this.buildFaceTriangles(faceIdx, def.a, def.b, def.c);
+      this.buildFaceStickersWithBlackBorder(faceIdx, def.a, def.b, def.c);
     });
 
     this.updateColors();
   }
 
-  private buildFaceTriangles(
+  private buildFaceStickersWithBlackBorder(
     faceIdx: number,
     A: THREE.Vector3,
     B: THREE.Vector3,
     C: THREE.Vector3
   ): void {
-    // Subdivide triangle ABC into 9 small triangles (3 rows)
-    // Row 0: 1 triangle
-    // Row 1: 3 triangles (2 upright, 1 inverted)
-    // Row 2: 5 triangles (3 upright, 2 inverted)
+    // True outward normal from tetrahedron center (0,0,0) to the face
+    const faceCenter = new THREE.Vector3().add(A).add(B).add(C).divideScalar(3);
+    const faceNormal = faceCenter.clone().normalize();
+
     const getPoint = (u: number, v: number) => {
-      // barycentric coords: A * (1 - u - v) + B * u + C * v
       return new THREE.Vector3()
         .addScaledVector(A, 1 - u - v)
         .addScaledVector(B, u)
         .addScaledVector(C, v);
     };
 
-    const triangles: [THREE.Vector3, THREE.Vector3, THREE.Vector3][] = [];
+    const rawTriangles: [THREE.Vector3, THREE.Vector3, THREE.Vector3][] = [];
 
     // Row 0: top triangle (idx 0)
-    triangles.push([getPoint(0, 0), getPoint(1 / 3, 0), getPoint(0, 1 / 3)]);
+    rawTriangles.push([getPoint(0, 0), getPoint(1 / 3, 0), getPoint(0, 1 / 3)]);
 
     // Row 1: (idx 1, 2, 3)
-    triangles.push([getPoint(1 / 3, 0), getPoint(2 / 3, 0), getPoint(1 / 3, 1 / 3)]);
-    triangles.push([getPoint(1 / 3, 1 / 3), getPoint(0, 1 / 3), getPoint(1 / 3, 0)]); // inverted
-    triangles.push([getPoint(0, 1 / 3), getPoint(1 / 3, 1 / 3), getPoint(0, 2 / 3)]);
+    rawTriangles.push([getPoint(1 / 3, 0), getPoint(2 / 3, 0), getPoint(1 / 3, 1 / 3)]);
+    rawTriangles.push([getPoint(1 / 3, 1 / 3), getPoint(0, 1 / 3), getPoint(1 / 3, 0)]); // inverted
+    rawTriangles.push([getPoint(0, 1 / 3), getPoint(1 / 3, 1 / 3), getPoint(0, 2 / 3)]);
 
     // Row 2: (idx 4, 5, 6, 7, 8)
-    triangles.push([getPoint(2 / 3, 0), getPoint(1, 0), getPoint(2 / 3, 1 / 3)]);
-    triangles.push([getPoint(2 / 3, 1 / 3), getPoint(1 / 3, 1 / 3), getPoint(2 / 3, 0)]); // inverted
-    triangles.push([getPoint(1 / 3, 1 / 3), getPoint(2 / 3, 1 / 3), getPoint(1 / 3, 2 / 3)]);
-    triangles.push([getPoint(1 / 3, 2 / 3), getPoint(0, 2 / 3), getPoint(1 / 3, 1 / 3)]); // inverted
-    triangles.push([getPoint(0, 2 / 3), getPoint(1 / 3, 2 / 3), getPoint(0, 1)]);
+    rawTriangles.push([getPoint(2 / 3, 0), getPoint(1, 0), getPoint(2 / 3, 1 / 3)]);
+    rawTriangles.push([getPoint(2 / 3, 1 / 3), getPoint(1 / 3, 1 / 3), getPoint(2 / 3, 0)]); // inverted
+    rawTriangles.push([getPoint(1 / 3, 1 / 3), getPoint(2 / 3, 1 / 3), getPoint(1 / 3, 2 / 3)]);
+    rawTriangles.push([getPoint(1 / 3, 2 / 3), getPoint(0, 2 / 3), getPoint(1 / 3, 1 / 3)]); // inverted
+    rawTriangles.push([getPoint(0, 2 / 3), getPoint(1 / 3, 2 / 3), getPoint(0, 1)]);
 
-    // Create 3D meshes for each of the 9 triangles
-    triangles.forEach((pts, stickerIdx) => {
-      // Calculate normal and slightly shrink triangle for border effect
+    const blackPlasticMat = new THREE.MeshStandardMaterial({
+      color: 0x111317,
+      roughness: 0.35,
+      metalness: 0.1,
+    });
+
+    rawTriangles.forEach((pts, stickerIdx) => {
+      let p0 = pts[0].clone();
+      let p1 = pts[1].clone();
+      let p2 = pts[2].clone();
+
+      // Ensure counter-clockwise outward winding
+      const cross = new THREE.Vector3()
+        .subVectors(p1, p0)
+        .cross(new THREE.Vector3().subVectors(p2, p0));
+      if (cross.dot(faceNormal) < 0) {
+        const tmp = p1;
+        p1 = p2;
+        p2 = tmp;
+      }
+
       const center = new THREE.Vector3()
-        .add(pts[0])
-        .add(pts[1])
-        .add(pts[2])
+        .add(p0)
+        .add(p1)
+        .add(p2)
         .divideScalar(3);
 
-      const shrink = 0.93;
-      const p0 = pts[0].clone().sub(center).multiplyScalar(shrink).add(center);
-      const p1 = pts[1].clone().sub(center).multiplyScalar(shrink).add(center);
-      const p2 = pts[2].clone().sub(center).multiplyScalar(shrink).add(center);
+      // 1. Black 3D piece backing plate with beveled side walls
+      const frameOffset = faceNormal.clone().multiplyScalar(0.016);
+      const frameShrink = 0.94; // Clean, dark grooved seam between pieces
+      const f0 = p0.clone().sub(center).multiplyScalar(frameShrink).add(center).add(frameOffset);
+      const f1 = p1.clone().sub(center).multiplyScalar(frameShrink).add(center).add(frameOffset);
+      const f2 = p2.clone().sub(center).multiplyScalar(frameShrink).add(center).add(frameOffset);
 
-      const geom = new THREE.BufferGeometry();
-      const vertices = new Float32Array([
-        p0.x, p0.y, p0.z,
-        p1.x, p1.y, p1.z,
-        p2.x, p2.y, p2.z,
+      // Base footprint on core surface
+      const b0 = p0.clone().sub(center).multiplyScalar(frameShrink).add(center);
+      const b1 = p1.clone().sub(center).multiplyScalar(frameShrink).add(center);
+      const b2 = p2.clone().sub(center).multiplyScalar(frameShrink).add(center);
+
+      // Construct solid 3D piece geometry (top face + 3 beveled side skirts)
+      const frameVertices = new Float32Array([
+        // Top cap
+        f0.x, f0.y, f0.z,
+        f1.x, f1.y, f1.z,
+        f2.x, f2.y, f2.z,
+        // Side 0: f0 - f1 - b1, b1 - b0 - f0
+        f0.x, f0.y, f0.z,
+        f1.x, f1.y, f1.z,
+        b1.x, b1.y, b1.z,
+        b1.x, b1.y, b1.z,
+        b0.x, b0.y, b0.z,
+        f0.x, f0.y, f0.z,
+        // Side 1: f1 - f2 - b2, b2 - b1 - f1
+        f1.x, f1.y, f1.z,
+        f2.x, f2.y, f2.z,
+        b2.x, b2.y, b2.z,
+        b2.x, b2.y, b2.z,
+        b1.x, b1.y, b1.z,
+        f1.x, f1.y, f1.z,
+        // Side 2: f2 - f0 - b0, b0 - b2 - f2
+        f2.x, f2.y, f2.z,
+        f0.x, f0.y, f0.z,
+        b0.x, b0.y, b0.z,
+        b0.x, b0.y, b0.z,
+        b2.x, b2.y, b2.z,
+        f2.x, f2.y, f2.z,
       ]);
-      geom.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-      geom.computeVertexNormals();
 
-      const mat = new THREE.MeshStandardMaterial({
+      const frameGeom = new THREE.BufferGeometry();
+      frameGeom.setAttribute('position', new THREE.BufferAttribute(frameVertices, 3));
+      frameGeom.computeVertexNormals();
+
+      const frameMesh = new THREE.Mesh(frameGeom, blackPlasticMat);
+      this.mainGroup.add(frameMesh);
+
+      // 2. Colored sticker: inset with scale 0.80 to give signature speedcube black border!
+      const stickerShrink = 0.80; // 20% bold black border around every piece
+      const stickerOffset = faceNormal.clone().multiplyScalar(0.024); // cleanly elevated on top
+      const s0 = p0.clone().sub(center).multiplyScalar(stickerShrink).add(center).add(stickerOffset);
+      const s1 = p1.clone().sub(center).multiplyScalar(stickerShrink).add(center).add(stickerOffset);
+      const s2 = p2.clone().sub(center).multiplyScalar(stickerShrink).add(center).add(stickerOffset);
+
+      const stickerGeom = new THREE.BufferGeometry();
+      stickerGeom.setAttribute(
+        'position',
+        new THREE.BufferAttribute(
+          new Float32Array([
+            s0.x, s0.y, s0.z,
+            s1.x, s1.y, s1.z,
+            s2.x, s2.y, s2.z,
+          ]),
+          3
+        )
+      );
+      stickerGeom.computeVertexNormals();
+
+      const stickerMat = new THREE.MeshStandardMaterial({
         color: 0x111317,
-        roughness: 0.25,
-        metalness: 0.1,
-        side: THREE.DoubleSide,
+        roughness: 0.22,
+        metalness: 0.05,
       });
 
-      const mesh = new THREE.Mesh(geom, mat);
-      this.mainGroup.add(mesh);
-      this.stickerMeshes[faceIdx][stickerIdx] = mesh;
+      const stickerMesh = new THREE.Mesh(stickerGeom, stickerMat);
+      this.mainGroup.add(stickerMesh);
+      this.stickerMeshes[faceIdx][stickerIdx] = stickerMesh;
     });
   }
 
