@@ -6,11 +6,81 @@ import { generateScramble } from '../cube/scramble';
 import { resolveCameraFaces } from '../cube/cameraResolver';
 import { CameraVectors } from '../cube/types';
 import { GUIDE_DATA } from '../content/guideData';
+import { PyraminxState, generatePyraminxScramble } from '../cube/pyraminxState';
+import { OTHER_CUBES_GUIDES } from '../content/otherCubesData';
+import { SettingsManager, DEFAULT_KEYBINDS, TWOHAND_SPEEDCUBE_KEYBINDS } from '../ui/settings';
 
 describe("Rubik's Cube Pure Logic", () => {
   it('initializes a solved 3x3 cube', () => {
     const cube = new CubeState(3);
     expect(cube.isSolved()).toBe(true);
+  });
+
+  it('supports 2x2 and 4x4 cubes with solved state validation', () => {
+    const cube2 = new CubeState(2);
+    expect(cube2.isSolved()).toBe(true);
+    const turn2 = resolveTurn('R', undefined, 2);
+    cube2.applyTurn(turn2.axis, turn2.layers, turn2.angle);
+    expect(cube2.isSolved()).toBe(false);
+
+    const cube4 = new CubeState(4);
+    expect(cube4.isSolved()).toBe(true);
+    const turn4 = resolveTurn('R', undefined, 4);
+    cube4.applyTurn(turn4.axis, turn4.layers, turn4.angle);
+    expect(cube4.isSolved()).toBe(false);
+  });
+
+  it('pyraminx initializes solved, moves apply correctly, and 3x cycles return to solved', () => {
+    const pyra = new PyraminxState();
+    expect(pyra.isSolved()).toBe(true);
+
+    pyra.applyMove('U');
+    expect(pyra.isSolved()).toBe(false);
+    pyra.applyMove('U');
+    pyra.applyMove('U');
+    expect(pyra.isSolved()).toBe(true); // 120 * 3 = 360 deg
+
+    pyra.applyMove('u');
+    expect(pyra.isSolved()).toBe(false);
+    pyra.applyMove("u'");
+    expect(pyra.isSolved()).toBe(true);
+
+    const sc = generatePyraminxScramble(10);
+    expect(sc.length).toBeGreaterThan(0);
+  });
+
+  it('verifies dedicated keybinds for prime moves and custom rebinding (e.g. setting R as D)', () => {
+    // Test default keybinds have direct prime support
+    expect(DEFAULT_KEYBINDS).toHaveProperty("R'");
+    expect(TWOHAND_SPEEDCUBE_KEYBINDS["R'"]).toBe('KeyK');
+    expect(TWOHAND_SPEEDCUBE_KEYBINDS["U'"]).toBe('KeyF');
+
+    // Test custom rebinding: setting R to KeyD
+    const settings = new SettingsManager();
+    settings.setKeybind('R', 'KeyD');
+    expect(settings.getKeybinds()['R']).toBe('KeyD');
+    // Conflict resolution: old binding for D was cleared
+    expect(settings.getKeybinds()['D']).toBe('');
+
+    // Rebind direct prime without needing Shift
+    settings.setKeybind("R'", 'KeyK');
+    expect(settings.getKeybinds()["R'"]).toBe('KeyK');
+  });
+
+  it('verifies all algorithms in OTHER_CUBES_GUIDES parse correctly', () => {
+    for (const guide of Object.values(OTHER_CUBES_GUIDES)) {
+      for (const step of guide.steps) {
+        for (const alg of step.algorithms) {
+          if (guide.category === 'pyraminx') {
+            const tokens = alg.notation.split(/[\s()]+/).filter(Boolean);
+            expect(tokens.length).toBeGreaterThan(0);
+          } else {
+            const moves = parseAlgorithm(alg.notation);
+            expect(moves.length, `Failed parsing ${alg.notation} for ${guide.name}`).toBeGreaterThan(0);
+          }
+        }
+      }
+    }
   });
 
   it('applying a single move makes it unsolved, and inverse restores solved', () => {

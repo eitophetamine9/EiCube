@@ -359,6 +359,31 @@ export class RubiksCubeScene {
     this.onSolvedChange?.(true);
   }
 
+  setSize(newSize: number): void {
+    if (newSize < 2 || newSize > 5) return;
+    this.queue.clear();
+    this.size = newSize;
+    this.cubeState = new CubeState(newSize);
+    this.buildCubies();
+    
+    // Adjust camera distance for smaller or larger cubes
+    const baseDist = newSize === 2 ? 4.8 : newSize === 4 ? 6.8 : 5.8;
+    this.camera.position.setLength(baseDist);
+    this.controls.minDistance = newSize === 2 ? 3.5 : 4.5;
+    this.controls.maxDistance = newSize === 4 ? 16.0 : 13.0;
+    this.controls.update();
+
+    this.onSolvedChange?.(true);
+  }
+
+  getCubeState(): CubeState {
+    return this.cubeState;
+  }
+
+  getSize(): number {
+    return this.size;
+  }
+
   setSpeed(durationMs: number): void {
     this.queue.setBaseDuration(durationMs);
   }

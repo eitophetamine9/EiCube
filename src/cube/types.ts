@@ -73,3 +73,12 @@ export const FACE_NAMES: Record<Face, string> = {
   R: 'Right (Red)',
   L: 'Left (Orange)',
 };
+
+// Pyraminx types
+export type PyraFace = 'U' | 'L' | 'R' | 'B'; // or Yellow, Green, Red, Blue
+export const PYRA_COLORS: Record<string, string> = {
+  U: '#facc15', // Yellow
+  L: '#16a34a', // Green
+  R: '#dc2626', // Red
+  B: '#2563eb', // Blue
+};
