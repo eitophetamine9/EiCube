@@ -1,32 +1,45 @@
 const TUTORIAL_STORAGE_KEY = 'eicube_tutorial_dismissed_v1';
 
+interface TutorialStep {
+  title: string;
+  badge: string;
+  description: string;
+  targetSelector?: string;
+}
+
 export class TutorialOverlay {
   private overlayEl: HTMLElement | null = null;
   private currentStep: number = 0;
-  private steps = [
+  private highlightedElement: HTMLElement | null = null;
+
+  private steps: TutorialStep[] = [
     {
-      title: 'Real 3D Interactive Cube',
+      title: 'Turn, Orbit & Zoom',
+      badge: 'Navigation 1/4: 3D Stage',
       description:
-        'Click and drag anywhere on the cube or background to orbit. Scroll or pinch to zoom in and out. The camera is clamped so you never lose sight of your puzzle.',
-      badge: 'Step 1 of 4: View & Orbit',
+        'Drag puzzle pieces directly to turn layers. Drag the background to orbit, and pinch or scroll to zoom.',
+      targetSelector: '#cube-viewport',
     },
     {
-      title: 'Camera-Relative Turns',
+      title: 'Instant Puzzle Switcher',
+      badge: 'Navigation 2/4: Puzzles',
       description:
-        'Moves adapt to where you look! Pressing "R" always turns whichever face is currently on your right, "U" turns the top, and "F" turns the front facing you. Rotate the view 180° and "R" will intuitively turn the new right face.',
-      badge: 'Step 2 of 4: Smart Moves',
+        'Switch instantly between 3×3, 2×2, 4×4, and Pyraminx right from the top bar.',
+      targetSelector: '.puzzle-mini-picker',
     },
     {
-      title: 'Keyboard Controls & Customization',
+      title: 'Move Pad & Keybinds',
+      badge: 'Navigation 3/4: Controls',
       description:
-        'Use U, D, L, R, F, B on your keyboard. Hold Shift for prime (counter-clockwise) turns, or use the on-screen buttons. Want custom shortcuts? Open Settings to rebind any move with conflict detection.',
-      badge: 'Step 3 of 4: Keybinds',
+        'Execute face, slice (M/M\'), and rotation turns. Click any key chip to customize keyboard shortcuts.',
+      targetSelector: '.trainer-left-sidebar',
     },
     {
-      title: 'Scramble, Timer & Solving Guide',
+      title: 'Video Guides & Speedcubing',
+      badge: 'Navigation 4/4: Learn',
       description:
-        'Hit "Scramble" for an official random sequence. Practice solving with the built-in timer, or click the "Learn" tab to master the beginner layer-by-layer method with interactive "Try it on cube" algorithm buttons!',
-      badge: 'Step 4 of 4: Learn & Train',
+        'Watch curated HD video tutorials and test speedcubing algorithms with 1-click execution on the 3D puzzle.',
+      targetSelector: '[data-tab="learn"]',
     },
   ];
 
@@ -55,9 +68,28 @@ export class TutorialOverlay {
   }
 
   close(): void {
+    this.clearHighlight();
     if (!this.overlayEl) return;
     this.overlayEl.classList.remove('is-open');
     this.overlayEl.setAttribute('aria-hidden', 'true');
+  }
+
+  private clearHighlight(): void {
+    if (this.highlightedElement) {
+      this.highlightedElement.classList.remove('tutorial-spotlight-active');
+      this.highlightedElement = null;
+    }
+  }
+
+  private applyHighlight(selector?: string): void {
+    this.clearHighlight();
+    if (!selector) return;
+
+    const el = document.querySelector<HTMLElement>(selector);
+    if (el) {
+      el.classList.add('tutorial-spotlight-active');
+      this.highlightedElement = el;
+    }
   }
 
   private setDontShowAgain(val: boolean): void {
@@ -81,7 +113,7 @@ export class TutorialOverlay {
 
     overlay.innerHTML = `
       <div class="tutorial-card">
-        <div class="tutorial-badge" id="tutorial-badge">Step 1 of 4</div>
+        <div class="tutorial-badge" id="tutorial-badge">Navigation 1 of 4</div>
         <h2 class="tutorial-title" id="tutorial-title">Tutorial Title</h2>
         <p class="tutorial-desc" id="tutorial-desc">Tutorial text</p>
 
@@ -137,6 +169,27 @@ export class TutorialOverlay {
       const checked = (e.target as HTMLInputElement).checked;
       this.setDontShowAgain(checked);
     });
+
+    // Keyboard navigation
+    window.addEventListener('keydown', (e) => {
+      if (!this.overlayEl?.classList.contains('is-open')) return;
+
+      if (e.key === 'Escape') {
+        this.close();
+      } else if (e.key === 'ArrowRight' || e.key === 'Enter') {
+        if (this.currentStep < this.steps.length - 1) {
+          this.currentStep++;
+          this.renderStep();
+        } else {
+          this.close();
+        }
+      } else if (e.key === 'ArrowLeft') {
+        if (this.currentStep > 0) {
+          this.currentStep--;
+          this.renderStep();
+        }
+      }
+    });
   }
 
   private renderStep(): void {
@@ -167,8 +220,16 @@ export class TutorialOverlay {
       this.steps.forEach((_, idx) => {
         const dot = document.createElement('span');
         dot.className = `tutorial-dot ${idx === this.currentStep ? 'is-active' : ''}`;
+        dot.style.cursor = 'pointer';
+        dot.title = `Step ${idx + 1}`;
+        dot.addEventListener('click', () => {
+          this.currentStep = idx;
+          this.renderStep();
+        });
         dots.appendChild(dot);
       });
     }
+
+    this.applyHighlight(step.targetSelector);
   }
 }

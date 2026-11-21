@@ -204,6 +204,29 @@ The "Learn Puzzles" tab integrates curated YouTube video tutorials:
 - Interactive chapter bookmark pills that dynamically set the iframe playback timestamp via URL query parameters (`?start=SS`).
 - Direct integration between algorithm cards and the 3D scene via "Try it on the cube" buttons.
 
+### Advanced Speedcubing Section & Pro Algorithm Library
+
+EiCube features an Advanced Speedcubing section covering all four puzzles:
+- **3x3 CFOP (Fridrich)**: Full PLL cases (T-Perm, Y-Perm, Jb-Perm, H-Perm, Z-Perm, Ua-Perm, Ub-Perm), essential OLL cases (Sune, Anti-Sune), and fingertrick triggers (Sexy Move, Sledgehammer). Accompanied by J Perm's 21 PLL Algorithms tutorial (`vU6HsK3hvQs`).
+- **2x2 Ortega & CLL**: Complete PBL (Permute Both Layers) case coverage (Adjacent/Adjacent, Diagonal/Diagonal, Adjacent/None, Diagonal/None, None/Adjacent) and OLL cases with J Perm's sub-4 speedcubing guide (`z2gOUzMmY3w`).
+- **4x4 Yau Parity**: OLL Parity (`Rw U2 x Rw U2...`), PLL Parity (`2R2 U2 2R2 Uw2 2R2 2Uw2`), and 3-2-2-2 edge flipping triggers with J Perm's Parity & Fingertricks guide (`6P_tJ1_Z8v8`).
+- **Pyraminx L4E**: Last 4 Edges intuitive speedsolving, Sledgehammer and Hedgeslammer triggers, clockwise/counter-clockwise 3-edge cycles, and double-edge flips with SpeedyGoneCuber's L4E speedcubing guide (`_S2iDihTuxw`).
+- **1-Click 3D Execution**: Every algorithm card includes an interactive "Try on puzzle" button that immediately loads the puzzle into the trainer and executes the algorithm with real-time 3D animation.
+
+### Conventional Move Bindings & Middle Slices (M / M')
+
+- **Middle Slices**: Middle slice turns (`M`, `M'`, `E`, `E'`, `S`, `S'`) are fully supported by the kinematic solver (`resolveTurn()`), rotating layer coordinate 0 with WCA standard rotational vectors.
+- **Wide Turns**: Two-layer turns (`Rw`, `Rw'`, `Lw`, `Lw'`, `Uw`, `Uw'`, `Dw`, `Dw'`, `Fw`, `Fw'`, `Bw`, `Bw'`) calculate outer and inner adjacent coordinates dynamically across arbitrary puzzle dimensions.
+- **Pyraminx Tips**: Independent vertex tips (`u`, `u'`, `l`, `l'`, `r`, `r'`, `b`, `b'`) can be executed and rebound to dedicated keys without requiring Shift.
+- **Direct 1-Click Keytag Rebind**: Every move in the sidebar move pad features a clickable key tag (`data-rebind-action`) that opens the rebind modal directly focused on that move.
+
+### Dynamic Website Navigation Spotlight
+
+The onboarding tutorial (`TutorialOverlay`) guides new users through website navigation using visual spotlighting:
+- Dynamically attaches an animated glowing outline (`.tutorial-spotlight-active`) to target DOM elements across 4 concise steps (3D Stage, Puzzle Switcher, Move Pad & Keybinds, Learn & Speedcubing).
+- Designed for speed: limited to single punchy sentences to prevent user fatigue or skips.
+- Full keyboard support (`ArrowRight`, `ArrowLeft`, `Enter`, `Escape`) and clickable step indicators.
+
 ---
 
 ## 6. Testing & Quality Assurance

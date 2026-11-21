@@ -2375,3 +2375,137 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ==========================================================================
+   DYNAMIC TUTORIAL SPOTLIGHT
+   ========================================================================== */
+
+.tutorial-spotlight-active {
+  position: relative;
+  z-index: 10001 !important;
+  outline: 2px solid var(--accent-emerald) !important;
+  box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.25), 0 0 32px rgba(16, 185, 129, 0.45) !important;
+  border-radius: var(--radius-md) !important;
+  transition: all var(--transition-normal);
+  animation: spotlightPulse 2s ease-in-out infinite;
+}
+
+@keyframes spotlightPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.25), 0 0 32px rgba(16, 185, 129, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0.35), 0 0 44px rgba(16, 185, 129, 0.65);
+  }
+}
+
+/* ==========================================================================
+   ADVANCED SPEEDCUBING ALGORITHMS SECTION
+   ========================================================================== */
+
+.speedcubing-algorithms-section {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.speedcube-method-badge {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  color: #c084fc;
+}
+
+.speedcube-algs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.speedcube-alg-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all var(--transition-fast);
+}
+
+.speedcube-alg-card:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-surface-elevated);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.speedcube-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.speedcube-category-chip {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background: rgba(14, 165, 233, 0.15);
+  color: var(--accent-sky);
+  border: 1px solid rgba(14, 165, 233, 0.3);
+}
+
+.speedcube-alg-name {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.speedcube-notation-box {
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  color: #f87171;
+  word-break: break-word;
+  user-select: all;
+  letter-spacing: 0.03em;
+}
+
+.speedcube-recognition {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  background: rgba(255, 255, 255, 0.02);
+  border-left: 2px solid var(--accent-emerald);
+  padding: 4px 8px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.speedcube-recognition .rec-label {
+  font-weight: 700;
+  color: var(--accent-emerald);
+}
+
+.speedcube-alg-desc {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+

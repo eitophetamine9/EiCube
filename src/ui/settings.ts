@@ -19,13 +19,36 @@ export const DEFAULT_KEYBINDS: KeybindMap = {
   "R'": '',
   "F'": '',
   "B'": '',
-  // Slices & rotations
+  // Slices & prime slices
   M: 'KeyM',
+  "M'": '',
   E: 'KeyE',
+  "E'": '',
   S: 'KeyS',
+  "S'": '',
+  // Rotations
   x: 'KeyX',
+  "x'": '',
   y: 'KeyY',
+  "y'": '',
   z: 'KeyZ',
+  "z'": '',
+  // Wide moves (4x4 & 3x3)
+  Rw: '',
+  "Rw'": '',
+  Lw: '',
+  "Lw'": '',
+  Uw: '',
+  "Uw'": '',
+  // Pyraminx tips
+  u: '',
+  "u'": '',
+  l: '',
+  "l'": '',
+  r: '',
+  "r'": '',
+  b: '',
+  "b'": '',
 };
 
 export const TWOHAND_SPEEDCUBE_KEYBINDS: KeybindMap = {
@@ -41,12 +64,36 @@ export const TWOHAND_SPEEDCUBE_KEYBINDS: KeybindMap = {
   "D'": 'KeyL',
   B: 'KeyW',
   "B'": 'KeyO',
+  // Slices
   M: 'KeyM',
+  "M'": 'KeyN',
   E: 'KeyC',
+  "E'": '',
   S: 'KeyV',
-  x: 'KeyX',
+  "S'": '',
+  // Rotations
+  x: 'KeyT',
+  "x'": '',
   y: 'KeyY',
-  z: 'KeyZ',
+  "y'": '',
+  z: 'KeyP',
+  "z'": '',
+  // Wide
+  Rw: 'KeyU',
+  "Rw'": '',
+  Lw: '',
+  "Lw'": '',
+  Uw: '',
+  "Uw'": '',
+  // Pyraminx tips
+  u: 'Digit7',
+  "u'": 'Digit8',
+  l: 'Digit9',
+  "l'": 'Digit0',
+  r: 'Minus',
+  "r'": 'Equal',
+  b: 'BracketLeft',
+  "b'": 'BracketRight',
 };
 
 const STORAGE_KEY = 'eicube_keybinds_v2';
@@ -273,27 +320,49 @@ export class SettingsManager {
     grid.innerHTML = '';
 
     const actions = [
-      // Regular Clockwise
-      { id: 'U', label: 'Up (U)', desc: 'Clockwise top' },
-      { id: "U'", label: "Up Prime (U')", desc: 'Counter-clockwise top' },
-      { id: 'D', label: 'Down (D)', desc: 'Clockwise bottom' },
-      { id: "D'", label: "Down Prime (D')", desc: 'Counter-clockwise bottom' },
-      { id: 'L', label: 'Left (L)', desc: 'Clockwise left' },
-      { id: "L'", label: "Left Prime (L')", desc: 'Counter-clockwise left' },
-      { id: 'R', label: 'Right (R)', desc: 'Clockwise right' },
-      { id: "R'", label: "Right Prime (R')", desc: 'Counter-clockwise right' },
-      { id: 'F', label: 'Front (F)', desc: 'Clockwise front' },
-      { id: "F'", label: "Front Prime (F')", desc: 'Counter-clockwise front' },
-      { id: 'B', label: 'Back (B)', desc: 'Clockwise back' },
-      { id: "B'", label: "Back Prime (B')", desc: 'Counter-clockwise back' },
+      // Standard Face Moves
+      { id: 'U', label: 'Up (U)', desc: 'Clockwise top layer' },
+      { id: "U'", label: "Up Prime (U')", desc: 'Counter-clockwise top layer' },
+      { id: 'D', label: 'Down (D)', desc: 'Clockwise bottom layer' },
+      { id: "D'", label: "Down Prime (D')", desc: 'Counter-clockwise bottom layer' },
+      { id: 'L', label: 'Left (L)', desc: 'Clockwise left layer' },
+      { id: "L'", label: "Left Prime (L')", desc: 'Counter-clockwise left layer' },
+      { id: 'R', label: 'Right (R)', desc: 'Clockwise right layer' },
+      { id: "R'", label: "Right Prime (R')", desc: 'Counter-clockwise right layer' },
+      { id: 'F', label: 'Front (F)', desc: 'Clockwise front layer' },
+      { id: "F'", label: "Front Prime (F')", desc: 'Counter-clockwise front layer' },
+      { id: 'B', label: 'Back (B)', desc: 'Clockwise back layer' },
+      { id: "B'", label: "Back Prime (B')", desc: 'Counter-clockwise back layer' },
       // Slices
-      { id: 'M', label: 'Middle Slice (M)', desc: 'Between L and R' },
-      { id: 'E', label: 'Equator Slice (E)', desc: 'Between U and D' },
-      { id: 'S', label: 'Standing Slice (S)', desc: 'Between F and B' },
+      { id: 'M', label: 'Middle Slice (M)', desc: 'Between L and R (follows L downward)' },
+      { id: "M'", label: "Middle Prime (M')", desc: 'Upward middle slice (follows R)' },
+      { id: 'E', label: 'Equator Slice (E)', desc: 'Between U and D (follows D)' },
+      { id: "E'", label: "Equator Prime (E')", desc: 'Opposite equator slice' },
+      { id: 'S', label: 'Standing Slice (S)', desc: 'Between F and B (follows F)' },
+      { id: "S'", label: "Standing Prime (S')", desc: 'Opposite standing slice' },
       // Rotations
-      { id: 'x', label: 'Rotation X', desc: 'Roll forward/back' },
-      { id: 'y', label: 'Rotation Y', desc: 'Turn left/right' },
-      { id: 'z', label: 'Rotation Z', desc: 'Tilt clockwise/counter' },
+      { id: 'x', label: 'Cube Rotation X', desc: 'Roll forward (follows R)' },
+      { id: "x'", label: "Cube Rotation X'", desc: 'Roll backward (follows L)' },
+      { id: 'y', label: 'Cube Rotation Y', desc: 'Turn left (follows U)' },
+      { id: "y'", label: "Cube Rotation Y'", desc: 'Turn right (follows D)' },
+      { id: 'z', label: 'Cube Rotation Z', desc: 'Tilt clockwise (follows F)' },
+      { id: "z'", label: "Cube Rotation Z'", desc: 'Tilt counter-clockwise (follows B)' },
+      // Wide moves
+      { id: 'Rw', label: 'Wide Right (Rw)', desc: 'Turn Right + Middle layers' },
+      { id: "Rw'", label: "Wide Right Prime (Rw')", desc: 'Counter Right + Middle layers' },
+      { id: 'Lw', label: 'Wide Left (Lw)', desc: 'Turn Left + Middle layers' },
+      { id: "Lw'", label: "Wide Left Prime (Lw')", desc: 'Counter Left + Middle layers' },
+      { id: 'Uw', label: 'Wide Up (Uw)', desc: 'Turn Top + Equator layers' },
+      { id: "Uw'", label: "Wide Up Prime (Uw')", desc: 'Counter Top + Equator layers' },
+      // Pyraminx tips
+      { id: 'u', label: 'Pyraminx Top Tip (u)', desc: 'Top corner tip' },
+      { id: "u'", label: "Pyraminx Top Tip Prime (u')", desc: 'Counter top tip' },
+      { id: 'l', label: 'Pyraminx Left Tip (l)', desc: 'Left corner tip' },
+      { id: "l'", label: "Pyraminx Left Tip Prime (l')", desc: 'Counter left tip' },
+      { id: 'r', label: 'Pyraminx Right Tip (r)', desc: 'Right corner tip' },
+      { id: "r'", label: "Pyraminx Right Tip Prime (r')", desc: 'Counter right tip' },
+      { id: 'b', label: 'Pyraminx Back Tip (b)', desc: 'Back corner tip' },
+      { id: "b'", label: "Pyraminx Back Tip Prime (b')", desc: 'Counter back tip' },
     ];
 
     actions.forEach((act) => {

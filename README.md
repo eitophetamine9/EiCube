@@ -36,10 +36,13 @@ Unlike conventional digital cube simulators that lock rotations to static world 
 
 - **Direct Mouse & Touch Layer Drag**: Swipe any cubie along a face tangent to rotate that layer, with dynamic camera locking and tactile hand cursor feedback (`grab` / `grabbing`).
 - **Camera-Relative Controls**: Physical keybinds and on-screen pads dynamically map to faces relative to your current camera view angle.
+- **M & M' Slices and Conventional Move Binds**: Full support for middle slices (`M`, `M'`, `E`, `E'`, `S`, `S'`), wide turns (`Rw`, `Rw'`, `Lw`, `Lw'`, `Uw`, `Uw'`), cube rotations (`x`, `x'`, `y`, `y'`, `z`, `z'`), and Pyraminx tips (`u`, `u'`, `l`, `l'`, `r`, `r'`, `b`, `b'`), all with direct 1-click rebind chips.
+- **Advanced Speedcubing Guides**: Dedicated pro speedsolving algorithms across all puzzles (3x3 CFOP PLL/OLL, 2x2 Ortega PBL, 4x4 Yau parities, and Pyraminx L4E) with verified video tutorials, chapter timestamps, and interactive 1-click puzzle execution.
+- **Dynamic Onboarding Spotlight**: Snappy, non-intrusive 4-step interactive website navigation tour that visually spotlights key stage controls without text overload.
 - **Player-Centric Move History**: Scramble turns are cleanly filtered out; timer automatically starts on the player's first manual turn.
 - **Multi-Puzzle Support**: Universal trainer for 3x3x3, 2x2x2, 4x4x4, and regular tetrahedron Pyraminx.
 - **"Solve This Version"**: Explore puzzles in dedicated 3D interactive sandboxes and load them directly into the solver with one click.
-- **Realistic 3D Pyraminx Model**: Regular tetrahedron geometry with signature 20% speedcube black borders, dynamic 3D layer turning animation, and direct mouse/touch swipe interaction.
+- **Realistic 3D Pyraminx Model**: Regular tetrahedron geometry with signature speedcube black borders, dynamic 3D layer turning animation, and direct mouse/touch swipe interaction.
 - **Embedded Video Guides**: Curated YouTube tutorials with interactive chapter bookmark pills linking to specific algorithm timestamps.
 - **Mobile Ergonomics**: Floating thumb dock with quick access to Moves, Scramble, Undo, and History, plus responsive off-canvas drawers.
 - **Custom Keybindings**: Fully rebindable keys with dedicated single-key prime moves (`R'`, `U'`, `L'`, `D'`, `F'`, `B'`) and speedcubing presets.

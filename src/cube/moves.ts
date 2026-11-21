@@ -78,8 +78,10 @@ export function resolveTurn(
   // Wide moves: 2 layers
   if (isWide) {
     const faceDef = getFaceMoveDefinition(targetFace, size);
-    // Include the center layer (0) along with the outer layer
-    const wideLayers = faceDef.layers.concat([0]);
+    // Include adjacent inner layer
+    const outerCoord = faceDef.layers[0];
+    const innerCoord = outerCoord > 0 ? outerCoord - 1 : outerCoord + 1;
+    const wideLayers = [outerCoord, innerCoord];
     return {
       axis: faceDef.axis,
       layers: wideLayers,

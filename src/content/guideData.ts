@@ -252,3 +252,279 @@ export const GUIDE_DATA: GuideData = {
     ],
   },
 };
+
+export interface SpeedcubeAlgorithmItem {
+  id: string;
+  name: string;
+  category: string;
+  notation: string;
+  description: string;
+  recognition: string;
+}
+
+export interface SpeedcubePuzzleSection {
+  puzzleId: '3x3' | '2x2' | '4x4' | 'pyraminx';
+  title: string;
+  subtitle: string;
+  methodName: string;
+  algorithms: SpeedcubeAlgorithmItem[];
+}
+
+export const ADVANCED_SPEEDCUBING_DATA: Record<string, SpeedcubePuzzleSection> = {
+  '3x3': {
+    puzzleId: '3x3',
+    title: '3×3 CFOP Speedcubing Algorithms',
+    subtitle: 'Championship-grade speedsolving system: Cross, F2L, OLL, and full PLL.',
+    methodName: 'CFOP (Fridrich Method)',
+    algorithms: [
+      {
+        id: 't-perm',
+        name: 'T-Perm (Adjacent Corner Swap)',
+        category: 'PLL',
+        notation: "R U R' U' R' F R2 U' R' U' R U R' F'",
+        description: 'Swaps the front-right and back-right corners while swapping the front and right edges.',
+        recognition: 'Headlights on the left side, matching block on the front right.',
+      },
+      {
+        id: 'y-perm',
+        name: 'Y-Perm (Diagonal Corner Swap)',
+        category: 'PLL',
+        notation: "F R U' R' U' R U R' F' R U R' U' R' F R F'",
+        description: 'Swaps diagonally opposite corners (front-left and back-right) and two adjacent edges.',
+        recognition: 'No headlights on any face; 1 matching corner-edge block.',
+      },
+      {
+        id: 'jb-perm',
+        name: 'Jb-Perm (Adjacent Swap & Edge)',
+        category: 'PLL',
+        notation: "R U R' F' R U R' U' R' F R2 U' R'",
+        description: 'One of the fastest, most ergonomic PLL algorithms in speedcubing.',
+        recognition: 'Complete 1x1x3 solved bar on the left side with headlights on the right.',
+      },
+      {
+        id: 'h-perm',
+        name: 'H-Perm (Opposite Edge Swap)',
+        category: 'PLL',
+        notation: 'M2 U M2 U2 M2 U M2',
+        description: 'Swaps opposite edge pairs (Front <-> Back, Left <-> Right) with all corners solved.',
+        recognition: 'All 4 corners solved; opposite contrasting color on all 4 side edges.',
+      },
+      {
+        id: 'z-perm',
+        name: 'Z-Perm (Adjacent Edge Swap)',
+        category: 'PLL',
+        notation: "M' U M2 U M2 U M' U2 M2",
+        description: 'Swaps adjacent edge pairs (Front <-> Right, Back <-> Left) with slice turns.',
+        recognition: 'All corners solved; edges need diagonal swap pairs.',
+      },
+      {
+        id: 'ua-perm',
+        name: 'Ua-Perm (3-Edge Cycle CCW)',
+        category: 'PLL',
+        notation: "R U' R U R U R U' R' U' R2",
+        description: 'Cycles 3 top edges counter-clockwise while preserving all 4 corners.',
+        recognition: 'Solved bar on Back face; front edge needs to go to Right.',
+      },
+      {
+        id: 'ub-perm',
+        name: 'Ub-Perm (3-Edge Cycle CW)',
+        category: 'PLL',
+        notation: "R2 U R U R' U' R' U' R' U R'",
+        description: 'Cycles 3 top edges clockwise while preserving all 4 corners.',
+        recognition: 'Solved bar on Back face; front edge needs to go to Left.',
+      },
+      {
+        id: 'sune',
+        name: 'Sune (OLL 27)',
+        category: 'OLL',
+        notation: "R U R' U R U2 R'",
+        description: 'Orients 3 corners counter-clockwise when 1 corner is already oriented.',
+        recognition: 'Single yellow corner on top-left, yellow sticker facing front on right corner.',
+      },
+      {
+        id: 'anti-sune',
+        name: 'Anti-Sune (OLL 26)',
+        category: 'OLL',
+        notation: "R U2 R' U' R U' R'",
+        description: 'Mirror of Sune: orients 3 corners clockwise.',
+        recognition: 'Single yellow corner on top-right, yellow sticker facing front on left corner.',
+      },
+      {
+        id: 'sexy-move',
+        name: 'Sexy Move Trigger',
+        category: 'Fingertricks',
+        notation: "R U R' U'",
+        description: 'The fundamental 4-move building block of speedcubing. Extremely fast right-hand trigger.',
+        recognition: 'Used throughout F2L pairing, OLL, and PLL.',
+      },
+      {
+        id: 'sledgehammer',
+        name: 'Sledgehammer Trigger',
+        category: 'Fingertricks',
+        notation: "R' F R F'",
+        description: 'Changes edge orientation while inserting pairs into the front-right slot.',
+        recognition: 'Essential trigger for CFOP F2L edge control.',
+      },
+    ],
+  },
+  '2x2': {
+    puzzleId: '2x2',
+    title: '2×2 Ortega Speedcubing (PBL & OLL)',
+    subtitle: 'Championship 3-step method: Solve first face, orient opposite face, permute both layers in one look.',
+    methodName: 'Ortega Method',
+    algorithms: [
+      {
+        id: 'pbl-adj-adj',
+        name: 'PBL: Adjacent / Adjacent',
+        category: 'PBL',
+        notation: "R2 U' B2 U2 R2 U' R2",
+        description: 'Swaps adjacent corners on both top and bottom layers simultaneously.',
+        recognition: 'One solid matching bar on top, one solid matching bar on bottom. Hold both bars on the Front.',
+      },
+      {
+        id: 'pbl-diag-diag',
+        name: 'PBL: Diagonal / Diagonal',
+        category: 'PBL',
+        notation: 'R2 F2 R2',
+        description: 'Ultra-fast 3-move algorithm that swaps diagonally opposite corners on both layers.',
+        recognition: 'No matching bars on either layer (all opposite colors on both top and bottom).',
+      },
+      {
+        id: 'pbl-adj-none',
+        name: 'PBL: Adjacent / Solved',
+        category: 'PBL',
+        notation: "R U' R F2 R' U R'",
+        description: 'Swaps adjacent corners on top layer while bottom layer is already completely solved.',
+        recognition: 'One matching bar on top, bottom layer fully solved. Hold top bar on Left.',
+      },
+      {
+        id: 'pbl-none-adj',
+        name: 'PBL: Solved / Adjacent',
+        category: 'PBL',
+        notation: "R' U R' F2 R F' R",
+        description: 'Swaps adjacent corners on the bottom layer while top layer is already solved.',
+        recognition: 'Top layer fully solved, one matching bar on bottom. Hold bottom bar on Left.',
+      },
+      {
+        id: 'pbl-diag-none',
+        name: 'PBL: Diagonal / Solved (Y-Perm)',
+        category: 'PBL',
+        notation: "F R U' R' U' R U R' F' R U R' U' R' F R F'",
+        description: 'Diagonal swap on top layer with bottom layer solved.',
+        recognition: 'No bars on top layer, bottom layer completely solved.',
+      },
+      {
+        id: 'ortega-sune',
+        name: 'OLL: Sune',
+        category: 'OLL',
+        notation: "R U R' U R U2 R'",
+        description: '1 yellow corner facing Up, clockwise rotation for the other 3.',
+        recognition: '1 yellow sticker facing Up on front-left.',
+      },
+      {
+        id: 'ortega-pi',
+        name: 'OLL: Pi',
+        category: 'OLL',
+        notation: "F (R U R' U') (R U R' U') F'",
+        description: 'Orients 4 unoriented yellow corners with two pairs of opposite headlights.',
+        recognition: 'No yellow corners facing Up; two headlights on left and two opposite on right.',
+      },
+    ],
+  },
+  '4x4': {
+    puzzleId: '4x4',
+    title: '4×4 Yau Parity & Speedcubing',
+    subtitle: 'Master the OLL and PLL parities that occur on even-layered cubes, plus fast edge pairing.',
+    methodName: 'Yau & Reduction Parities',
+    algorithms: [
+      {
+        id: 'oll-parity',
+        name: 'OLL Parity (Flipped Edge Pair)',
+        category: 'Parity',
+        notation: "Rw U2 x Rw U2 Rw U2 Rw' U2 Lw U2 Rw' U2 Rw U2 Rw' U2 Rw'",
+        description: 'Flips a single top-layer edge pair that is impossible on a standard 3x3 cube.',
+        recognition: 'Top layer has an odd number of oriented edges (e.g. 1 or 3 yellow edges instead of 0, 2, or 4). Hold flipped edge in Front.',
+      },
+      {
+        id: 'pll-parity-opp',
+        name: 'PLL Parity (Opposite Edge Swap)',
+        category: 'Parity',
+        notation: '2R2 U2 2R2 Uw2 2R2 2Uw2',
+        description: 'Swaps opposite edge pairs on the top layer without affecting any other piece.',
+        recognition: 'Front and Back top edge pairs are swapped, Left and Right edges are solved.',
+      },
+      {
+        id: 'pll-parity-adj',
+        name: 'Adjacent PLL Parity (Adjacent Swap)',
+        category: 'Parity',
+        notation: "2R2 U2 2R2 Uw2 2R2 2Uw2 + (R U R' U' R' F R2 U' R' U' R U R' F')",
+        description: 'Combines the standard PLL parity with a T-Perm to swap two adjacent edge pairs.',
+        recognition: 'Two adjacent top edges are swapped while the other two are solved.',
+      },
+      {
+        id: 'edge-flip-trigger',
+        name: 'Edge Flipping Trigger (Slice-Flip-Slice)',
+        category: 'Edge Pairing',
+        notation: "R U R' F R' F' R",
+        description: 'Flips the front-right edge pair in place during 3-2-2-2 edge reduction.',
+        recognition: 'Used whenever the matching edge wing needs to be inverted before slice insertion.',
+      },
+    ],
+  },
+  'pyraminx': {
+    puzzleId: 'pyraminx',
+    title: 'Pyraminx L4E Speedcubing (Last 4 Edges)',
+    subtitle: 'The sub-5 standard: build a 3-edge V-base and solve the Last 4 Edges with intuitive triggers.',
+    methodName: 'L4E (Last 4 Edges Method)',
+    algorithms: [
+      {
+        id: 'pyra-sledge',
+        name: 'Sledgehammer (Core Trigger)',
+        category: 'Triggers',
+        notation: "R' L R L'",
+        description: 'The fundamental trigger of Pyraminx speedcubing. Fast downward rolling motion.',
+        recognition: 'Used for V-base insertion and L4E orientation.',
+      },
+      {
+        id: 'pyra-hedge',
+        name: 'Hedgeslammer (Core Trigger)',
+        category: 'Triggers',
+        notation: "L R' L' R",
+        description: 'The inverse / mirror trigger of sledgehammer starting with left hand.',
+        recognition: 'Used when target edge needs left-handed insertion.',
+      },
+      {
+        id: 'pyra-cw-cycle',
+        name: '3-Edge Cycle Clockwise',
+        category: 'L4E Cycles',
+        notation: "R U R' U R U R'",
+        description: 'Cycles the 3 top-layer edges in a clockwise loop.',
+        recognition: 'Top layer edges are oriented but need to shift clockwise.',
+      },
+      {
+        id: 'pyra-ccw-cycle',
+        name: '3-Edge Cycle Counter-Clockwise',
+        category: 'L4E Cycles',
+        notation: "R U' R' U' R U' R'",
+        description: 'Cycles the 3 top-layer edges in a counter-clockwise loop.',
+        recognition: 'Top layer edges are oriented but need to shift counter-clockwise.',
+      },
+      {
+        id: 'pyra-superflip',
+        name: 'Double Edge Flip (Superflip)',
+        category: 'L4E Flips',
+        notation: "R' L R L' U' L' U L",
+        description: 'Flips both front top edges in place without disturbing centers or base.',
+        recognition: 'Two top edges are in their correct positions but flipped upside down.',
+      },
+      {
+        id: 'pyra-adj-flip',
+        name: 'Adjacent Edge Flip Cycle',
+        category: 'L4E Flips',
+        notation: "R U' R' U L' U L",
+        description: 'Simultaneously cycles and flips adjacent edges into solved positions.',
+        recognition: 'One edge solved, other two edges swapped and flipped.',
+      },
+    ],
+  },
+};

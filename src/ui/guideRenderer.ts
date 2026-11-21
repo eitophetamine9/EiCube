@@ -1,4 +1,4 @@
-import { GUIDE_DATA, GuideStep } from '../content/guideData';
+import { GUIDE_DATA, GuideStep, ADVANCED_SPEEDCUBING_DATA } from '../content/guideData';
 import { OTHER_CUBES_GUIDES } from '../content/otherCubesData';
 import { PUZZLE_VIDEOS, VideoTutorial } from '../content/videoData';
 import { toast } from './toast';
@@ -180,6 +180,9 @@ export class GuideRenderer {
               .join('')}
           </div>
         </section>
+
+        <!-- Speedcubing Algorithms Section -->
+        ${this.renderSpeedcubingSection()}
       `;
     }
 
@@ -242,6 +245,65 @@ export class GuideRenderer {
                     )
                     .join('')}
                 </div>
+              </div>
+            </div>
+          `
+            )
+            .join('')}
+        </div>
+      </section>
+
+      <!-- Speedcubing Algorithms Section -->
+      ${this.renderSpeedcubingSection()}
+    `;
+  }
+
+  private renderSpeedcubingSection(): string {
+    const data = ADVANCED_SPEEDCUBING_DATA[this.currentCategory];
+    if (!data) return '';
+
+    return `
+      <!-- Advanced Speedcubing Algorithms Section -->
+      <section class="guide-section speedcubing-algorithms-section" id="speedcubing-section">
+        <div class="section-heading-row">
+          <h2 class="guide-section-heading">
+            <span class="guide-section-num">SPEED</span>
+            ${data.title}
+          </h2>
+          <span class="speedcube-method-badge">${data.methodName}</span>
+        </div>
+        <p class="guide-section-desc">${data.subtitle}</p>
+
+        <div class="speedcube-algs-grid">
+          ${data.algorithms
+            .map(
+              (alg) => `
+            <div class="speedcube-alg-card">
+              <div class="speedcube-card-header">
+                <span class="speedcube-category-chip">${alg.category}</span>
+                <h3 class="speedcube-alg-name">${alg.name}</h3>
+              </div>
+              <div class="speedcube-notation-box">
+                <code>${alg.notation}</code>
+              </div>
+              ${
+                alg.recognition
+                  ? `<div class="speedcube-recognition">
+                      <span class="rec-label">Recognition:</span> ${alg.recognition}
+                    </div>`
+                  : ''
+              }
+              <p class="speedcube-alg-desc">${alg.description}</p>
+              <div class="alg-actions">
+                <button class="btn btn-sm btn-primary btn-try-alg" data-alg="${alg.notation}" title="Execute on 3D puzzle">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  Try on puzzle
+                </button>
+                <button class="btn btn-sm btn-secondary btn-copy-alg" data-alg="${alg.notation}" title="Copy notation">
+                  Copy
+                </button>
               </div>
             </div>
           `
