@@ -2424,6 +2424,15 @@ body {
   color: #c084fc;
 }
 
+.speedcube-video-card-wrap {
+  margin-bottom: 8px;
+}
+
+.speedcube-video-card-wrap .video-tutorial-card {
+  border-color: rgba(168, 85, 247, 0.35);
+  background: var(--bg-surface-elevated);
+}
+
 .speedcube-algs-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));

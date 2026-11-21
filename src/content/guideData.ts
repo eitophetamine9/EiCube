@@ -1,3 +1,5 @@
+import { VideoTutorial } from './videoData';
+
 export interface GuideAlgorithm {
   name: string;
   notation: string;
@@ -267,6 +269,7 @@ export interface SpeedcubePuzzleSection {
   title: string;
   subtitle: string;
   methodName: string;
+  video: VideoTutorial;
   algorithms: SpeedcubeAlgorithmItem[];
 }
 
@@ -276,6 +279,22 @@ export const ADVANCED_SPEEDCUBING_DATA: Record<string, SpeedcubePuzzleSection> =
     title: '3×3 CFOP Speedcubing Algorithms',
     subtitle: 'Championship-grade speedsolving system: Cross, F2L, OLL, and full PLL.',
     methodName: 'CFOP (Fridrich Method)',
+    video: {
+      puzzleId: '3x3',
+      title: 'All 21 PLL Algorithms & Finger Tricks (Speedcubing)',
+      creator: 'J Perm',
+      videoId: 'vU6HsK3hvQs',
+      duration: '18:50',
+      views: '3.8M+ views',
+      description: 'Master full PLL for CFOP speedsolving. Covers recognition, optimal finger tricks, and execution for T-Perm, Y-Perm, J-Perm, H-Perm, and all 21 permutation cases.',
+      chapters: [
+        { time: '0:00', title: 'PLL Introduction & Flow', seconds: 0 },
+        { time: '0:42', title: 'Adjacent Corner Swaps (T-Perm, J-Perm)', seconds: 42 },
+        { time: '4:15', title: 'Diagonal Corner Swaps (Y-Perm, V-Perm)', seconds: 255 },
+        { time: '8:30', title: 'Edge-Only Permutations (H, Z, Ua, Ub)', seconds: 510 },
+        { time: '13:00', title: 'G-Permutations & Advanced Fingertricks', seconds: 780 },
+      ],
+    },
     algorithms: [
       {
         id: 't-perm',
@@ -372,6 +391,22 @@ export const ADVANCED_SPEEDCUBING_DATA: Record<string, SpeedcubePuzzleSection> =
     title: '2×2 Ortega Speedcubing (PBL & OLL)',
     subtitle: 'Championship 3-step method: Solve first face, orient opposite face, permute both layers in one look.',
     methodName: 'Ortega Method',
+    video: {
+      puzzleId: '2x2',
+      title: 'How to Solve 2x2 with Ortega Method (Sub-4 Speedcubing)',
+      creator: 'J Perm',
+      videoId: 'z2gOUzMmY3w',
+      duration: '6:32',
+      views: '2.1M+ views',
+      description: 'The premier speedcubing method for 2x2: solve any first face intuitively (ignoring side bars), orient the opposite layer in 1 look (OLL), and permute both layers (PBL).',
+      chapters: [
+        { time: '0:00', title: 'Ortega Method Overview', seconds: 0 },
+        { time: '1:10', title: 'Step 1: Intuitive First Face', seconds: 70 },
+        { time: '2:15', title: 'Step 2: 2x2 OLL Cases', seconds: 135 },
+        { time: '3:50', title: 'Step 3: PBL Bar Recognition', seconds: 230 },
+        { time: '5:10', title: 'PBL Algorithms & Execution', seconds: 310 },
+      ],
+    },
     algorithms: [
       {
         id: 'pbl-adj-adj',
@@ -436,6 +471,21 @@ export const ADVANCED_SPEEDCUBING_DATA: Record<string, SpeedcubePuzzleSection> =
     title: '4×4 Yau Parity & Speedcubing',
     subtitle: 'Master the OLL and PLL parities that occur on even-layered cubes, plus fast edge pairing.',
     methodName: 'Yau & Reduction Parities',
+    video: {
+      puzzleId: '4x4',
+      title: '4x4 Parity Algorithms & Fingertricks (OLL & PLL)',
+      creator: 'J Perm',
+      videoId: '1M9DE1WyzO4',
+      duration: '5:10',
+      views: '1.4M+ views',
+      description: 'Fast, ergonomic speedsolving execution for 4x4 OLL parity (single flipped edge) and PLL parity (two swapped edges) with optimal finger tricks.',
+      chapters: [
+        { time: '0:00', title: 'Understanding 4x4 Parities', seconds: 0 },
+        { time: '0:45', title: 'OLL Parity Algorithm Breakdown', seconds: 45 },
+        { time: '2:15', title: 'PLL Parity Algorithm (Opposite Swap)', seconds: 135 },
+        { time: '3:30', title: 'Adjacent PLL Parity Fast Execution', seconds: 210 },
+      ],
+    },
     algorithms: [
       {
         id: 'oll-parity',
@@ -476,6 +526,22 @@ export const ADVANCED_SPEEDCUBING_DATA: Record<string, SpeedcubePuzzleSection> =
     title: 'Pyraminx L4E Speedcubing (Last 4 Edges)',
     subtitle: 'The sub-5 standard: build a 3-edge V-base and solve the Last 4 Edges with intuitive triggers.',
     methodName: 'L4E (Last 4 Edges Method)',
+    video: {
+      puzzleId: 'pyraminx',
+      title: 'Intuitive L4E Pyraminx Tutorial (Speedcubing)',
+      creator: 'SpeedyGoneCuber',
+      videoId: '_S2iDihTuxw',
+      duration: '5:48',
+      views: '180K+ views',
+      description: 'Master the Last 4 Edges (L4E) method for Pyraminx. Build a 3-edge V-base, recognize top edge patterns, and solve with lightning-fast Sledgehammer and Hedgeslammer triggers.',
+      chapters: [
+        { time: '0:00', title: 'L4E Overview & V-Base', seconds: 0 },
+        { time: '1:00', title: 'Sledgehammer & Hedgeslammer', seconds: 60 },
+        { time: '2:15', title: '3-Edge Cycle Algorithms', seconds: 135 },
+        { time: '3:45', title: 'Edge Flip Algorithms (Superflip)', seconds: 225 },
+        { time: '4:50', title: 'Sub-5 Practice Strategy', seconds: 290 },
+      ],
+    },
     algorithms: [
       {
         id: 'pyra-sledge',

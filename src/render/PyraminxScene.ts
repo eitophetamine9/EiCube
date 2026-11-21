@@ -29,50 +29,6 @@ const MOVE_AXES: Record<string, THREE.Vector3> = {
   B: AXIS_B,
 };
 
-// Exact piece indices (faceIdx, stickerIdx) affected by each base move
-const MOVE_PIECES: Record<string, Array<[number, number]>> = {
-  u: [
-    [0, 0],
-    [1, 0],
-    [2, 0],
-  ],
-  U: [
-    [0, 0], [0, 1], [0, 2], [0, 3],
-    [1, 0], [1, 1], [1, 2], [1, 3],
-    [2, 0], [2, 1], [2, 2], [2, 3],
-  ],
-  l: [
-    [0, 4],
-    [2, 8],
-    [3, 4],
-  ],
-  L: [
-    [0, 4], [0, 1], [0, 2], [0, 5],
-    [2, 8], [2, 7], [2, 6], [2, 5],
-    [3, 4], [3, 1], [3, 2], [3, 5],
-  ],
-  r: [
-    [0, 8],
-    [1, 4],
-    [3, 8],
-  ],
-  R: [
-    [0, 8], [0, 3], [0, 6], [0, 7],
-    [1, 4], [1, 1], [1, 5], [1, 2],
-    [3, 8], [3, 3], [3, 6], [3, 7],
-  ],
-  b: [
-    [1, 8],
-    [2, 4],
-    [3, 0],
-  ],
-  B: [
-    [1, 8], [1, 7], [1, 6], [1, 3],
-    [2, 4], [2, 1], [2, 5], [2, 2],
-    [3, 0], [3, 7], [3, 6], [3, 3],
-  ],
-};
-
 interface PyraQueuedMove {
   move: string;
   isScramble?: boolean;
@@ -98,6 +54,7 @@ export class PyraminxScene {
   private mainGroup: THREE.Group;
   private pivotGroup: THREE.Group;
   private pieceGroups: THREE.Group[][] = []; // [faceIdx][stickerIdx]
+  private allPieces: THREE.Group[] = []; // flat list of all 36 piece groups
   private stickerMeshes: THREE.Mesh[][] = []; // [faceIndex][stickerIndex]
   private isDestroyed: boolean = false;
   private lastTime: number = 0;
@@ -219,6 +176,7 @@ export class PyraminxScene {
     this.mainGroup.add(this.pivotGroup);
 
     this.pieceGroups = [[], [], [], []];
+    this.allPieces = [];
     this.stickerMeshes = [[], [], [], []];
 
     // Solid inner dark core (scaled to 0.58 so it provides interior shadow without clipping through rotating layers)
@@ -333,17 +291,17 @@ export class PyraminxScene {
 
       const center = new THREE.Vector3().add(p0).add(p1).add(p2).divideScalar(3);
 
-      // 1. Black 3D piece backing plate with beveled side walls
+      // 1. Black 3D piece backing plate with beveled side walls (coordinates relative to piece center)
       const frameOffset = faceNormal.clone().multiplyScalar(0.016);
       const frameShrink = 0.94;
-      const f0 = p0.clone().sub(center).multiplyScalar(frameShrink).add(center).add(frameOffset);
-      const f1 = p1.clone().sub(center).multiplyScalar(frameShrink).add(center).add(frameOffset);
-      const f2 = p2.clone().sub(center).multiplyScalar(frameShrink).add(center).add(frameOffset);
+      const f0 = p0.clone().sub(center).multiplyScalar(frameShrink).add(frameOffset);
+      const f1 = p1.clone().sub(center).multiplyScalar(frameShrink).add(frameOffset);
+      const f2 = p2.clone().sub(center).multiplyScalar(frameShrink).add(frameOffset);
 
-      // Base footprint on core surface
-      const b0 = p0.clone().sub(center).multiplyScalar(frameShrink).add(center);
-      const b1 = p1.clone().sub(center).multiplyScalar(frameShrink).add(center);
-      const b2 = p2.clone().sub(center).multiplyScalar(frameShrink).add(center);
+      // Base footprint on core surface (relative to piece center)
+      const b0 = p0.clone().sub(center).multiplyScalar(frameShrink);
+      const b1 = p1.clone().sub(center).multiplyScalar(frameShrink);
+      const b2 = p2.clone().sub(center).multiplyScalar(frameShrink);
 
       // Construct solid 3D piece geometry (top face + 3 beveled side skirts)
       const frameVertices = new Float32Array([
@@ -381,12 +339,12 @@ export class PyraminxScene {
       const frameMesh = new THREE.Mesh(frameGeom, blackPlasticMat);
       frameMesh.userData = { faceIdx, stickerIdx };
 
-      // 2. Colored sticker: inset with scale 0.80 to yield the 20% bold black speedcube border
+      // 2. Colored sticker: inset with scale 0.80 for 20% bold black speedcube border (relative to piece center)
       const stickerShrink = 0.80;
       const stickerOffset = faceNormal.clone().multiplyScalar(0.024);
-      const s0 = p0.clone().sub(center).multiplyScalar(stickerShrink).add(center).add(stickerOffset);
-      const s1 = p1.clone().sub(center).multiplyScalar(stickerShrink).add(center).add(stickerOffset);
-      const s2 = p2.clone().sub(center).multiplyScalar(stickerShrink).add(center).add(stickerOffset);
+      const s0 = p0.clone().sub(center).multiplyScalar(stickerShrink).add(stickerOffset);
+      const s1 = p1.clone().sub(center).multiplyScalar(stickerShrink).add(stickerOffset);
+      const s2 = p2.clone().sub(center).multiplyScalar(stickerShrink).add(stickerOffset);
 
       const stickerGeom = new THREE.BufferGeometry();
       stickerGeom.setAttribute(
@@ -408,14 +366,20 @@ export class PyraminxScene {
       const stickerMesh = new THREE.Mesh(stickerGeom, stickerMat);
       stickerMesh.userData = { faceIdx, stickerIdx };
 
-      // Encapsulate into an individual piece group for dynamic 3D rotation
+      // Encapsulate into an individual piece group positioned at its geometric center
       const pieceGroup = new THREE.Group();
-      pieceGroup.userData = { faceIdx, stickerIdx };
+      pieceGroup.position.copy(center);
+      pieceGroup.userData = {
+        faceIdx,
+        stickerIdx,
+        initialPos: center.clone(),
+      };
       pieceGroup.add(frameMesh);
       pieceGroup.add(stickerMesh);
 
       this.mainGroup.add(pieceGroup);
       this.pieceGroups[faceIdx][stickerIdx] = pieceGroup;
+      this.allPieces.push(pieceGroup);
       this.stickerMeshes[faceIdx][stickerIdx] = stickerMesh;
     });
   }
@@ -466,12 +430,16 @@ export class PyraminxScene {
     if (this.activeMove) {
       for (const pGroup of this.activePieces) {
         this.mainGroup.attach(pGroup);
-        pGroup.position.set(0, 0, 0);
-        pGroup.quaternion.identity();
       }
       this.pivotGroup.quaternion.identity();
       this.activeMove = null;
       this.activePieces = [];
+    }
+    for (const pGroup of this.allPieces) {
+      if (pGroup.userData.initialPos) {
+        pGroup.position.copy(pGroup.userData.initialPos);
+        pGroup.quaternion.identity();
+      }
     }
     this.state.reset();
     this.updateColors();
@@ -517,9 +485,8 @@ export class PyraminxScene {
     const isPrime = m.endsWith("'");
     const base = m.replace("'", '');
 
-    const pieceIndices = MOVE_PIECES[base];
     const axis = MOVE_AXES[base];
-    if (!pieceIndices || !axis) {
+    if (!axis) {
       this.finishActiveMove();
       return;
     }
@@ -532,10 +499,14 @@ export class PyraminxScene {
     this.pivotGroup.position.set(0, 0, 0);
     this.pivotGroup.quaternion.identity();
 
-    // Attach affected piece groups to pivot
-    for (const [f, s] of pieceIndices) {
-      const pGroup = this.pieceGroups[f]?.[s];
-      if (pGroup) {
+    const isTip = base === base.toLowerCase();
+    const threshold = isTip ? 0.80 : 0.20;
+    const worldPos = new THREE.Vector3();
+
+    // Dynamically find affected pieces based on current 3D world position along rotation axis
+    for (const pGroup of this.allPieces) {
+      pGroup.getWorldPosition(worldPos);
+      if (worldPos.dot(axis) > threshold) {
         this.activePieces.push(pGroup);
         this.pivotGroup.attach(pGroup);
       }
@@ -548,17 +519,16 @@ export class PyraminxScene {
     const isScramble = this.activeMove.isScramble;
     const onDone = this.activeMove.onComplete;
 
-    // Reattach piece groups back to mainGroup and reset local transforms
+    // Reattach piece groups back to mainGroup (preserves continuous rotated world transform!)
     for (const pGroup of this.activePieces) {
       this.mainGroup.attach(pGroup);
-      pGroup.position.set(0, 0, 0);
-      pGroup.quaternion.identity();
     }
     this.pivotGroup.quaternion.identity();
 
     // Apply logical move to PyraminxState
     this.state.applyMove(moveStr);
-    this.updateColors();
+    // Note: Do NOT call updateColors() here. Pieces are physical 3D objects with their own
+    // stickers that stay in their new rotated positions, providing 100% seamless motion with zero color flash.
 
     const isSolved = this.state.isSolved();
     this.onSolvedChange?.(isSolved);
@@ -659,31 +629,21 @@ export class PyraminxScene {
     }
   }
 
-  private getCandidateMoves(faceIdx: number, stickerIdx: number): string[] {
-    // Apex corner tips
-    if (faceIdx === 0 && stickerIdx === 0) return ['u', "u'"];
-    if (faceIdx === 1 && stickerIdx === 0) return ['u', "u'"];
-    if (faceIdx === 2 && stickerIdx === 0) return ['u', "u'"];
+  private getCandidateMoves(hitPoint: THREE.Vector3): string[] {
+    // Check if hitPoint is in one of the 4 tips (dot > 0.80)
+    for (const tip of ['u', 'l', 'r', 'b']) {
+      const ax = MOVE_AXES[tip];
+      if (hitPoint.dot(ax) > 0.80) {
+        return [tip, `${tip}'`];
+      }
+    }
 
-    if (faceIdx === 0 && stickerIdx === 4) return ['l', "l'"];
-    if (faceIdx === 2 && stickerIdx === 8) return ['l', "l'"];
-    if (faceIdx === 3 && stickerIdx === 4) return ['l', "l'"];
-
-    if (faceIdx === 0 && stickerIdx === 8) return ['r', "r'"];
-    if (faceIdx === 1 && stickerIdx === 4) return ['r', "r'"];
-    if (faceIdx === 3 && stickerIdx === 8) return ['r', "r'"];
-
-    if (faceIdx === 1 && stickerIdx === 8) return ['b', "b'"];
-    if (faceIdx === 2 && stickerIdx === 4) return ['b', "b'"];
-    if (faceIdx === 3 && stickerIdx === 0) return ['b', "b'"];
-
-    // Layer pieces: find which layers contain this piece
+    // Otherwise, check which layers contain this hitPoint (dot > 0.20)
     const candidates: string[] = [];
-    const layers = ['U', 'L', 'R', 'B'];
-    for (const l of layers) {
-      const pieces = MOVE_PIECES[l];
-      if (pieces.some(([f, s]) => f === faceIdx && s === stickerIdx)) {
-        candidates.push(l, `${l}'`);
+    for (const layer of ['U', 'L', 'R', 'B']) {
+      const ax = MOVE_AXES[layer];
+      if (hitPoint.dot(ax) > 0.20) {
+        candidates.push(layer, `${layer}'`);
       }
     }
 
@@ -691,7 +651,7 @@ export class PyraminxScene {
   }
 
   private resolveAndExecuteDragTurn(target: DragTarget, dx: number, dy: number): void {
-    const candidates = this.getCandidateMoves(target.faceIdx, target.stickerIdx);
+    const candidates = this.getCandidateMoves(target.hitPoint);
 
     const toScreen = (worldPos: THREE.Vector3): THREE.Vector2 => {
       const v = worldPos.clone().project(this.camera);

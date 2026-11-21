@@ -274,6 +274,11 @@ export class GuideRenderer {
         </div>
         <p class="guide-section-desc">${data.subtitle}</p>
 
+        <!-- Pro Speedcubing Video Overview -->
+        <div class="speedcube-video-card-wrap">
+          ${this.renderVideoCard(data.video)}
+        </div>
+
         <div class="speedcube-algs-grid">
           ${data.algorithms
             .map(
