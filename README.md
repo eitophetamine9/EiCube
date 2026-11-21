@@ -22,6 +22,18 @@ EiCube provides a digital training environment for both beginner and competitive
 
 ## Key Features
 
+- **Mouse & Touch Direct Layer Drag**:
+  - Direct 3D swipe controls: touch or click any cubie and drag along a face tangent to immediately execute that layer rotation.
+  - Automatic differentiation: swiping on a cubie rotates that layer, while dragging the background smoothly orbits the camera.
+  - Multi-touch pinch-to-zoom support for mobile devices.
+- **Player-Centric Move History**:
+  - Scramble moves are cleanly excluded from the move history log.
+  - Move history strictly records turns manually executed by the player (via keys, on-screen buttons, or direct touch drags).
+  - Stopwatch timer starts automatically on the player's first manual move after a scramble.
+- **Mobile-Friendly Ergonomics**:
+  - Fixed floating thumb dock on mobile devices with quick access to Moves, Scramble, Undo, and History.
+  - Slide-out drawer sidebars for keybinds and move history with tap-to-close backdrops.
+  - Full-screen unobstructed 3D stage on phones and tablets.
 - **Universal "Puzzle" Trainer Tab**:
   - Dynamically load and solve any puzzle: 3x3 Rubik's Cube, 2x2 Pocket Cube, 4x4 Rubik's Revenge, or Pyraminx.
   - Seamless inline quick-picker in the top floating bar.

@@ -153,7 +153,15 @@ export class ControlsManager {
         <aside class="controls-sidebar-left">
           <div class="sidebar-header">
             <span class="sidebar-title">${this.getPuzzleDisplayName()} Moves</span>
-            <button id="btn-edit-keybinds" class="btn-text-sm" title="Rebind any key">Edit Keys</button>
+            <div class="sidebar-header-actions">
+              <button id="btn-edit-keybinds" class="btn-text-sm" title="Rebind any key">Edit Keys</button>
+              <button id="btn-close-left-sidebar" class="btn-icon-subtle btn-close-sidebar" aria-label="Close Moves Pad">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
           </div>
 
           <!-- Moves Pad according to active puzzle -->
@@ -167,7 +175,15 @@ export class ControlsManager {
               <span class="sidebar-title">Move History</span>
               <span id="history-count" class="history-count-badge">0</span>
             </div>
-            <button id="btn-clear-history" class="btn-text-sm" aria-label="Clear move history">Clear</button>
+            <div class="sidebar-header-actions">
+              <button id="btn-clear-history" class="btn-text-sm" aria-label="Clear move history">Clear</button>
+              <button id="btn-close-right-sidebar" class="btn-icon-subtle btn-close-sidebar" aria-label="Close Move History">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
           </div>
 
           <div id="history-vertical-list" class="history-vertical-list">
@@ -177,6 +193,49 @@ export class ControlsManager {
             </div>
           </div>
         </aside>
+
+        <!-- Mobile Drawer Backdrop -->
+        <div id="mobile-drawer-backdrop" class="mobile-drawer-backdrop"></div>
+
+        <!-- Mobile Bottom Dock (Thumb-friendly controls for phones & tablets) -->
+        <nav class="mobile-bottom-dock" aria-label="Mobile Controls">
+          <button id="btn-mobile-moves" class="btn-dock-item" aria-label="Toggle Moves Pad">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            <span>Moves</span>
+          </button>
+
+          <button id="btn-mobile-scramble" class="btn-dock-item btn-dock-scramble" aria-label="Scramble">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="16 3 21 3 21 8"></polyline>
+              <line x1="4" y1="20" x2="21" y2="3"></line>
+              <polyline points="21 16 21 21 16 21"></polyline>
+              <line x1="15" y1="15" x2="21" y2="21"></line>
+              <line x1="4" y1="4" x2="9" y2="9"></line>
+            </svg>
+            <span>Scramble</span>
+          </button>
+
+          <button id="btn-mobile-undo" class="btn-dock-item" aria-label="Undo">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 14 4 9l5-5"></path>
+              <path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"></path>
+            </svg>
+            <span>Undo</span>
+          </button>
+
+          <button id="btn-mobile-history" class="btn-dock-item" aria-label="Toggle Move History">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="9"></circle>
+              <polyline points="12 7 12 12 15 15"></polyline>
+            </svg>
+            <span>History (<span id="mobile-history-count">0</span>)</span>
+          </button>
+        </nav>
       </div>
     `;
 
@@ -435,6 +494,52 @@ export class ControlsManager {
       this.clearHistory();
     });
 
+    // Mobile Dock & Drawers
+    const leftSidebar = this.container.querySelector<HTMLElement>('.controls-sidebar-left');
+    const rightSidebar = this.container.querySelector<HTMLElement>('.history-sidebar-right');
+    const backdrop = this.container.querySelector<HTMLElement>('#mobile-drawer-backdrop');
+
+    const closeDrawers = () => {
+      leftSidebar?.classList.remove('is-open-mobile');
+      rightSidebar?.classList.remove('is-open-mobile');
+      backdrop?.classList.remove('is-open');
+    };
+
+    this.container.querySelector('#btn-mobile-moves')?.addEventListener('click', () => {
+      rightSidebar?.classList.remove('is-open-mobile');
+      const willOpen = !leftSidebar?.classList.contains('is-open-mobile');
+      leftSidebar?.classList.toggle('is-open-mobile', willOpen);
+      backdrop?.classList.toggle('is-open', willOpen);
+    });
+
+    this.container.querySelector('#btn-mobile-history')?.addEventListener('click', () => {
+      leftSidebar?.classList.remove('is-open-mobile');
+      const willOpen = !rightSidebar?.classList.contains('is-open-mobile');
+      rightSidebar?.classList.toggle('is-open-mobile', willOpen);
+      backdrop?.classList.toggle('is-open', willOpen);
+    });
+
+    this.container.querySelector('#btn-mobile-scramble')?.addEventListener('click', () => {
+      closeDrawers();
+      this.handleScramble();
+    });
+
+    this.container.querySelector('#btn-mobile-undo')?.addEventListener('click', () => {
+      this.handleUndo();
+    });
+
+    this.container.querySelector('#btn-close-left-sidebar')?.addEventListener('click', () => {
+      closeDrawers();
+    });
+
+    this.container.querySelector('#btn-close-right-sidebar')?.addEventListener('click', () => {
+      closeDrawers();
+    });
+
+    backdrop?.addEventListener('click', () => {
+      closeDrawers();
+    });
+
     // Copy scramble button
     this.container.querySelector('#btn-copy-scramble')?.addEventListener('click', async () => {
       const notationEl = this.container.querySelector('#scramble-notation');
@@ -470,6 +575,9 @@ export class ControlsManager {
   }
 
   handleScramble(): void {
+    // Clear move history so scramble moves are never shown or recorded in user history
+    this.clearHistory();
+
     let scramble = '';
     if (this.activePuzzle === 'pyraminx') {
       scramble = generatePyraminxScramble(14);
@@ -537,6 +645,10 @@ export class ControlsManager {
   }
 
   recordMove(notation: string): void {
+    if (this.isAwaitingFirstMoveAfterScramble) {
+      this.isAwaitingFirstMoveAfterScramble = false;
+      this.startTimer();
+    }
     this.moveHistory.push(notation);
     this.renderHistory();
   }
@@ -549,9 +661,11 @@ export class ControlsManager {
   private renderHistory(): void {
     const list = this.container.querySelector<HTMLElement>('#history-vertical-list');
     const count = this.container.querySelector<HTMLElement>('#history-count');
+    const mobileCount = this.container.querySelector<HTMLElement>('#mobile-history-count');
     if (!list) return;
 
     if (count) count.textContent = String(this.moveHistory.length);
+    if (mobileCount) mobileCount.textContent = String(this.moveHistory.length);
 
     if (this.moveHistory.length === 0) {
       list.innerHTML = `

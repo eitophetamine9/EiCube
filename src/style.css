@@ -778,14 +778,189 @@ body {
   color: #38bdf8;
 }
 
+/* Header Actions inside sidebars */
+.sidebar-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-close-sidebar {
+  display: none;
+}
+
+/* Mobile Bottom Dock (Hidden on desktop by default) */
+.mobile-bottom-dock {
+  display: none;
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 20, 31, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  padding: 6px 10px;
+  gap: 8px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.65);
+  z-index: 60;
+  pointer-events: auto;
+  user-select: none;
+}
+
+.btn-dock-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  touch-action: manipulation;
+  min-height: 40px;
+}
+
+.btn-dock-item:hover, .btn-dock-item:active {
+  background: var(--bg-surface-active);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.btn-dock-scramble {
+  background: var(--accent-emerald);
+  border-color: var(--accent-emerald);
+  color: #ffffff;
+  box-shadow: 0 2px 10px var(--accent-emerald-glow);
+}
+
+.btn-dock-scramble:hover, .btn-dock-scramble:active {
+  background: #059669;
+  color: #ffffff;
+}
+
+.mobile-drawer-backdrop {
+  display: none;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN FOR TABLETS & MOBILE DEVICES
+   ========================================================================== */
+
 @media (max-width: 860px) {
   .controls-sidebar-left {
-    width: 170px;
-    left: 8px;
+    position: fixed;
+    left: 12px;
+    bottom: 74px;
+    top: auto;
+    width: calc(100% - 24px);
+    max-width: 330px;
+    max-height: 62vh;
+    transform: translateX(-130%);
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 70;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75);
+    border: 1px solid var(--border-strong);
   }
+
+  .controls-sidebar-left.is-open-mobile {
+    transform: translateX(0);
+  }
+
   .history-sidebar-right {
-    width: 140px;
-    right: 8px;
+    position: fixed;
+    right: 12px;
+    bottom: 74px;
+    top: auto;
+    width: calc(100% - 24px);
+    max-width: 300px;
+    max-height: 62vh;
+    transform: translateX(130%);
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 70;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75);
+    border: 1px solid var(--border-strong);
+  }
+
+  .history-sidebar-right.is-open-mobile {
+    transform: translateX(0);
+  }
+
+  .btn-close-sidebar {
+    display: inline-flex !important;
+  }
+
+  .mobile-bottom-dock {
+    display: flex;
+  }
+
+  .mobile-drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 65;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-fast);
+  }
+
+  .mobile-drawer-backdrop.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .floating-top-bar {
+    padding: 6px 12px;
+    gap: 8px;
+    top: 8px;
+  }
+
+  .top-action-buttons {
+    display: none; /* Controlled from bottom thumb dock */
+  }
+
+  .speed-control {
+    display: none; /* Minimalist top bar on mobile */
+  }
+}
+
+@media (max-width: 480px) {
+  .floating-top-bar {
+    width: calc(100% - 16px);
+    justify-content: space-between;
+  }
+
+  .puzzle-mini-picker {
+    padding: 1px 4px;
+  }
+
+  .btn-picker {
+    padding: 2px 6px;
+    font-size: 0.72rem;
+  }
+
+  .timer-box {
+    padding: 3px 6px;
+  }
+
+  .timer-display {
+    font-size: 0.88rem;
+  }
+
+  .btn-dock-item {
+    padding: 6px 10px;
+  }
+
+  .btn-dock-item span {
+    font-size: 0.72rem;
   }
 }
 

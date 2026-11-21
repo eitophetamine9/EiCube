@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { CubeState } from '../cube/CubeState';
 import { AnimationQueue, QueuedMove } from './AnimationQueue';
-import { CameraVectors, Face, FACE_COLORS, FaceOrientationMap, ResolvedTurn } from '../cube/types';
+import { Axis, CameraVectors, Face, FACE_COLORS, FaceOrientationMap, ResolvedTurn } from '../cube/types';
 import { resolveCameraFaces } from '../cube/cameraResolver';
 import { resolveTurn } from '../cube/moves';
 
@@ -10,6 +10,15 @@ interface CubieMeshItem {
   id: string;
   group: THREE.Group;
   initialCoords: [number, number, number];
+}
+
+interface DragTarget {
+  startX: number;
+  startY: number;
+  hitPoint: THREE.Vector3;
+  cubieWorldPos: THREE.Vector3;
+  normal: THREE.Vector3; // cardinal normal (±1, 0, 0), (0, ±1, 0), or (0, 0, ±1)
+  pointerId: number;
 }
 
 export class RubiksCubeScene {
@@ -30,6 +39,14 @@ export class RubiksCubeScene {
   private onSolvedChange?: (isSolved: boolean) => void;
   private onMoveExecuted?: (notation: string, viewRelativeNotation: string) => void;
   private resizeObserver: ResizeObserver;
+
+  // Mouse & Touch Drag-to-Turn State
+  private raycaster: THREE.Raycaster = new THREE.Raycaster();
+  private dragTarget: DragTarget | null = null;
+  private isDragRotating: boolean = false;
+  private onPointerDownBound: (e: PointerEvent) => void;
+  private onPointerMoveBound: (e: PointerEvent) => void;
+  private onPointerUpBound: (e: PointerEvent) => void;
 
   constructor(
     container: HTMLElement,
@@ -100,6 +117,16 @@ export class RubiksCubeScene {
     // Handle Window Resize
     this.resizeObserver = new ResizeObserver(() => this.handleResize());
     this.resizeObserver.observe(this.container);
+
+    // Mouse & Touch Drag-to-Turn Listeners
+    this.onPointerDownBound = this.onPointerDown.bind(this);
+    this.onPointerMoveBound = this.onPointerMove.bind(this);
+    this.onPointerUpBound = this.onPointerUp.bind(this);
+
+    this.renderer.domElement.addEventListener('pointerdown', this.onPointerDownBound);
+    window.addEventListener('pointermove', this.onPointerMoveBound);
+    window.addEventListener('pointerup', this.onPointerUpBound);
+    window.addEventListener('pointercancel', this.onPointerUpBound);
 
     // Animation Loop
     this.lastTime = performance.now();
@@ -258,10 +285,12 @@ export class RubiksCubeScene {
         // Update pure logical cube state
         this.cubeState.applyTurn(currentTurn.axis, currentTurn.layers, currentTurn.angle);
 
-        // Notify listeners
+        // Notify listeners (only notify onMoveExecuted if it is NOT a scramble turn)
         const isSolved = this.cubeState.isSolved();
         this.onSolvedChange?.(isSolved);
-        this.onMoveExecuted?.(move.turn.notation, move.turn.notation);
+        if (!move.isScramble) {
+          this.onMoveExecuted?.(move.turn.notation, move.turn.notation);
+        }
 
         currentTurn = null;
         affectedMeshes = [];
@@ -425,6 +454,11 @@ export class RubiksCubeScene {
     this.resizeObserver.disconnect();
     this.controls.dispose();
 
+    this.renderer.domElement.removeEventListener('pointerdown', this.onPointerDownBound);
+    window.removeEventListener('pointermove', this.onPointerMoveBound);
+    window.removeEventListener('pointerup', this.onPointerUpBound);
+    window.removeEventListener('pointercancel', this.onPointerUpBound);
+
     this.cubieItems.forEach((item) => {
       item.group.traverse((obj) => {
         if (obj instanceof THREE.Mesh) {
@@ -442,5 +476,229 @@ export class RubiksCubeScene {
     if (this.renderer.domElement && this.renderer.domElement.parentNode) {
       this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
     }
+  }
+
+  // =========================================================================
+  // MOUSE & TOUCH LAYER DRAG INTERACTION
+  // =========================================================================
+
+  private onPointerDown(e: PointerEvent): void {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    if (this.queue.isBusy()) return;
+
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    const mouse = new THREE.Vector2(
+      ((e.clientX - rect.left) / rect.width) * 2 - 1,
+      -((e.clientY - rect.top) / rect.height) * 2 + 1
+    );
+
+    this.raycaster.setFromCamera(mouse, this.camera);
+    const intersects = this.raycaster.intersectObjects(this.cubeGroup.children, true);
+
+    if (intersects.length === 0) {
+      this.dragTarget = null;
+      this.controls.enabled = true;
+      return;
+    }
+
+    const hit = intersects[0];
+    let cubieGroup: THREE.Group | null = null;
+    let curr: THREE.Object3D | null = hit.object;
+    while (curr && curr.parent && curr.parent !== this.cubeGroup) {
+      curr = curr.parent;
+    }
+    if (curr instanceof THREE.Group) {
+      cubieGroup = curr;
+    }
+    if (!cubieGroup) return;
+
+    const cubieWorldPos = new THREE.Vector3();
+    cubieGroup.getWorldPosition(cubieWorldPos);
+
+    let worldNormal = new THREE.Vector3(0, 0, 1);
+    if (hit.face) {
+      const normalMatrix = new THREE.Matrix3().getNormalMatrix(hit.object.matrixWorld);
+      worldNormal = hit.face.normal.clone().applyMatrix3(normalMatrix).normalize();
+    }
+
+    // Snap to nearest cardinal axis
+    const ax = Math.abs(worldNormal.x);
+    const ay = Math.abs(worldNormal.y);
+    const az = Math.abs(worldNormal.z);
+    const cardinalNormal = new THREE.Vector3();
+    if (ax > ay && ax > az) {
+      cardinalNormal.set(Math.sign(worldNormal.x), 0, 0);
+    } else if (ay > az) {
+      cardinalNormal.set(0, Math.sign(worldNormal.y), 0);
+    } else {
+      cardinalNormal.set(0, 0, Math.sign(worldNormal.z));
+    }
+
+    this.dragTarget = {
+      startX: e.clientX,
+      startY: e.clientY,
+      hitPoint: hit.point.clone(),
+      cubieWorldPos: cubieWorldPos.clone(),
+      normal: cardinalNormal,
+      pointerId: e.pointerId,
+    };
+    this.isDragRotating = false;
+  }
+
+  private onPointerMove(e: PointerEvent): void {
+    if (!this.dragTarget || e.pointerId !== this.dragTarget.pointerId) return;
+
+    const dx = e.clientX - this.dragTarget.startX;
+    const dy = e.clientY - this.dragTarget.startY;
+    const dist = Math.hypot(dx, dy);
+
+    // Lock OrbitControls once the drag gesture exceeds threshold on the cube
+    if (dist > 10 && !this.isDragRotating) {
+      this.isDragRotating = true;
+      this.controls.enabled = false;
+    }
+  }
+
+  private onPointerUp(e: PointerEvent): void {
+    this.controls.enabled = true;
+
+    if (!this.dragTarget || e.pointerId !== this.dragTarget.pointerId) {
+      this.dragTarget = null;
+      this.isDragRotating = false;
+      return;
+    }
+
+    const dx = e.clientX - this.dragTarget.startX;
+    const dy = e.clientY - this.dragTarget.startY;
+    const dist = Math.hypot(dx, dy);
+
+    const target = this.dragTarget;
+    this.dragTarget = null;
+    this.isDragRotating = false;
+
+    if (dist >= 18) {
+      this.resolveAndExecuteDragTurn(target, dx, dy);
+    }
+  }
+
+  private resolveAndExecuteDragTurn(target: DragTarget, dx: number, dy: number): void {
+    const normal = target.normal;
+    const u1 = new THREE.Vector3();
+    const u2 = new THREE.Vector3();
+
+    if (Math.abs(normal.x) > 0.9) {
+      u1.set(0, 1, 0); // Y
+      u2.set(0, 0, 1); // Z
+    } else if (Math.abs(normal.y) > 0.9) {
+      u1.set(1, 0, 0); // X
+      u2.set(0, 0, 1); // Z
+    } else {
+      u1.set(1, 0, 0); // X
+      u2.set(0, 1, 0); // Y
+    }
+
+    const toScreen = (worldPos: THREE.Vector3): THREE.Vector2 => {
+      const v = worldPos.clone().project(this.camera);
+      const rect = this.renderer.domElement.getBoundingClientRect();
+      return new THREE.Vector2(
+        ((v.x + 1) * rect.width) / 2,
+        ((-v.y + 1) * rect.height) / 2
+      );
+    };
+
+    const P = target.hitPoint;
+    const s0 = toScreen(P);
+    const s1 = toScreen(P.clone().add(u1));
+    const s2 = toScreen(P.clone().add(u2));
+
+    const dir1 = s1.clone().sub(s0);
+    const dir2 = s2.clone().sub(s0);
+
+    const dragScreen = new THREE.Vector2(dx, dy);
+
+    const proj1 = dir1.length() > 0 ? dragScreen.dot(dir1.clone().normalize()) : 0;
+    const proj2 = dir2.length() > 0 ? dragScreen.dot(dir2.clone().normalize()) : 0;
+
+    let worldDragDir: THREE.Vector3;
+    if (Math.abs(proj1) > Math.abs(proj2)) {
+      worldDragDir = u1.clone().multiplyScalar(Math.sign(proj1));
+    } else {
+      worldDragDir = u2.clone().multiplyScalar(Math.sign(proj2));
+    }
+
+    const rotVector = new THREE.Vector3().crossVectors(normal, worldDragDir);
+    let rotAxis: Axis = 'y';
+    let angleSign = 1;
+
+    if (Math.abs(rotVector.x) > 0.9) {
+      rotAxis = 'x';
+      angleSign = Math.sign(rotVector.x);
+    } else if (Math.abs(rotVector.y) > 0.9) {
+      rotAxis = 'y';
+      angleSign = Math.sign(rotVector.y);
+    } else if (Math.abs(rotVector.z) > 0.9) {
+      rotAxis = 'z';
+      angleSign = Math.sign(rotVector.z);
+    }
+
+    const angle = angleSign * (Math.PI / 2);
+
+    const cubiePos = target.cubieWorldPos;
+    const rawCoord = rotAxis === 'x' ? cubiePos.x : rotAxis === 'y' ? cubiePos.y : cubiePos.z;
+
+    const validLayers: number[] = this.cubeState.layers;
+    const closestLayer = validLayers.reduce((prev: number, curr: number) =>
+      Math.abs(curr - rawCoord) < Math.abs(prev - rawCoord) ? curr : prev
+    );
+
+    let physicalFace: Face = 'U';
+    let isClockwise = false;
+
+    if (rotAxis === 'x') {
+      if (closestLayer > 0.2) {
+        physicalFace = 'R';
+        isClockwise = angle < 0;
+      } else if (closestLayer < -0.2) {
+        physicalFace = 'L';
+        isClockwise = angle > 0;
+      }
+    } else if (rotAxis === 'y') {
+      if (closestLayer > 0.2) {
+        physicalFace = 'U';
+        isClockwise = angle < 0;
+      } else if (closestLayer < -0.2) {
+        physicalFace = 'D';
+        isClockwise = angle > 0;
+      }
+    } else if (rotAxis === 'z') {
+      if (closestLayer > 0.2) {
+        physicalFace = 'F';
+        isClockwise = angle < 0;
+      } else if (closestLayer < -0.2) {
+        physicalFace = 'B';
+        isClockwise = angle > 0;
+      }
+    }
+
+    let notation = '';
+    if (Math.abs(closestLayer) <= 0.2) {
+      // Slice turn (M, E, S)
+      if (rotAxis === 'x') notation = angle > 0 ? 'M' : "M'";
+      else if (rotAxis === 'y') notation = angle > 0 ? 'E' : "E'";
+      else if (rotAxis === 'z') notation = angle < 0 ? 'S' : "S'";
+    } else {
+      const cameraMap = this.getCameraFaceMap();
+      const viewFace = (Object.keys(cameraMap) as Face[]).find((vf) => cameraMap[vf] === physicalFace) || physicalFace;
+      notation = isClockwise ? viewFace : `${viewFace}'`;
+    }
+
+    const turn: ResolvedTurn = {
+      axis: rotAxis,
+      layers: [closestLayer],
+      angle: angle,
+      notation: notation,
+    };
+
+    this.queue.enqueue(turn, false);
   }
 }

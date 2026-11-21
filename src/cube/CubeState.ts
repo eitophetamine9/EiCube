@@ -33,6 +33,15 @@ export class CubeState {
   readonly size: number;
   cubies: CubieState[];
 
+  get layers(): number[] {
+    const maxCoord = (this.size - 1) / 2;
+    const list: number[] = [];
+    for (let i = 0; i < this.size; i++) {
+      list.push(i - maxCoord);
+    }
+    return list;
+  }
+
   constructor(size: number = 3, cubies?: CubieState[]) {
     this.size = size;
     if (cubies) {

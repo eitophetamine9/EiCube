@@ -247,5 +247,16 @@ describe("Rubik's Cube Pure Logic", () => {
       }
     }
   });
+
+  it('validates cube layer coordinates for mouse/touch layer drag across sizes', () => {
+    const c2 = new CubeState(2);
+    expect(c2.layers).toEqual([-0.5, 0.5]);
+
+    const c3 = new CubeState(3);
+    expect(c3.layers).toEqual([-1, 0, 1]);
+
+    const c4 = new CubeState(4);
+    expect(c4.layers).toEqual([-1.5, -0.5, 0.5, 1.5]);
+  });
 });
 
