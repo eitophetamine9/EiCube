@@ -1,14 +1,23 @@
 export interface KeybindMap {
-  [action: string]: string; // action e.g. 'U', 'D', 'L', 'R', 'F', 'B', 'M', 'E', 'S', 'x', 'y', 'z', etc. -> Key code e.g. 'KeyU', 'KeyR'
+  [action: string]: string; // action e.g. 'U', 'U\'', 'D', 'D\'', 'L', 'L\'', 'R', 'R\'', 'F', 'F\'', 'B', 'B\'', 'M', 'E', 'S', etc.
 }
 
 export const DEFAULT_KEYBINDS: KeybindMap = {
+  // Regular
   U: 'KeyU',
   D: 'KeyD',
   L: 'KeyL',
   R: 'KeyR',
   F: 'KeyF',
   B: 'KeyB',
+  // Direct primes (empty by default so Shift+key works, but user can bind dedicated keys!)
+  "U'": '',
+  "D'": '',
+  "L'": '',
+  "R'": '',
+  "F'": '',
+  "B'": '',
+  // Slices & rotations
   M: 'KeyM',
   E: 'KeyE',
   S: 'KeyS',
@@ -17,7 +26,28 @@ export const DEFAULT_KEYBINDS: KeybindMap = {
   z: 'KeyZ',
 };
 
-const STORAGE_KEY = 'eicube_keybinds_v1';
+export const TWOHAND_SPEEDCUBE_KEYBINDS: KeybindMap = {
+  U: 'KeyJ',
+  "U'": 'KeyF',
+  R: 'KeyI',
+  "R'": 'KeyK',
+  L: 'KeyD',
+  "L'": 'KeyE',
+  F: 'KeyH',
+  "F'": 'KeyG',
+  D: 'KeyS',
+  "D'": 'KeyL',
+  B: 'KeyW',
+  "B'": 'KeyO',
+  M: 'KeyM',
+  E: 'KeyC',
+  S: 'KeyV',
+  x: 'KeyX',
+  y: 'KeyY',
+  z: 'KeyZ',
+};
+
+const STORAGE_KEY = 'eicube_keybinds_v2';
 
 export class SettingsManager {
   private keybinds: KeybindMap;
@@ -29,7 +59,9 @@ export class SettingsManager {
   constructor(onKeybindsChange?: (keybinds: KeybindMap) => void) {
     this.onKeybindsChange = onKeybindsChange;
     this.keybinds = this.loadKeybinds();
-    this.createModal();
+    if (typeof document !== 'undefined') {
+      this.createModal();
+    }
   }
 
   loadKeybinds(): KeybindMap {
@@ -39,7 +71,7 @@ export class SettingsManager {
         return { ...DEFAULT_KEYBINDS, ...JSON.parse(stored) };
       }
     } catch {
-      // Ignore fallback
+      // Ignore
     }
     return { ...DEFAULT_KEYBINDS };
   }
@@ -54,10 +86,31 @@ export class SettingsManager {
     this.onKeybindsChange?.(binds);
   }
 
-  resetToDefaults(): void {
-    this.keybinds = { ...DEFAULT_KEYBINDS };
+  setKeybind(action: string, code: string): void {
+    // Check conflicts
+    const conflictAction = Object.keys(this.keybinds).find(
+      (act) => act !== action && this.keybinds[act] === code
+    );
+    if (conflictAction) {
+      this.keybinds[conflictAction] = '';
+    }
+    this.keybinds[action] = code;
     this.saveKeybinds(this.keybinds);
     this.renderKeybindRows();
+  }
+
+  applyPreset(presetName: 'default' | 'twohand'): void {
+    if (presetName === 'twohand') {
+      this.keybinds = { ...TWOHAND_SPEEDCUBE_KEYBINDS };
+    } else {
+      this.keybinds = { ...DEFAULT_KEYBINDS };
+    }
+    this.saveKeybinds(this.keybinds);
+    this.renderKeybindRows();
+  }
+
+  resetToDefaults(): void {
+    this.applyPreset('default');
   }
 
   getKeybinds(): KeybindMap {
@@ -68,11 +121,12 @@ export class SettingsManager {
     return this.isModalOpen;
   }
 
-  open(): void {
+  open(initialActionToRebind?: string): void {
     if (!this.modalEl) return;
     this.isModalOpen = true;
     this.modalEl.classList.add('is-open');
     this.modalEl.setAttribute('aria-hidden', 'false');
+    this.listeningAction = initialActionToRebind || null;
     this.renderKeybindRows();
     const closeBtn = this.modalEl.querySelector<HTMLButtonElement>('.modal-close');
     closeBtn?.focus();
@@ -97,7 +151,10 @@ export class SettingsManager {
     modal.innerHTML = `
       <div class="modal-card">
         <div class="modal-header">
-          <h2 id="settings-modal-title" class="modal-title">Keyboard Controls & Settings</h2>
+          <div class="modal-header-left">
+            <h2 id="settings-modal-title" class="modal-title">Custom Keybinds & Controls</h2>
+            <span class="modal-badge">Full Customization</span>
+          </div>
           <button class="modal-close" aria-label="Close settings">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -106,8 +163,13 @@ export class SettingsManager {
           </button>
         </div>
         <div class="modal-body">
+          <div class="presets-row">
+            <span class="preset-label">Quick Presets:</span>
+            <button id="preset-default" class="btn btn-sm btn-secondary">Standard (U, D, L, R, F, B)</button>
+            <button id="preset-twohand" class="btn btn-sm btn-primary">Two-Hand Pro Speedcubing</button>
+          </div>
           <p class="modal-intro">
-            Click any key button to rebind it. Hold <strong>Shift</strong> for inverse (prime) moves, or <strong>Alt / Option</strong> for double turns.
+            Click any button to assign your preferred key (e.g. set <strong>R</strong> to <strong>D</strong>, or assign single dedicated keys to prime moves like <strong>R'</strong> or <strong>U'</strong> without holding Shift!).
           </p>
           <div id="keybind-conflict-warning" class="settings-warning" style="display: none;"></div>
           <div class="keybinds-table-container">
@@ -128,6 +190,8 @@ export class SettingsManager {
     modal.querySelector('.modal-close')?.addEventListener('click', () => this.close());
     modal.querySelector('#btn-done-keybinds')?.addEventListener('click', () => this.close());
     modal.querySelector('#btn-reset-keybinds')?.addEventListener('click', () => this.resetToDefaults());
+    modal.querySelector('#preset-default')?.addEventListener('click', () => this.applyPreset('default'));
+    modal.querySelector('#preset-twohand')?.addEventListener('click', () => this.applyPreset('twohand'));
 
     modal.addEventListener('click', (e) => {
       if (e.target === modal) this.close();
@@ -151,33 +215,13 @@ export class SettingsManager {
         e.stopPropagation();
 
         const code = e.code;
-        // Ignore modifier keys by themselves
+        // Ignore standalone modifiers
         if (['ShiftLeft', 'ShiftRight', 'ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight'].includes(code)) {
           return;
         }
 
-        // Check conflicts
-        const conflictAction = Object.keys(this.keybinds).find(
-          (act) => act !== this.listeningAction && this.keybinds[act] === code
-        );
-
-        const warningEl = this.modalEl?.querySelector<HTMLElement>('#keybind-conflict-warning');
-
-        if (conflictAction) {
-          if (warningEl) {
-            warningEl.textContent = `Key "${formatKeyCode(code)}" is already bound to "${conflictAction}". Conflict resolved by swapping.`;
-            warningEl.style.display = 'block';
-          }
-          // Swap or unbind conflicting
-          this.keybinds[conflictAction] = '';
-        } else if (warningEl) {
-          warningEl.style.display = 'none';
-        }
-
-        this.keybinds[this.listeningAction] = code;
+        this.setKeybind(this.listeningAction, code);
         this.listeningAction = null;
-        this.saveKeybinds(this.keybinds);
-        this.renderKeybindRows();
       }
     });
   }
@@ -190,18 +234,27 @@ export class SettingsManager {
     grid.innerHTML = '';
 
     const actions = [
-      { id: 'U', label: 'Up Face (U)', desc: 'Top layer' },
-      { id: 'D', label: 'Down Face (D)', desc: 'Bottom layer' },
-      { id: 'L', label: 'Left Face (L)', desc: 'Left layer' },
-      { id: 'R', label: 'Right Face (R)', desc: 'Right layer' },
-      { id: 'F', label: 'Front Face (F)', desc: 'Front layer' },
-      { id: 'B', label: 'Back Face (B)', desc: 'Back layer' },
+      // Regular Clockwise
+      { id: 'U', label: 'Up (U)', desc: 'Clockwise top' },
+      { id: "U'", label: "Up Prime (U')", desc: 'Counter-clockwise top' },
+      { id: 'D', label: 'Down (D)', desc: 'Clockwise bottom' },
+      { id: "D'", label: "Down Prime (D')", desc: 'Counter-clockwise bottom' },
+      { id: 'L', label: 'Left (L)', desc: 'Clockwise left' },
+      { id: "L'", label: "Left Prime (L')", desc: 'Counter-clockwise left' },
+      { id: 'R', label: 'Right (R)', desc: 'Clockwise right' },
+      { id: "R'", label: "Right Prime (R')", desc: 'Counter-clockwise right' },
+      { id: 'F', label: 'Front (F)', desc: 'Clockwise front' },
+      { id: "F'", label: "Front Prime (F')", desc: 'Counter-clockwise front' },
+      { id: 'B', label: 'Back (B)', desc: 'Clockwise back' },
+      { id: "B'", label: "Back Prime (B')", desc: 'Counter-clockwise back' },
+      // Slices
       { id: 'M', label: 'Middle Slice (M)', desc: 'Between L and R' },
       { id: 'E', label: 'Equator Slice (E)', desc: 'Between U and D' },
       { id: 'S', label: 'Standing Slice (S)', desc: 'Between F and B' },
-      { id: 'x', label: 'Cube Rotation X', desc: 'Roll forward/back' },
-      { id: 'y', label: 'Cube Rotation Y', desc: 'Turn left/right' },
-      { id: 'z', label: 'Cube Rotation Z', desc: 'Tilt clockwise/counter' },
+      // Rotations
+      { id: 'x', label: 'Rotation X', desc: 'Roll forward/back' },
+      { id: 'y', label: 'Rotation Y', desc: 'Turn left/right' },
+      { id: 'z', label: 'Rotation Z', desc: 'Tilt clockwise/counter' },
     ];
 
     actions.forEach((act) => {
@@ -209,14 +262,14 @@ export class SettingsManager {
       row.className = 'keybind-item';
       const isListening = this.listeningAction === act.id;
       const code = this.keybinds[act.id] || '';
-      const displayKey = isListening ? 'Press key...' : formatKeyCode(code);
+      const displayKey = isListening ? 'Press key...' : code ? formatKeyCode(code) : 'None';
 
       row.innerHTML = `
         <div class="keybind-info">
           <span class="keybind-label">${act.label}</span>
           <span class="keybind-desc">${act.desc}</span>
         </div>
-        <button class="keybind-btn ${isListening ? 'is-listening' : ''}" data-action="${act.id}" aria-label="Rebind ${act.label}">
+        <button class="keybind-btn ${isListening ? 'is-listening' : ''} ${!code ? 'is-unassigned' : ''}" data-action="${act.id}" aria-label="Rebind ${act.label}">
           <kbd>${displayKey}</kbd>
         </button>
       `;
