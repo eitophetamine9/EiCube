@@ -309,6 +309,12 @@ body {
   width: 100% !important;
   height: 100% !important;
   display: block;
+  cursor: grab;
+  touch-action: none;
+}
+
+.cube-viewport-container canvas:active {
+  cursor: grabbing;
 }
 
 .controls-mount {
@@ -1117,6 +1123,12 @@ body {
   width: 100% !important;
   height: 100% !important;
   display: block;
+  cursor: grab;
+  touch-action: none;
+}
+
+.other-canvas-viewport canvas:active {
+  cursor: grabbing;
 }
 
 .other-quick-moves {

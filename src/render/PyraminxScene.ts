@@ -46,6 +46,17 @@ export class PyraminxScene {
     this.controls.maxDistance = 11.0;
     this.controls.rotateSpeed = 0.85;
 
+    // Dynamic hand cursor
+    this.renderer.domElement.style.cursor = 'grab';
+    this.renderer.domElement.addEventListener('pointerdown', () => {
+      this.renderer.domElement.style.cursor = 'grabbing';
+    });
+    window.addEventListener('pointerup', () => {
+      if (!this.isDestroyed && this.renderer.domElement) {
+        this.renderer.domElement.style.cursor = 'grab';
+      }
+    });
+
     // Three-point studio lighting matching the 3x3 cube
     this.setupLighting();
 

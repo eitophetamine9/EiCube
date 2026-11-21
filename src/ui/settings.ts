@@ -1,3 +1,5 @@
+import { toast } from './toast';
+
 export interface KeybindMap {
   [action: string]: string; // action e.g. 'U', 'U\'', 'D', 'D\'', 'L', 'L\'', 'R', 'R\'', 'F', 'F\'', 'B', 'B\'', 'M', 'E', 'S', etc.
 }
@@ -87,13 +89,33 @@ export class SettingsManager {
   }
 
   setKeybind(action: string, code: string): void {
-    // Check conflicts
-    const conflictAction = Object.keys(this.keybinds).find(
-      (act) => act !== action && this.keybinds[act] === code
-    );
-    if (conflictAction) {
-      this.keybinds[conflictAction] = '';
+    const warningEl = this.modalEl?.querySelector<HTMLElement>('#keybind-conflict-warning');
+
+    if (code) {
+      // Check conflicts
+      const conflictAction = Object.keys(this.keybinds).find(
+        (act) => act !== action && this.keybinds[act] === code
+      );
+      if (conflictAction) {
+        this.keybinds[conflictAction] = '';
+        if (warningEl) {
+          warningEl.textContent = `Rebound ${action} to ${formatKeyCode(code)} (cleared ${conflictAction})`;
+          warningEl.style.display = 'block';
+        }
+        toast.show(`Bound ${action} to ${formatKeyCode(code)} (cleared ${conflictAction})`);
+      } else {
+        if (warningEl) {
+          warningEl.style.display = 'none';
+        }
+        toast.show(`Bound ${action} to ${formatKeyCode(code)}`);
+      }
+    } else {
+      if (warningEl) {
+        warningEl.style.display = 'none';
+      }
+      toast.show(`Cleared keybind for ${action}`);
     }
+
     this.keybinds[action] = code;
     this.saveKeybinds(this.keybinds);
     this.renderKeybindRows();
@@ -216,12 +238,29 @@ export class SettingsManager {
 
         const code = e.code;
         // Ignore standalone modifiers
-        if (['ShiftLeft', 'ShiftRight', 'ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight'].includes(code)) {
+        if (
+          [
+            'ShiftLeft',
+            'ShiftRight',
+            'ControlLeft',
+            'ControlRight',
+            'AltLeft',
+            'AltRight',
+            'MetaLeft',
+            'MetaRight',
+          ].includes(code)
+        ) {
           return;
         }
 
-        this.setKeybind(this.listeningAction, code);
-        this.listeningAction = null;
+        const actionToRebind = this.listeningAction;
+        this.listeningAction = null; // Clear listening BEFORE saving so re-render shows the new key!
+
+        if (code === 'Backspace' || code === 'Delete') {
+          this.setKeybind(actionToRebind, '');
+        } else {
+          this.setKeybind(actionToRebind, code);
+        }
       }
     });
   }

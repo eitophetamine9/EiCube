@@ -1,7 +1,9 @@
 export class ToastManager {
-  private container: HTMLElement;
+  private container: HTMLElement | null = null;
 
   constructor() {
+    if (typeof document === 'undefined') return;
+
     let existing = document.getElementById('toast-container');
     if (!existing) {
       existing = document.createElement('div');
@@ -13,6 +15,8 @@ export class ToastManager {
   }
 
   show(message: string, durationMs: number = 2400): void {
+    if (typeof document === 'undefined' || !this.container) return;
+
     const toast = document.createElement('div');
     toast.className = 'toast-bubble';
     toast.textContent = message;

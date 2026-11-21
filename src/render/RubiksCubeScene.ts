@@ -43,7 +43,6 @@ export class RubiksCubeScene {
   // Mouse & Touch Drag-to-Turn State
   private raycaster: THREE.Raycaster = new THREE.Raycaster();
   private dragTarget: DragTarget | null = null;
-  private isDragRotating: boolean = false;
   private onPointerDownBound: (e: PointerEvent) => void;
   private onPointerMoveBound: (e: PointerEvent) => void;
   private onPointerUpBound: (e: PointerEvent) => void;
@@ -118,12 +117,12 @@ export class RubiksCubeScene {
     this.resizeObserver = new ResizeObserver(() => this.handleResize());
     this.resizeObserver.observe(this.container);
 
-    // Mouse & Touch Drag-to-Turn Listeners
+    // Mouse & Touch Drag-to-Turn Listeners (Capture phase ensures cube drag disables OrbitControls immediately)
     this.onPointerDownBound = this.onPointerDown.bind(this);
     this.onPointerMoveBound = this.onPointerMove.bind(this);
     this.onPointerUpBound = this.onPointerUp.bind(this);
 
-    this.renderer.domElement.addEventListener('pointerdown', this.onPointerDownBound);
+    this.renderer.domElement.addEventListener('pointerdown', this.onPointerDownBound, { capture: true });
     window.addEventListener('pointermove', this.onPointerMoveBound);
     window.addEventListener('pointerup', this.onPointerUpBound);
     window.addEventListener('pointercancel', this.onPointerUpBound);
@@ -496,10 +495,16 @@ export class RubiksCubeScene {
     const intersects = this.raycaster.intersectObjects(this.cubeGroup.children, true);
 
     if (intersects.length === 0) {
+      // User clicked on the background: Allow OrbitControls to change perspective!
       this.dragTarget = null;
       this.controls.enabled = true;
+      this.renderer.domElement.style.cursor = 'grabbing';
       return;
     }
+
+    // User clicked ON THE CUBE: Immediately lock camera controls so perspective does NOT follow or tilt!
+    this.controls.enabled = false;
+    this.renderer.domElement.style.cursor = 'grabbing';
 
     const hit = intersects[0];
     let cubieGroup: THREE.Group | null = null;
@@ -542,39 +547,45 @@ export class RubiksCubeScene {
       normal: cardinalNormal,
       pointerId: e.pointerId,
     };
-    this.isDragRotating = false;
   }
 
   private onPointerMove(e: PointerEvent): void {
-    if (!this.dragTarget || e.pointerId !== this.dragTarget.pointerId) return;
+    // Dynamic hand cursor feedback
+    if (!this.dragTarget) {
+      if (this.controls.enabled && (e.buttons === 1 || e.buttons === 2)) {
+        this.renderer.domElement.style.cursor = 'grabbing';
+        return;
+      }
 
-    const dx = e.clientX - this.dragTarget.startX;
-    const dy = e.clientY - this.dragTarget.startY;
-    const dist = Math.hypot(dx, dy);
-
-    // Lock OrbitControls once the drag gesture exceeds threshold on the cube
-    if (dist > 10 && !this.isDragRotating) {
-      this.isDragRotating = true;
-      this.controls.enabled = false;
-    }
-  }
-
-  private onPointerUp(e: PointerEvent): void {
-    this.controls.enabled = true;
-
-    if (!this.dragTarget || e.pointerId !== this.dragTarget.pointerId) {
-      this.dragTarget = null;
-      this.isDragRotating = false;
+      const rect = this.renderer.domElement.getBoundingClientRect();
+      const mouse = new THREE.Vector2(
+        ((e.clientX - rect.left) / rect.width) * 2 - 1,
+        -((e.clientY - rect.top) / rect.height) * 2 + 1
+      );
+      this.raycaster.setFromCamera(mouse, this.camera);
+      const intersects = this.raycaster.intersectObjects(this.cubeGroup.children, true);
+      this.renderer.domElement.style.cursor = intersects.length > 0 ? 'grab' : 'default';
       return;
     }
 
-    const dx = e.clientX - this.dragTarget.startX;
-    const dy = e.clientY - this.dragTarget.startY;
-    const dist = Math.hypot(dx, dy);
+    if (e.pointerId !== this.dragTarget.pointerId) return;
+    this.renderer.domElement.style.cursor = 'grabbing';
+  }
+
+  private onPointerUp(e: PointerEvent): void {
+    this.controls.enabled = true; // Always restore camera control for subsequent background drags
 
     const target = this.dragTarget;
     this.dragTarget = null;
-    this.isDragRotating = false;
+    this.renderer.domElement.style.cursor = 'grab';
+
+    if (!target || e.pointerId !== target.pointerId) {
+      return;
+    }
+
+    const dx = e.clientX - target.startX;
+    const dy = e.clientY - target.startY;
+    const dist = Math.hypot(dx, dy);
 
     if (dist >= 18) {
       this.resolveAndExecuteDragTurn(target, dx, dy);
