@@ -1,22 +1,17 @@
 # EiCube
 
-Interactive 3D twisty puzzle trainer and guide built with Three.js, TypeScript, and Vite. Features camera-relative rotational controls, multi-puzzle support (3x3, 2x2, 4x4, Pyraminx), "Solve this version" direct loading, embedded YouTube video tutorials with chapter bookmarks, vertical move history, direct prime keybindings, and comprehensive solving guides.
+## Overview
+
+EiCube is an interactive 3D twisty puzzle trainer and comprehensive solving guide built with Three.js, TypeScript, and Vite. It provides a digital training environment for both beginner and competitive speedcubers. Unlike traditional digital cubes that enforce fixed global world axes, EiCube dynamically resolves all moves relative to your current camera viewpoint.
+
+> [!IMPORTANT]
+> **Camera-Relative Rotations**: Turning the **R** face always turns whichever face is currently positioned on the viewer's right side, regardless of camera orbit angle. If you rotate the view 180 degrees, pressing R acts on the face now on your right, preserving intuitive tactile execution.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Three.js](https://img.shields.io/badge/Three.js-000000?style=flat&logo=three.js&logoColor=white)](https://threejs.org/)
 [![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat&logo=vite&logoColor=white)](https://vite.dev/)
 [![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=flat&logo=vitest&logoColor=white)](https://vitest.dev/)
 [![YouTube](https://img.shields.io/badge/YouTube-FF0000?style=flat&logo=youtube&logoColor=white)](https://www.youtube.com/)
-[![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat&logo=vercel&logoColor=white)](https://vercel.com/)
-
----
-
-## Overview
-
-EiCube provides a digital training environment for both beginner and competitive speedcubers. Unlike traditional digital cubes that enforce fixed global world axes, EiCube dynamically resolves all moves relative to your current camera viewpoint.
-
-> [!IMPORTANT]
-> **Camera-Relative Rotations**: Turning the **R** face always turns whichever face is currently positioned on the viewer's right side, regardless of camera orbit angle. If you rotate the view 180 degrees, pressing R acts on the face now on your right, preserving intuitive tactile execution.
 
 ---
 
@@ -140,32 +135,6 @@ npm run build
 ```
 
 The compiled static assets are generated in the `dist/` directory.
-
----
-
-## Deployment to Vercel
-
-This project is configured as a static build with zero server requirements.
-
-### Deploying via Vercel CLI
-
-```bash
-npm install -g vercel
-vercel
-```
-
-### Deploying via Vercel Dashboard
-
-1. Push your repository to GitHub: `https://github.com/eitophetamine9/EiCube`
-2. In the Vercel Dashboard, select **Add New Project** and import the `EiCube` repository.
-3. Keep default settings:
-   - **Framework Preset**: Vite
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-4. Click **Deploy**.
-
-> [!NOTE]
-> No environment variables or custom serverless configurations are required.
 
 ---
 
