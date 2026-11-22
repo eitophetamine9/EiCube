@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 150);
   });
 
-  // Header Buttons
+  // Header Buttons (Desktop)
   document.getElementById('btn-open-tips')?.addEventListener('click', () => {
     tipsModal.open();
   });
@@ -151,6 +151,61 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('btn-open-settings')?.addEventListener('click', () => {
+    settings.open();
+  });
+
+  // Mobile Navigation Drawer (Burger Menu)
+  const mobileNavDrawer = document.getElementById('mobile-nav-drawer');
+  const mobileNavBackdrop = document.getElementById('mobile-nav-backdrop');
+  const btnMobileMenuToggle = document.getElementById('btn-mobile-menu-toggle');
+  const btnCloseMobileNav = document.getElementById('btn-close-mobile-nav');
+
+  const openMobileNav = () => {
+    mobileNavDrawer?.classList.add('is-open');
+    mobileNavBackdrop?.classList.add('is-open');
+    btnMobileMenuToggle?.setAttribute('aria-expanded', 'true');
+    mobileNavDrawer?.setAttribute('aria-hidden', 'false');
+    mobileNavBackdrop?.setAttribute('aria-hidden', 'false');
+  };
+
+  const closeMobileNav = () => {
+    mobileNavDrawer?.classList.remove('is-open');
+    mobileNavBackdrop?.classList.remove('is-open');
+    btnMobileMenuToggle?.setAttribute('aria-expanded', 'false');
+    mobileNavDrawer?.setAttribute('aria-hidden', 'true');
+    mobileNavBackdrop?.setAttribute('aria-hidden', 'true');
+  };
+
+  btnMobileMenuToggle?.addEventListener('click', () => {
+    if (mobileNavDrawer?.classList.contains('is-open')) {
+      closeMobileNav();
+    } else {
+      openMobileNav();
+    }
+  });
+
+  btnCloseMobileNav?.addEventListener('click', closeMobileNav);
+  mobileNavBackdrop?.addEventListener('click', closeMobileNav);
+
+  // Close drawer when tab links are clicked
+  mobileNavDrawer?.querySelectorAll('[data-tab-target]').forEach((link) => {
+    link.addEventListener('click', () => {
+      closeMobileNav();
+    });
+  });
+
+  document.getElementById('btn-mobile-tips')?.addEventListener('click', () => {
+    closeMobileNav();
+    tipsModal.open();
+  });
+
+  document.getElementById('btn-mobile-tutorial')?.addEventListener('click', () => {
+    closeMobileNav();
+    tutorial.open();
+  });
+
+  document.getElementById('btn-mobile-settings')?.addEventListener('click', () => {
+    closeMobileNav();
     settings.open();
   });
 

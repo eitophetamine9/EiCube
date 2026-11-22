@@ -1,6 +1,6 @@
 const TUTORIAL_STORAGE_KEY = 'eicube_tutorial_dismissed_v1';
 
-interface TutorialStep {
+export interface TutorialStep {
   title: string;
   badge: string;
   description: string;
@@ -11,41 +11,81 @@ export class TutorialOverlay {
   private overlayEl: HTMLElement | null = null;
   private currentStep: number = 0;
   private highlightedElement: HTMLElement | null = null;
+  private isTransitioning: boolean = false;
 
-  private steps: TutorialStep[] = [
+  private desktopSteps: TutorialStep[] = [
     {
       title: 'Turn, Orbit & Zoom',
-      badge: 'Navigation 1/4: 3D Stage',
+      badge: 'Desktop Tour 1/4: 3D Stage',
       description:
-        'Drag puzzle pieces directly to turn layers. Drag the background to orbit, and pinch or scroll to zoom.',
-      targetSelector: '#cube-viewport',
+        'Drag puzzle pieces directly to turn layers. Drag the background to orbit, and scroll or pinch to zoom.',
+      targetSelector: '#cube-viewport-container',
     },
     {
       title: 'Instant Puzzle Switcher',
-      badge: 'Navigation 2/4: Puzzles',
+      badge: 'Desktop Tour 2/4: Puzzles',
       description:
-        'Switch instantly between 3×3, 2×2, 4×4, and Pyraminx right from the top bar.',
+        'Switch instantly between 3x3, 2x2, 4x4, and Pyraminx right from the top bar.',
       targetSelector: '.puzzle-mini-picker',
     },
     {
       title: 'Move Pad & Keybinds',
-      badge: 'Navigation 3/4: Controls',
+      badge: 'Desktop Tour 3/4: Controls',
       description:
         'Execute face, slice (M/M\'), and rotation turns. Click any key chip to customize keyboard shortcuts.',
       targetSelector: '.trainer-left-sidebar',
     },
     {
       title: 'Video Guides & Speedcubing',
-      badge: 'Navigation 4/4: Learn',
+      badge: 'Desktop Tour 4/4: Learn',
       description:
         'Watch curated HD video tutorials and test speedcubing algorithms with 1-click execution on the 3D puzzle.',
-      targetSelector: '[data-tab="learn"]',
+      targetSelector: '[data-tab-target="learn"]',
+    },
+  ];
+
+  private mobileSteps: TutorialStep[] = [
+    {
+      title: 'Touch, Turn & Orbit',
+      badge: 'Mobile Tour 1/4: 3D Stage',
+      description:
+        'Swipe any cube face or pyraminx layer directly to turn it. Swipe empty space to orbit the camera, and pinch to zoom.',
+      targetSelector: '#cube-viewport-container',
+    },
+    {
+      title: 'Navigation & Burger Menu',
+      badge: 'Mobile Tour 2/4: Navigation',
+      description:
+        'Tap the burger menu icon up top to switch between 3x3, 2x2, 4x4, and Pyraminx, or to open learning guides and settings.',
+      targetSelector: '#btn-mobile-menu-toggle',
+    },
+    {
+      title: 'Thumb Dock & Quick Moves',
+      badge: 'Mobile Tour 3/4: Controls',
+      description:
+        'Use the bottom thumb dock for one-tap Scramble, Undo, Move History, and full keypad moves on any puzzle.',
+      targetSelector: '.mobile-bottom-dock',
+    },
+    {
+      title: 'Pro Video Guides & Algorithms',
+      badge: 'Mobile Tour 4/4: Speedcubing',
+      description:
+        'Open the burger menu and tap Learn Puzzles to watch HD video guides and test advanced speedcubing algorithms with 1 tap.',
+      targetSelector: '#btn-mobile-menu-toggle',
     },
   ];
 
   constructor() {
     this.createOverlay();
     this.checkAutoShow();
+  }
+
+  private isMobileView(): boolean {
+    return typeof window !== 'undefined' && window.innerWidth <= 768;
+  }
+
+  private getActiveSteps(): TutorialStep[] {
+    return this.isMobileView() ? this.mobileSteps : this.desktopSteps;
   }
 
   private checkAutoShow(): void {
@@ -62,7 +102,7 @@ export class TutorialOverlay {
   open(): void {
     if (!this.overlayEl) return;
     this.currentStep = 0;
-    this.renderStep();
+    this.renderStep(false);
     this.overlayEl.classList.add('is-open');
     this.overlayEl.setAttribute('aria-hidden', 'false');
   }
@@ -113,9 +153,11 @@ export class TutorialOverlay {
 
     overlay.innerHTML = `
       <div class="tutorial-card">
-        <div class="tutorial-badge" id="tutorial-badge">Navigation 1 of 4</div>
-        <h2 class="tutorial-title" id="tutorial-title">Tutorial Title</h2>
-        <p class="tutorial-desc" id="tutorial-desc">Tutorial text</p>
+        <div class="tutorial-step-body" id="tutorial-step-body">
+          <div class="tutorial-badge" id="tutorial-badge">Tour 1 of 4</div>
+          <h2 class="tutorial-title" id="tutorial-title">Tutorial Title</h2>
+          <p class="tutorial-desc" id="tutorial-desc">Tutorial text</p>
+        </div>
 
         <div class="tutorial-dots" id="tutorial-dots"></div>
 
@@ -140,14 +182,15 @@ export class TutorialOverlay {
     overlay.querySelector('#tutorial-prev-btn')?.addEventListener('click', () => {
       if (this.currentStep > 0) {
         this.currentStep--;
-        this.renderStep();
+        this.renderStep(true);
       }
     });
 
     overlay.querySelector('#tutorial-next-btn')?.addEventListener('click', () => {
-      if (this.currentStep < this.steps.length - 1) {
+      const steps = this.getActiveSteps();
+      if (this.currentStep < steps.length - 1) {
         this.currentStep++;
-        this.renderStep();
+        this.renderStep(true);
       } else {
         const checkbox = overlay.querySelector<HTMLInputElement>('#tutorial-dont-show');
         if (checkbox?.checked) {
@@ -174,27 +217,61 @@ export class TutorialOverlay {
     window.addEventListener('keydown', (e) => {
       if (!this.overlayEl?.classList.contains('is-open')) return;
 
+      const steps = this.getActiveSteps();
       if (e.key === 'Escape') {
         this.close();
       } else if (e.key === 'ArrowRight' || e.key === 'Enter') {
-        if (this.currentStep < this.steps.length - 1) {
+        if (this.currentStep < steps.length - 1) {
           this.currentStep++;
-          this.renderStep();
+          this.renderStep(true);
         } else {
           this.close();
         }
       } else if (e.key === 'ArrowLeft') {
         if (this.currentStep > 0) {
           this.currentStep--;
-          this.renderStep();
+          this.renderStep(true);
         }
       }
     });
   }
 
-  private renderStep(): void {
+  private renderStep(animate: boolean = false): void {
     if (!this.overlayEl) return;
-    const step = this.steps[this.currentStep];
+    const steps = this.getActiveSteps();
+
+    // Clamp currentStep if bounds shifted due to orientation/screen changes
+    if (this.currentStep >= steps.length) {
+      this.currentStep = steps.length - 1;
+    }
+    const step = steps[this.currentStep];
+
+    const bodyEl = this.overlayEl.querySelector<HTMLElement>('#tutorial-step-body');
+
+    if (animate && bodyEl) {
+      if (this.isTransitioning) return;
+      this.isTransitioning = true;
+      bodyEl.classList.add('is-fading-out');
+
+      setTimeout(() => {
+        this.updateStepDOM(steps, step);
+        bodyEl.classList.remove('is-fading-out');
+        bodyEl.classList.add('is-entering');
+
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            bodyEl.classList.remove('is-entering');
+            this.isTransitioning = false;
+          });
+        });
+      }, 150);
+    } else {
+      this.updateStepDOM(steps, step);
+    }
+  }
+
+  private updateStepDOM(steps: TutorialStep[], step: TutorialStep): void {
+    if (!this.overlayEl) return;
 
     const badge = this.overlayEl.querySelector<HTMLElement>('#tutorial-badge');
     const title = this.overlayEl.querySelector<HTMLElement>('#tutorial-title');
@@ -212,19 +289,21 @@ export class TutorialOverlay {
     }
 
     if (nextBtn) {
-      nextBtn.textContent = this.currentStep === this.steps.length - 1 ? 'Start Solving' : 'Next';
+      nextBtn.textContent = this.currentStep === steps.length - 1 ? 'Start Solving' : 'Next';
     }
 
     if (dots) {
       dots.innerHTML = '';
-      this.steps.forEach((_, idx) => {
+      steps.forEach((_, idx) => {
         const dot = document.createElement('span');
         dot.className = `tutorial-dot ${idx === this.currentStep ? 'is-active' : ''}`;
         dot.style.cursor = 'pointer';
         dot.title = `Step ${idx + 1}`;
         dot.addEventListener('click', () => {
-          this.currentStep = idx;
-          this.renderStep();
+          if (this.currentStep !== idx) {
+            this.currentStep = idx;
+            this.renderStep(true);
+          }
         });
         dots.appendChild(dot);
       });
