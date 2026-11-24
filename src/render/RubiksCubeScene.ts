@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
 import { CubeState } from '../cube/CubeState';
 import { AnimationQueue, QueuedMove } from './AnimationQueue';
 import { Axis, CameraVectors, Face, FACE_COLORS, FaceOrientationMap, ResolvedTurn } from '../cube/types';
@@ -26,7 +26,7 @@ export class RubiksCubeScene {
   private scene: THREE.Scene;
   private camera: THREE.PerspectiveCamera;
   private renderer: THREE.WebGLRenderer;
-  private controls: OrbitControls;
+  private controls: TrackballControls;
   private cubeGroup: THREE.Group;
   private pivotGroup: THREE.Group;
   private cubieItems: CubieMeshItem[] = [];
@@ -88,14 +88,14 @@ export class RubiksCubeScene {
     this.renderer.toneMappingExposure = 1.15;
     this.container.appendChild(this.renderer.domElement);
 
-    // OrbitControls
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enablePan = false;
-    this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.08;
-    this.controls.minDistance = 4.2;
-    this.controls.maxDistance = 13.0;
-    this.controls.rotateSpeed = 0.85;
+    // TrackballControls for smooth 360-degree all-angle inspection with zero POV locking
+    this.controls = new TrackballControls(this.camera, this.renderer.domElement);
+    this.controls.noPan = true;
+    this.controls.rotateSpeed = 2.0;
+    this.controls.zoomSpeed = 1.2;
+    this.controls.staticMoving = false;
+    this.controls.dynamicDampingFactor = 0.15;
+    this.updateCameraDistance();
 
     // Lighting
     this.setupLighting();
@@ -394,13 +394,7 @@ export class RubiksCubeScene {
     this.cubeState = new CubeState(newSize);
     this.buildCubies();
     
-    // Adjust camera distance for smaller or larger cubes
-    const baseDist = newSize === 2 ? 4.8 : newSize === 4 ? 6.8 : 5.8;
-    this.camera.position.setLength(baseDist);
-    this.controls.minDistance = newSize === 2 ? 3.5 : 4.5;
-    this.controls.maxDistance = newSize === 4 ? 16.0 : 13.0;
-    this.controls.update();
-
+    this.updateCameraDistance();
     this.onSolvedChange?.(true);
   }
 
@@ -424,6 +418,35 @@ export class RubiksCubeScene {
     return this.queue.isBusy();
   }
 
+  private updateCameraDistance(): void {
+    if (this.isDestroyed || !this.container) return;
+    const width = this.container.clientWidth;
+    const height = this.container.clientHeight;
+    if (width === 0 || height === 0) return;
+
+    const aspect = width / height;
+    // Bounding radius based on cube size
+    const rBound = (this.size / 2) * Math.SQRT2 * 1.05;
+    const vFovRad = (this.camera.fov * Math.PI) / 360;
+    const halfTan = Math.tan(vFovRad);
+
+    const isMobile = width <= 768;
+    const marginFactor = isMobile ? 1.40 : 1.24;
+
+    const fitFactor = Math.min(1.0, aspect / 0.95);
+    const targetDist = (rBound / (halfTan * fitFactor)) * marginFactor;
+
+    const currentDir = this.camera.position.clone().normalize();
+    if (currentDir.lengthSq() < 0.1) {
+      currentDir.set(4.4, 3.4, 5.2).normalize();
+    }
+    this.camera.position.copy(currentDir).multiplyScalar(targetDist);
+    this.controls.minDistance = targetDist * 0.55;
+    this.controls.maxDistance = targetDist * 2.5;
+    this.controls.handleResize();
+    this.controls.update();
+  }
+
   private handleResize(): void {
     if (this.isDestroyed || !this.container) return;
     const width = this.container.clientWidth;
@@ -433,6 +456,7 @@ export class RubiksCubeScene {
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);
+    this.updateCameraDistance();
   }
 
   private animate(time: number): void {

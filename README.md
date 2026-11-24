@@ -1,7 +1,7 @@
 <h1 align="center">EiCube</h1>
 
 <p align="center">
-  <a href="https://github.com/eitophetamine9/EiCube/releases/tag/v1.0.0"><img src="https://img.shields.io/badge/Release-v1.0.0-007acc?style=flat&logo=github&logoColor=white" alt="Release v1.0.0" /></a>
+  <a href="https://github.com/eitophetamine9/EiCube/releases/tag/v1.0.1"><img src="https://img.shields.io/badge/Release-v1.0.1-007acc?style=flat&logo=github&logoColor=white" alt="Release v1.0.1" /></a>
   <a href="https://eicube.vercel.app"><img src="https://img.shields.io/badge/Deployment-Vercel-black?style=flat&logo=vercel&logoColor=white" alt="Live Deployment" /></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white" alt="TypeScript" /></a>
   <a href="https://threejs.org/"><img src="https://img.shields.io/badge/Three.js-000000?style=flat&logo=three.js&logoColor=white" alt="Three.js" /></a>
@@ -16,10 +16,10 @@
 
 EiCube is an interactive 3D twisty puzzle trainer, algorithm simulator, and solving guide built with Three.js, TypeScript, and Vite. Designed for speedcubers and puzzle enthusiasts, EiCube provides a digital training environment for 3x3x3 Rubik's Cubes, 2x2x2 Pocket Cubes, 4x4x4 Rubik's Revenge, and Pyraminx regular tetrahedrons.
 
-Unlike conventional digital cube simulators that lock rotations to static world axes, EiCube features a dynamic camera-relative rotation resolver. Every move executed by the player is resolved relative to their current viewport perspective.
+Unlike conventional digital cube simulators that lock rotations to static world axes, EiCube features a dynamic camera-relative rotation resolver and an unconstrained trackball inspection system that allows continuous, 360-degree rotation across all angles with zero POV locking. Every move executed by the player is resolved relative to their current viewport perspective.
 
 > [!IMPORTANT]
-> **Camera-Relative Kinematics**: Turning the **R** face always turns whichever face is currently positioned on the viewer's right side, regardless of camera orbit angle. If the camera orbits 180 degrees, pressing R automatically acts on the face now facing right, preserving intuitive tactile muscle memory.
+> **Camera-Relative Kinematics & Free Trackball Inspection**: Turning the **R** face always turns whichever face is currently positioned on the viewer's right side, regardless of camera orbit angle. The camera utilizes unconstrained spherical quaternion rotation, allowing full tumbling, upside-down inspection, and zero polar lock.
 
 ---
 
@@ -27,24 +27,24 @@ Unlike conventional digital cube simulators that lock rotations to static world 
 
 - **Live Production App**: [https://eicube.vercel.app](https://eicube.vercel.app)
 - **Technical Documentation**: [DOCUMENTATION.md](DOCUMENTATION.md)
-- **GitHub Release**: [Release v1.0.0](https://github.com/eitophetamine9/EiCube/releases/tag/v1.0.0)
+- **GitHub Release**: [Release v1.0.1](https://github.com/eitophetamine9/EiCube/releases/tag/v1.0.1)
 - **Source Repository**: [https://github.com/eitophetamine9/EiCube](https://github.com/eitophetamine9/EiCube)
 
 ---
 
 ## Key Features
 
+- **Unconstrained 360-Degree Inspection**: Freely inspect the cube and Pyraminx from all possible angles, including vertical flips and upside-down perspectives, with zero gimbal or polar locking.
+- **Dynamic Device Responsive Scaling**: Mathematical camera framing automatically scales distance and field-of-view based on device aspect ratio, ensuring puzzles are never clipped or overly zoomed on mobile screens and perfectly framed on desktop monitors.
+- **All Legal Axis Rotations & Slices**: Complete support for whole-cube rotations (`x`, `x'`, `x2`, `y`, `y'`, `y2`, `z`, `z'`, `z2`), slice turns (`M`, `M'`, `M2`, `E`, `E'`, `E2`, `S`, `S'`, `S2`), and wide double-layer turns (`Rw`, `Lw`, `Uw`, `Dw`, `Fw`, `Bw`) across all puzzles.
 - **Direct Mouse & Touch Layer Drag**: Swipe any cubie along a face tangent to rotate that layer, with dynamic camera locking and tactile hand cursor feedback (`grab` / `grabbing`).
 - **Camera-Relative Controls**: Physical keybinds and on-screen pads dynamically map to faces relative to your current camera view angle.
-- **M & M' Slices and Conventional Move Binds**: Full support for middle slices (`M`, `M'`, `E`, `E'`, `S`, `S'`), wide turns (`Rw`, `Rw'`, `Lw`, `Lw'`, `Uw`, `Uw'`), cube rotations (`x`, `x'`, `y`, `y'`, `z`, `z'`), and Pyraminx tips (`u`, `u'`, `l`, `l'`, `r`, `r'`, `b`, `b'`), all with direct 1-click rebind chips.
 - **Advanced Speedcubing Guides**: Dedicated pro speedsolving algorithms across all puzzles (3x3 CFOP PLL/OLL, 2x2 Ortega PBL, 4x4 Yau parities, and Pyraminx L4E) with verified video tutorials, chapter timestamps, and interactive 1-click puzzle execution.
-- **Dynamic Onboarding Spotlight**: Snappy, non-intrusive 4-step interactive website navigation tour that visually spotlights key stage controls without text overload.
+- **Smooth Mobile Ergonomics**: Clean mobile layout with an animated hamburger drawer, dedicated mobile-first onboarding tour, floating thumb dock, and top-bar GitHub Star button.
 - **Player-Centric Move History**: Scramble turns are cleanly filtered out; timer automatically starts on the player's first manual turn.
-- **Multi-Puzzle Support**: Universal trainer for 3x3x3, 2x2x2, 4x4x4, and regular tetrahedron Pyraminx.
-- **"Solve This Version"**: Explore puzzles in dedicated 3D interactive sandboxes and load them directly into the solver with one click.
+- **Multi-Puzzle Support**: Universal trainer for 3x3x3, 2x2x2, 4x4x4, and regular tetrahedron Pyraminx with 1-click "Solve this version" sandboxes.
 - **Realistic 3D Pyraminx Model**: Regular tetrahedron geometry with signature speedcube black borders, dynamic 3D layer turning animation, and direct mouse/touch swipe interaction.
 - **Embedded Video Guides**: Curated YouTube tutorials with interactive chapter bookmark pills linking to specific algorithm timestamps.
-- **Mobile Ergonomics**: Floating thumb dock with quick access to Moves, Scramble, Undo, and History, plus responsive off-canvas drawers.
 - **Custom Keybindings**: Fully rebindable keys with dedicated single-key prime moves (`R'`, `U'`, `L'`, `D'`, `F'`, `B'`) and speedcubing presets.
 
 > [!NOTE]
@@ -59,9 +59,10 @@ For detailed technical specifications, mathematical equations, raycasting logic,
 - [DOCUMENTATION.md](DOCUMENTATION.md)
   - Mathematical & Kinematic Model (Camera dot products, tetrahedron Euclidean coordinates, barycentric tessellation)
   - Touch & Mouse Raycasting Architecture (Capture-phase interception, camera freezing, tangent projections)
+  - Responsive Viewport & Trackball Kinematics (Aspect-ratio dynamic fitting, polar unlock)
   - Multi-Puzzle Engine & State Separation (`CubeState.ts`, `pyraminxState.ts`)
   - UI Philosophy & Mobile Ergonomics
-  - Testing & Verification Suite (16/16 Vitest unit tests)
+  - Testing & Verification Suite (17/17 Vitest unit tests)
 
 ---
 
