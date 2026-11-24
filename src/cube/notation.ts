@@ -14,6 +14,13 @@ export function normalizeMove(token: string): string {
   let t = token.trim();
   if (!t) return '';
 
+  // Handle 4x4 inner slice moves like 2R, 2L, etc.
+  if (/^2[RLUDFB]/i.test(t)) {
+    const face = t[1].toUpperCase();
+    const suffix = t.slice(2).replace(/2'|'2/, '2');
+    return `2${face}${suffix}`;
+  }
+
   // Replace wide move forms like Rw -> r, Lw -> l
   if (/^[RLUDFB]w/i.test(t)) {
     const face = t[0].toLowerCase();
@@ -72,7 +79,7 @@ export function parseAlgorithm(input: string): string[] {
 }
 
 export function isValidMoveToken(token: string): boolean {
-  return /^[RLUDFBMESxyzrludfb](?:w)?['2]?$/.test(token);
+  return /^(?:2[RLUDFB]|[RLUDFBMESxyzrludfb])(?:w)?['2]?$/i.test(token);
 }
 
 export function invertAlgorithm(input: string): string {

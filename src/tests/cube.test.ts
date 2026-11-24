@@ -288,14 +288,35 @@ describe("Rubik's Cube Pure Logic", () => {
       expect(cube.isSolved(true)).toBe(true);
     }
 
-    // 3. Slice moves (M, E, S): 4 turns return to solved
+    // 3. Slice moves (M, E, S): 4 turns return to solved (tested on 3x3 and 4x4)
     for (const slice of ['M', 'E', 'S']) {
       const cube = new CubeState(3);
+      const turn3 = resolveTurn(slice, undefined, 3);
+      expect(turn3.layers.length).toBe(1);
       for (let i = 0; i < 4; i++) {
-        const turn = resolveTurn(slice, undefined, 3);
-        cube.applyTurn(turn.axis, turn.layers, turn.angle);
+        cube.applyTurn(turn3.axis, turn3.layers, turn3.angle);
       }
       expect(cube.isSolved(true)).toBe(true);
+
+      const cube4 = new CubeState(4);
+      const turn4 = resolveTurn(slice, undefined, 4);
+      expect(turn4.layers.length).toBe(2);
+      expect(turn4.layers).toEqual([-0.5, 0.5]);
+      for (let i = 0; i < 4; i++) {
+        cube4.applyTurn(turn4.axis, turn4.layers, turn4.angle);
+      }
+      expect(cube4.isSolved(true)).toBe(true);
+    }
+
+    // 3b. 4x4 Inner middle slice moves (2R, 2L, 2U, 2D, 2F, 2B): 4 turns return to solved
+    for (const inner of ['2R', '2L', '2U', '2D', '2F', '2B']) {
+      const cube4 = new CubeState(4);
+      const turn = resolveTurn(inner, undefined, 4);
+      expect(turn.layers.length).toBe(1);
+      for (let i = 0; i < 4; i++) {
+        cube4.applyTurn(turn.axis, turn.layers, turn.angle);
+      }
+      expect(cube4.isSolved(true)).toBe(true);
     }
 
     // 4. Wide moves (Rw, Lw, Uw, Dw, Fw, Bw) on 3x3 and 4x4

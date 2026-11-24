@@ -727,14 +727,18 @@ export class RubiksCubeScene {
     }
 
     let notation = '';
-    if (Math.abs(closestLayer) <= 0.2) {
-      // Slice turn (M, E, S)
+    const cameraMap = this.getCameraFaceMap();
+    const viewFace = (Object.keys(cameraMap) as Face[]).find((vf) => cameraMap[vf] === physicalFace) || physicalFace;
+
+    if (this.size === 3 && Math.abs(closestLayer) <= 0.2) {
+      // 3x3 Slice turn (M, E, S)
       if (rotAxis === 'x') notation = angle > 0 ? 'M' : "M'";
       else if (rotAxis === 'y') notation = angle > 0 ? 'E' : "E'";
       else if (rotAxis === 'z') notation = angle < 0 ? 'S' : "S'";
+    } else if (this.size === 4 && Math.abs(closestLayer) < 1.0) {
+      // 4x4 Inner slice turn (2R, 2L, 2U, 2D, 2F, 2B)
+      notation = isClockwise ? `2${viewFace}` : `2${viewFace}'`;
     } else {
-      const cameraMap = this.getCameraFaceMap();
-      const viewFace = (Object.keys(cameraMap) as Face[]).find((vf) => cameraMap[vf] === physicalFace) || physicalFace;
       notation = isClockwise ? viewFace : `${viewFace}'`;
     }
 

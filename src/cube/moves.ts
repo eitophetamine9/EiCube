@@ -64,6 +64,7 @@ export function resolveTurn(
   const faceUpper = base.toUpperCase();
   const isFace = ['R', 'L', 'U', 'D', 'F', 'B'].includes(faceUpper);
   const isWide = ['r', 'l', 'u', 'd', 'f', 'b'].includes(base) || (base.length === 2 && base.endsWith('w'));
+  const isInnerSlice = /^2[RLUDFB]$/i.test(base);
   const isSlice = ['M', 'E', 'S'].includes(base.toUpperCase());
   const isRotation = ['x', 'y', 'z'].includes(base.toLowerCase());
 
@@ -103,6 +104,22 @@ export function resolveTurn(
     };
   }
 
+  // 4x4 / Big Cube Inner Slice move (2R, 2L, 2U, 2D, 2F, 2B)
+  if (isInnerSlice) {
+    const rawFace = base[1].toUpperCase() as Face;
+    const targetFace = faceMap ? faceMap[rawFace] : rawFace;
+    const faceDef = getFaceMoveDefinition(targetFace, size);
+    const outerCoord = faceDef.layers[0];
+    const innerCoord = outerCoord > 0 ? outerCoord - 1 : outerCoord + 1;
+    return {
+      axis: faceDef.axis,
+      layers: [innerCoord],
+      angle: faceDef.baseAngle * multiplier,
+      notation: clean,
+      viewFace: targetFace,
+    };
+  }
+
   // Slice moves:
   // M follows L (between L and R)
   // E follows D (between D and U)
@@ -119,9 +136,17 @@ export function resolveTurn(
     }
 
     const faceDef = getFaceMoveDefinition(refFace, size);
+    let sliceLayers: number[] = [];
+    if (size % 2 === 1) {
+      sliceLayers = [0];
+    } else {
+      // For even cube sizes (like 4x4), the middle slice comprises both inner layers
+      sliceLayers = [-0.5, 0.5];
+    }
+
     return {
       axis: faceDef.axis,
-      layers: [0], // middle slice
+      layers: sliceLayers,
       angle: faceDef.baseAngle * multiplier,
       notation: clean,
       viewFace: refFace,
