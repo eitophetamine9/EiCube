@@ -91,7 +91,7 @@ export class RubiksCubeScene {
     // TrackballControls for smooth 360-degree all-angle inspection with zero POV locking
     this.controls = new TrackballControls(this.camera, this.renderer.domElement);
     this.controls.noPan = true;
-    this.controls.rotateSpeed = 2.0;
+    this.controls.rotateSpeed = 1.4;
     this.controls.zoomSpeed = 1.2;
     this.controls.staticMoving = false;
     this.controls.dynamicDampingFactor = 0.15;
@@ -466,10 +466,36 @@ export class RubiksCubeScene {
     this.lastTime = time;
 
     this.controls.update();
+    this.levelCameraHorizon();
     this.queue.tick(delta, this.reducedMotion);
 
     this.renderer.render(this.scene, this.camera);
     requestAnimationFrame(this.animate);
+  }
+
+  private levelCameraHorizon(): void {
+    const eye = this.camera.position.clone().sub(this.controls.target);
+    const eyeLen = eye.length();
+    if (eyeLen < 0.001) return;
+
+    const dir = eye.clone().normalize();
+    const worldUp = new THREE.Vector3(0, 1, 0);
+    const right = new THREE.Vector3().crossVectors(worldUp, dir);
+    const rightLen = right.length();
+    const poleProximity = Math.abs(dir.y);
+    if (poleProximity > 0.98 || rightLen < 0.001) {
+      return;
+    }
+
+    right.normalize();
+    const desiredUp = new THREE.Vector3().crossVectors(dir, right).normalize();
+    const poleFade = Math.max(0, Math.min(1, (0.98 - poleProximity) / 0.15));
+
+    const isInteracting = (this.controls as any).state !== -1;
+    const factor = (isInteracting ? 0.04 : 0.12) * poleFade;
+
+    this.camera.up.lerp(desiredUp, factor).normalize();
+    this.camera.lookAt(this.controls.target);
   }
 
   dispose(): void {
