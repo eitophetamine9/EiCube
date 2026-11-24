@@ -817,8 +817,9 @@ export class ControlsManager {
       const moves = scramble.split(' ');
       moves.forEach((m) => this.onExecuteMoveDirect?.(m, true));
     } else {
-      const len = this.activePuzzle === '2x2' ? 14 : this.activePuzzle === '4x4' ? 24 : 22;
-      scramble = generateScramble(len);
+      const size = this.activePuzzle === '2x2' ? 2 : this.activePuzzle === '4x4' ? 4 : 3;
+      const len = size === 2 ? 14 : size === 4 ? 38 : 22;
+      scramble = generateScramble(len, size);
       const moves = parseAlgorithm(scramble);
       this.scene.executeAlgorithm(moves, false, true, () => {
         toast.show('Puzzle scrambled! Timer starts on your next move.');

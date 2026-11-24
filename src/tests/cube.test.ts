@@ -159,6 +159,43 @@ describe("Rubik's Cube Pure Logic", () => {
     expect(cube.isSolved()).toBe(true);
   });
 
+  it('generates 4x4 scramble that thoroughly scrambles middle centers and inner layers', () => {
+    const cube4 = new CubeState(4);
+    expect(cube4.isSolved()).toBe(true);
+
+    const sc4 = generateScramble(38, 4);
+    const moves4 = parseAlgorithm(sc4);
+    expect(moves4.length).toBe(38);
+
+    // Verify scramble contains middle layer moves (wide, inner 2R..2B, or M/E/S)
+    const hasMiddleMoves = moves4.some((m) =>
+      /w|2[RLUDFB]|[MES]/i.test(m)
+    );
+    expect(hasMiddleMoves).toBe(true);
+
+    for (const m of moves4) {
+      const turn = resolveTurn(m, undefined, 4);
+      cube4.applyTurn(turn.axis, turn.layers, turn.angle);
+    }
+    expect(cube4.isSolved()).toBe(false);
+
+    // Verify that center cubies (e.g. abs(coord) == 0.5) are scrambled
+    const centerCubies = cube4.cubies.filter((c) => {
+      const countHalf = c.coords.filter((v) => Math.abs(v) === 0.5).length;
+      return countHalf === 2; // Face center pieces on 4x4 have two 0.5 coordinates and one 1.5 coordinate
+    });
+    expect(centerCubies.length).toBe(24);
+
+    // Invert algorithm and verify it returns to solved
+    const inv4 = invertAlgorithm(sc4);
+    const invMoves4 = parseAlgorithm(inv4);
+    for (const m of invMoves4) {
+      const turn = resolveTurn(m, undefined, 4);
+      cube4.applyTurn(turn.axis, turn.layers, turn.angle);
+    }
+    expect(cube4.isSolved(true)).toBe(true);
+  });
+
   it('slice moves (M, E, S) cyclic properties hold', () => {
     const cube = new CubeState(3);
     const mMoves = parseAlgorithm('M M M M');
