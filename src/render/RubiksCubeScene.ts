@@ -93,8 +93,7 @@ export class RubiksCubeScene {
     this.controls.noPan = true;
     this.controls.rotateSpeed = 1.4;
     this.controls.zoomSpeed = 1.2;
-    this.controls.staticMoving = false;
-    this.controls.dynamicDampingFactor = 0.15;
+    this.controls.staticMoving = true;
     this.updateCameraDistance();
 
     // Lighting
@@ -474,25 +473,39 @@ export class RubiksCubeScene {
   }
 
   private levelCameraHorizon(): void {
+    // Only level when idle (not actively dragging scene or pieces)
+    const isInteracting = (this.controls as any).state !== -1 || this.dragTarget !== null;
+    if (isInteracting) return;
+
     const eye = this.camera.position.clone().sub(this.controls.target);
     const eyeLen = eye.length();
     if (eyeLen < 0.001) return;
 
     const dir = eye.clone().normalize();
     const worldUp = new THREE.Vector3(0, 1, 0);
-    const right = new THREE.Vector3().crossVectors(worldUp, dir);
+
+    // Align with whichever hemisphere camera.up is in (prevents 180-degree barrel flips)
+    const sign = this.camera.up.dot(worldUp) >= 0 ? 1 : -1;
+    const targetWorldUp = new THREE.Vector3(0, sign, 0);
+
+    const right = new THREE.Vector3().crossVectors(targetWorldUp, dir);
     const rightLen = right.length();
     const poleProximity = Math.abs(dir.y);
-    if (poleProximity > 0.98 || rightLen < 0.001) {
+    if (poleProximity > 0.95 || rightLen < 0.001) {
       return;
     }
 
     right.normalize();
     const desiredUp = new THREE.Vector3().crossVectors(dir, right).normalize();
-    const poleFade = Math.max(0, Math.min(1, (0.98 - poleProximity) / 0.15));
 
-    const isInteracting = (this.controls as any).state !== -1;
-    const factor = (isInteracting ? 0.04 : 0.12) * poleFade;
+    // Verify desiredUp is in the same direction to avoid any snap flips
+    const dot = this.camera.up.dot(desiredUp);
+    if (dot < 0.2 || dot > 0.9995) {
+      return;
+    }
+
+    const poleFade = Math.max(0, Math.min(1, (0.95 - poleProximity) / 0.15));
+    const factor = 0.08 * poleFade;
 
     this.camera.up.lerp(desiredUp, factor).normalize();
     this.camera.lookAt(this.controls.target);
