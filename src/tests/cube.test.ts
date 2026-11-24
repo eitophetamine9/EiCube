@@ -266,5 +266,73 @@ describe("Rubik's Cube Pure Logic", () => {
     const c4 = new CubeState(4);
     expect(c4.layers).toEqual([-1.5, -0.5, 0.5, 1.5]);
   });
+
+  it('validates legal axis rotations, slice turns, and wide layer turns', () => {
+    // 1. Whole cube rotations (x, y, z) on 3x3: 4 full turns return to solved
+    for (const rot of ['x', 'y', 'z']) {
+      const cube = new CubeState(3);
+      for (let i = 0; i < 4; i++) {
+        const turn = resolveTurn(rot, undefined, 3);
+        cube.applyTurn(turn.axis, turn.layers, turn.angle);
+      }
+      expect(cube.isSolved(true)).toBe(true);
+    }
+
+    // 2. Double rotations (x2, y2, z2): 2 turns return to solved
+    for (const rot2 of ['x2', 'y2', 'z2']) {
+      const cube = new CubeState(3);
+      for (let i = 0; i < 2; i++) {
+        const turn = resolveTurn(rot2, undefined, 3);
+        cube.applyTurn(turn.axis, turn.layers, turn.angle);
+      }
+      expect(cube.isSolved(true)).toBe(true);
+    }
+
+    // 3. Slice moves (M, E, S): 4 turns return to solved
+    for (const slice of ['M', 'E', 'S']) {
+      const cube = new CubeState(3);
+      for (let i = 0; i < 4; i++) {
+        const turn = resolveTurn(slice, undefined, 3);
+        cube.applyTurn(turn.axis, turn.layers, turn.angle);
+      }
+      expect(cube.isSolved(true)).toBe(true);
+    }
+
+    // 4. Wide moves (Rw, Lw, Uw, Dw, Fw, Bw) on 3x3 and 4x4
+    for (const wide of ['Rw', 'Lw', 'Uw', 'Dw', 'Fw', 'Bw']) {
+      const cube3 = new CubeState(3);
+      const turn3 = resolveTurn(wide, undefined, 3);
+      expect(turn3.layers.length).toBe(2);
+      for (let i = 0; i < 4; i++) {
+        cube3.applyTurn(turn3.axis, turn3.layers, turn3.angle);
+      }
+      expect(cube3.isSolved(true)).toBe(true);
+
+      const cube4 = new CubeState(4);
+      const turn4 = resolveTurn(wide, undefined, 4);
+      expect(turn4.layers.length).toBe(2);
+      for (let i = 0; i < 4; i++) {
+        cube4.applyTurn(turn4.axis, turn4.layers, turn4.angle);
+      }
+      expect(cube4.isSolved(true)).toBe(true);
+    }
+
+    // 5. Rotations on 2x2 and 4x4
+    const cube2 = new CubeState(2);
+    const turnX2 = resolveTurn('x', undefined, 2);
+    expect(turnX2.layers.length).toBe(2);
+    for (let i = 0; i < 4; i++) {
+      cube2.applyTurn(turnX2.axis, turnX2.layers, turnX2.angle);
+    }
+    expect(cube2.isSolved(true)).toBe(true);
+
+    const cube4 = new CubeState(4);
+    const turnY4 = resolveTurn('y', undefined, 4);
+    expect(turnY4.layers.length).toBe(4);
+    for (let i = 0; i < 4; i++) {
+      cube4.applyTurn(turnY4.axis, turnY4.layers, turnY4.angle);
+    }
+    expect(cube4.isSolved(true)).toBe(true);
+  });
 });
 

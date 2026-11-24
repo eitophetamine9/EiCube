@@ -130,13 +130,22 @@ To avoid latency and eliminate conflicts between Three.js `OrbitControls` and di
 canvas.addEventListener('pointerdown', this.onPointerDown.bind(this), { capture: true });
 ```
 
-### Camera Perspective Freezing
+### Camera Perspective Freezing & Unconstrained Trackball Inspection
 
 When a `pointerdown` event registers:
 1. A raycaster evaluates intersections against cubie meshes.
-2. If a cubie is intersected, `OrbitControls.enabled` is immediately set to `false`.
+2. If a cubie is intersected, `TrackballControls.enabled` is immediately set to `false`.
 3. The camera position remains fixed throughout the drag, ensuring the viewport perspective never rotates while executing a turn.
-4. If no cubie is intersected (clicking the background stage), `OrbitControls` remains enabled to allow smooth viewpoint orbit.
+4. If no cubie is intersected (clicking the background stage), `TrackballControls` remains enabled to allow smooth 360-degree viewpoint inspection.
+5. Unlike standard OrbitControls with polar angle clamping ($[0, \pi]$), EiCube's inspection engine uses unconstrained virtual trackball quaternion rotations. This completely eliminates gimbal locking, singularity traps, and top/bottom polar stalling, enabling users to freely roll, flip, and tumble the puzzle across all angles.
+
+### Dynamic Device Responsive Scaling
+
+To prevent puzzles from clipping or appearing overly zoomed-in on mobile portrait viewports (narrow aspect ratios $A < 1.0$), camera distances are calculated dynamically based on viewport aspect ratio:
+
+$$D = \frac{R_{\text{bound}}}{\min(1, A / 0.95) \cdot \tan(\text{fov}_v / 2)} \cdot M$$
+
+where $R_{\text{bound}}$ is the 3D bounding radius of the puzzle, $\text{fov}_v$ is the vertical field of view ($42^\circ$), and $M$ is the platform margin factor ($1.40$ on mobile, $1.24$ on desktop). This ensures consistent edge clearance on all devices without manual zoom adjustments.
 
 ### Tangent Plane Vector Projection
 
@@ -231,14 +240,15 @@ The onboarding tutorial (`TutorialOverlay`) guides new users through website nav
 
 ## 6. Testing & Quality Assurance
 
-EiCube includes an automated Vitest unit test suite (`src/tests/cube.test.ts`):
+EiCube includes an automated Vitest unit test suite with 17 tests (`src/tests/cube.test.ts`):
 
 1. **Move Identity Inverses**: Verifies that applying $X$ followed by $X'$ returns the cube to an identity state ($X \cdot X' = I$).
 2. **Cycle Periodicity**: Verifies that repeating any face turn 4 times leaves the state unchanged ($X^4 = I$).
-3. **Camera Resolver Determinism**: Validates face resolution across 0, 90, 180, and 270 degree camera yaw angles.
-4. **Pyraminx Permutations**: Validates tip rotations, axial layer turns, and scramble validity.
-5. **Notation Parser**: Verifies parsing of single moves, prime modifiers (`'`), double turns (`2`), and algorithm repetitions (`(R U R' U') x2`).
-6. **Data Schema Integrity**: Validates video IDs, start timestamps, and algorithm strings in content dictionaries.
+3. **Axis Rotations & Slice Verification**: Validates 4-fold periodic return for whole-cube rotations ($x, y, z$), 2-fold return for double rotations ($x2, y2, z2$), slice turns ($M, E, S$), and wide turns ($Rw, Lw, Uw, Dw, Fw, Bw$) across 2x2, 3x3, and 4x4.
+4. **Camera Resolver Determinism**: Validates face resolution across 0, 90, 180, and 270 degree camera yaw angles.
+5. **Pyraminx Permutations**: Validates tip rotations, axial layer turns, and scramble validity.
+6. **Notation Parser**: Verifies parsing of single moves, prime modifiers (`'`), double turns (`2`), and algorithm repetitions (`(R U R' U') x2`).
+7. **Data Schema Integrity**: Validates video IDs, start timestamps, and algorithm strings in content dictionaries.
 
 Execute the test suite:
 

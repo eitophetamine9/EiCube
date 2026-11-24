@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
 import { PyraminxState, PYRA_COLOR_HEX, generatePyraminxScramble } from '../cube/pyraminxState';
 
 // Regular tetrahedron dimensions
@@ -49,7 +49,7 @@ export class PyraminxScene {
   private scene: THREE.Scene;
   private camera: THREE.PerspectiveCamera;
   private renderer: THREE.WebGLRenderer;
-  private controls: OrbitControls;
+  private controls: TrackballControls;
   private state: PyraminxState;
   private mainGroup: THREE.Group;
   private pivotGroup: THREE.Group;
@@ -109,13 +109,13 @@ export class PyraminxScene {
     this.renderer.toneMappingExposure = 1.15;
     this.container.appendChild(this.renderer.domElement);
 
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enablePan = false;
-    this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.08;
-    this.controls.minDistance = 3.5;
-    this.controls.maxDistance = 11.0;
-    this.controls.rotateSpeed = 0.85;
+    this.controls = new TrackballControls(this.camera, this.renderer.domElement);
+    this.controls.noPan = true;
+    this.controls.rotateSpeed = 2.0;
+    this.controls.zoomSpeed = 1.2;
+    this.controls.staticMoving = false;
+    this.controls.dynamicDampingFactor = 0.15;
+    this.updateCameraDistance();
 
     // Three-point studio lighting
     this.setupLighting();
@@ -483,7 +483,30 @@ export class PyraminxScene {
 
     const m = this.activeMove.move.trim();
     const isPrime = m.endsWith("'");
-    const base = m.replace("'", '');
+    const isDouble = m.endsWith('2');
+    const base = m.replace(/[2']+/g, '');
+
+    // Whole puzzle rotations (x, y, z)
+    const isRotation = ['x', 'y', 'z'].includes(base.toLowerCase());
+    if (isRotation) {
+      const rotAxis =
+        base.toLowerCase() === 'x'
+          ? new THREE.Vector3(1, 0, 0)
+          : base.toLowerCase() === 'y'
+            ? new THREE.Vector3(0, 1, 0)
+            : new THREE.Vector3(0, 0, 1);
+
+      this.activeAxis.copy(rotAxis);
+      this.activeAngle = (isPrime ? 1 : isDouble ? -2 : -1) * (Math.PI / 2);
+      this.activePieces = [...this.allPieces];
+
+      this.pivotGroup.position.set(0, 0, 0);
+      this.pivotGroup.quaternion.identity();
+      for (const pGroup of this.allPieces) {
+        this.pivotGroup.attach(pGroup);
+      }
+      return;
+    }
 
     const axis = MOVE_AXES[base];
     if (!axis) {
@@ -525,10 +548,12 @@ export class PyraminxScene {
     }
     this.pivotGroup.quaternion.identity();
 
-    // Apply logical move to PyraminxState
-    this.state.applyMove(moveStr);
-    // Note: Do NOT call updateColors() here. Pieces are physical 3D objects with their own
-    // stickers that stay in their new rotated positions, providing 100% seamless motion with zero color flash.
+    // Apply logical move to PyraminxState if layer/tip turn
+    const base = moveStr.trim().replace(/[2']+/g, '');
+    const isRotation = ['x', 'y', 'z'].includes(base.toLowerCase());
+    if (!isRotation) {
+      this.state.applyMove(moveStr);
+    }
 
     const isSolved = this.state.isSolved();
     this.onSolvedChange?.(isSolved);
@@ -702,6 +727,34 @@ export class PyraminxScene {
     }
   }
 
+  private updateCameraDistance(): void {
+    if (this.isDestroyed || !this.container) return;
+    const width = this.container.clientWidth;
+    const height = this.container.clientHeight;
+    if (width === 0 || height === 0) return;
+
+    const aspect = width / height;
+    const rBound = 1.95; // Pyraminx bounding radius
+    const vFovRad = (this.camera.fov * Math.PI) / 360;
+    const halfTan = Math.tan(vFovRad);
+
+    const isMobile = width <= 768;
+    const marginFactor = isMobile ? 1.35 : 1.20;
+
+    const fitFactor = Math.min(1.0, aspect / 0.95);
+    const targetDist = (rBound / (halfTan * fitFactor)) * marginFactor;
+
+    const currentDir = this.camera.position.clone().normalize();
+    if (currentDir.lengthSq() < 0.1) {
+      currentDir.set(0, 0.8, 5.2).normalize();
+    }
+    this.camera.position.copy(currentDir).multiplyScalar(targetDist);
+    this.controls.minDistance = targetDist * 0.55;
+    this.controls.maxDistance = targetDist * 2.5;
+    this.controls.handleResize();
+    this.controls.update();
+  }
+
   private handleResize(): void {
     if (this.isDestroyed || !this.container) return;
     const width = this.container.clientWidth;
@@ -711,6 +764,7 @@ export class PyraminxScene {
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);
+    this.updateCameraDistance();
   }
 
   private animate(time: number): void {
