@@ -34,7 +34,7 @@ Unlike conventional digital cube simulators that lock rotations to static world 
 
 ## Key Features
 
-- **Unconstrained 360-Degree Inspection**: Freely inspect the cube and Pyraminx from all possible angles, including vertical flips and upside-down perspectives, with zero gimbal or polar locking.
+- **Unconstrained 360-Degree Inspection & Horizon Stabilization**: Freely inspect the cube and Pyraminx from all possible angles with zero gimbal or polar locking, paired with automatic soft horizon stabilization that keeps the puzzle upright and prevents excessive tilt or slanting.
 - **Dynamic Device Responsive Scaling**: Mathematical camera framing automatically scales distance and field-of-view based on device aspect ratio, ensuring puzzles are never clipped or overly zoomed on mobile screens and perfectly framed on desktop monitors.
 - **All Legal Axis Rotations & Slices**: Complete support for whole-cube rotations (`x`, `x'`, `x2`, `y`, `y'`, `y2`, `z`, `z'`, `z2`), slice turns (`M`, `M'`, `M2`, `E`, `E'`, `E2`, `S`, `S'`, `S2`), and wide double-layer turns (`Rw`, `Lw`, `Uw`, `Dw`, `Fw`, `Bw`) across all puzzles.
 - **Direct Mouse & Touch Layer Drag**: Swipe any cubie along a face tangent to rotate that layer, with dynamic camera locking and tactile hand cursor feedback (`grab` / `grabbing`).
