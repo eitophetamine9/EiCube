@@ -269,8 +269,9 @@ export class OtherCubesManager {
         const sc = this.pyraScene?.scramble();
         if (sc) toast.show(`Scrambled Pyraminx: ${sc}`);
       } else {
-        const length = this.currentPuzzle === '2x2' ? 14 : this.currentPuzzle === '4x4' ? 24 : 22;
-        const sc = generateScramble(length);
+        const size = this.currentPuzzle === '2x2' ? 2 : this.currentPuzzle === '4x4' ? 4 : 3;
+        const length = size === 2 ? 14 : size === 4 ? 38 : 22;
+        const sc = generateScramble(length, size);
         const moves = parseAlgorithm(sc);
         this.cubeScene?.executeAlgorithm(moves, false, true);
         toast.show(`Scrambled ${this.currentPuzzle}: ${sc}`);
