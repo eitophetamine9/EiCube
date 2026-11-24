@@ -111,9 +111,10 @@ export class PyraminxScene {
 
     this.controls = new TrackballControls(this.camera, this.renderer.domElement);
     this.controls.noPan = true;
-    this.controls.rotateSpeed = 1.4;
+    this.controls.rotateSpeed = 2.2;
     this.controls.zoomSpeed = 1.2;
-    this.controls.staticMoving = true;
+    this.controls.staticMoving = false;
+    this.controls.dynamicDampingFactor = 0.28;
     this.updateCameraDistance();
 
     // Three-point studio lighting
@@ -598,6 +599,7 @@ export class PyraminxScene {
 
     // User clicked ON THE PYRAMINX: Immediately freeze camera controls!
     this.controls.enabled = false;
+    (this.controls as any)._lastAngle = 0;
     this.renderer.domElement.style.cursor = 'grabbing';
 
     this.dragTarget = {
@@ -637,6 +639,7 @@ export class PyraminxScene {
 
   private onPointerUp(e: PointerEvent): void {
     this.controls.enabled = true; // Always restore camera control for subsequent background drags
+    (this.controls as any)._lastAngle = 0;
 
     const target = this.dragTarget;
     this.dragTarget = null;
@@ -773,7 +776,6 @@ export class PyraminxScene {
     this.lastTime = time;
 
     this.controls.update();
-    this.levelCameraHorizon();
 
     // Step active animation
     if (this.activeMove) {
@@ -793,43 +795,13 @@ export class PyraminxScene {
     requestAnimationFrame(this.animate);
   }
 
-  private levelCameraHorizon(): void {
-    // Only level when idle (not actively dragging scene or pieces)
-    const isInteracting = (this.controls as any).state !== -1 || this.dragTarget !== null;
-    if (isInteracting) return;
-
-    const eye = this.camera.position.clone().sub(this.controls.target);
-    const eyeLen = eye.length();
-    if (eyeLen < 0.001) return;
-
-    const dir = eye.clone().normalize();
-    const worldUp = new THREE.Vector3(0, 1, 0);
-
-    // Align with whichever hemisphere camera.up is in (prevents 180-degree barrel flips)
-    const sign = this.camera.up.dot(worldUp) >= 0 ? 1 : -1;
-    const targetWorldUp = new THREE.Vector3(0, sign, 0);
-
-    const right = new THREE.Vector3().crossVectors(targetWorldUp, dir);
-    const rightLen = right.length();
-    const poleProximity = Math.abs(dir.y);
-    if (poleProximity > 0.95 || rightLen < 0.001) {
-      return;
-    }
-
-    right.normalize();
-    const desiredUp = new THREE.Vector3().crossVectors(dir, right).normalize();
-
-    // Verify desiredUp is in the same direction to avoid any snap flips
-    const dot = this.camera.up.dot(desiredUp);
-    if (dot < 0.2 || dot > 0.9995) {
-      return;
-    }
-
-    const poleFade = Math.max(0, Math.min(1, (0.95 - poleProximity) / 0.15));
-    const factor = 0.08 * poleFade;
-
-    this.camera.up.lerp(desiredUp, factor).normalize();
-    this.camera.lookAt(this.controls.target);
+  public resetCameraView(): void {
+    const defaultDir = new THREE.Vector3(0, 0.8, 5.2).normalize();
+    this.camera.position.copy(defaultDir);
+    this.camera.up.set(0, 1, 0);
+    this.controls.target.set(0, 0, 0);
+    (this.controls as any)._lastAngle = 0;
+    this.updateCameraDistance();
   }
 
   dispose(): void {
