@@ -116,10 +116,10 @@ $$(\vec{P}_1 - \vec{P}_0) \times (\vec{P}_2 - \vec{P}_0) \cdot \vec{N}_{\text{fa
 
 ### Piece Backing Plates & Aesthetic Bordering
 
-To eliminate translucent color bleed-through and mirror the appearance of high-end competition speedcubes, each piece consists of three distinct visual components:
-1. **Solid Inner Core**: A dark plastic regular tetrahedron ($0x111317$, roughness $0.35$).
-2. **Beveled Backing Plate**: Individual 3D piece frames raised $0.016$ units above the core with a $0.94$ shrink factor and beveled side walls.
-3. **Elevated Glossy Sticker**: Colored triangular facets raised $0.024$ units above the core with a $0.80$ shrink factor, producing the signature $20\%$ dark speedcube framing border.
+To eliminate translucent gaps or background bleed-through and mirror the appearance of high-end competition speedcubes, each piece consists of three distinct visual components:
+1. **Solid Inner Core**: A closed dark plastic regular tetrahedron ($0.72$ scale) plus an opaque central sphere (`DoubleSide`, $0x111317$, roughness $0.40$).
+2. **Closed Tapered Wedge Backing**: Individual 3D piece prisms raised $0.016$ units outward with a $0.992$ shrink factor, $0.70$ tapered inward walls, and bottom caps so zero gaps show at any viewing angle or turn progress.
+3. **Elevated Glossy Sticker**: Colored triangular facets raised $0.024$ units above the core with a $0.78$ shrink factor, producing crisp opaque dark speedcube framing borders.
 
 ---
 

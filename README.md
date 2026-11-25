@@ -34,7 +34,7 @@ Unlike conventional digital cube simulators that lock rotations to static world 
 
 ## Key Features
 
-- **Unconstrained 360-Degree Smooth & Fast Spectating**: Freely inspect the cube and Pyraminx from all possible angles with zero gimbal or polar locking, fast responsive rotation, silky dynamic damping, and zero forced auto-orienting.
+- **Unconstrained 360-Degree Smooth & Fast Spectating**: Freely inspect the cube and Pyraminx from all possible angles with zero gimbal or polar locking, customizable Camera POV Orbit Sensitivity (`0.5x`–`5.0x` slider persisted in settings), silky dynamic damping, and zero forced auto-orienting.
 - **Dynamic Device Responsive Scaling**: Mathematical camera framing automatically scales distance and field-of-view based on device aspect ratio, ensuring puzzles are never clipped or overly zoomed on mobile screens and perfectly framed on desktop monitors.
 - **All Legal Axis Rotations, Slices & 4x4 Inner Layers**: Complete support for whole-cube rotations (`x`, `x'`, `x2`, `y`, `y'`, `y2`, `z`, `z'`, `z2`), slice turns (`M`, `M'`, `M2`, `E`, `E'`, `E2`, `S`, `S'`, `S2` on 3x3 and 4x4), 4x4 inner middle slice turns (`2R`, `2L`, `2U`, `2D`, `2F`, `2B`), and wide double-layer turns (`Rw`, `Lw`, `Uw`, `Dw`, `Fw`, `Bw`) across all puzzles.
 - **Direct Mouse & Touch Layer Drag**: Swipe any cubie along a face tangent to rotate that layer, with dynamic camera locking and tactile hand cursor feedback (`grab` / `grabbing`).
@@ -45,7 +45,7 @@ Unlike conventional digital cube simulators that lock rotations to static world 
 - **Smooth Mobile Ergonomics**: Clean mobile layout with an animated hamburger drawer, theme switcher, dedicated mobile-first onboarding tour, full-width 44px+ bottom thumb dock, and top-bar GitHub Star pill button.
 - **Player-Centric Move History**: Scramble turns are cleanly filtered out; timer automatically starts on the player's first manual turn.
 - **Multi-Puzzle Support**: Universal trainer for 3x3x3, 2x2x2, 4x4x4, and regular tetrahedron Pyraminx with 1-click "Solve this version" sandboxes.
-- **Realistic 3D Pyraminx Model**: Regular tetrahedron geometry with signature speedcube black borders, dynamic 3D layer turning animation, and direct mouse/touch swipe interaction.
+- **Realistic Solid 3D Pyraminx Model**: Regular tetrahedron geometry with deep tapered opaque black plastic wedges (`DoubleSide`) and zero see-through gaps, dynamic 3D layer turning animation, and direct mouse/touch swipe interaction.
 - **Embedded Video Guides**: Curated YouTube tutorials with interactive chapter bookmark pills linking to specific algorithm timestamps.
 - **Custom Keybindings**: Fully rebindable keys with dedicated single-key prime moves (`R'`, `U'`, `L'`, `D'`, `F'`, `B'`) and speedcubing presets.
 
