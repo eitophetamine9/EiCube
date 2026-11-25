@@ -116,20 +116,63 @@ export const TWOHAND_SPEEDCUBE_KEYBINDS: KeybindMap = {
 };
 
 const STORAGE_KEY = 'eicube_keybinds_v2';
+const SENSITIVITY_STORAGE_KEY = 'eicube_cam_sensitivity_v1';
+const DEFAULT_CAMERA_SENSITIVITY = 2.0;
 
 export class SettingsManager {
   private keybinds: KeybindMap;
+  private cameraSensitivity: number;
   private modalEl: HTMLElement | null = null;
   private isModalOpen: boolean = false;
   private listeningAction: string | null = null;
   private onKeybindsChange?: (keybinds: KeybindMap) => void;
+  private onSensitivityChange?: (speed: number) => void;
 
-  constructor(onKeybindsChange?: (keybinds: KeybindMap) => void) {
+  constructor(
+    onKeybindsChange?: (keybinds: KeybindMap) => void,
+    onSensitivityChange?: (speed: number) => void
+  ) {
     this.onKeybindsChange = onKeybindsChange;
+    this.onSensitivityChange = onSensitivityChange;
     this.keybinds = this.loadKeybinds();
+    this.cameraSensitivity = this.loadCameraSensitivity();
     if (typeof document !== 'undefined') {
       this.createModal();
     }
+  }
+
+  loadCameraSensitivity(): number {
+    try {
+      const raw = localStorage.getItem(SENSITIVITY_STORAGE_KEY);
+      if (raw !== null) {
+        const parsed = parseFloat(raw);
+        if (!Number.isNaN(parsed)) {
+          return Math.max(0.5, Math.min(5.0, parsed));
+        }
+      }
+    } catch {
+      // Ignore
+    }
+    return DEFAULT_CAMERA_SENSITIVITY;
+  }
+
+  getCameraSensitivity(): number {
+    return this.cameraSensitivity;
+  }
+
+  setCameraSensitivity(speed: number): void {
+    const clamped = Math.round(Math.max(0.5, Math.min(5.0, speed)) * 10) / 10;
+    this.cameraSensitivity = clamped;
+    try {
+      localStorage.setItem(SENSITIVITY_STORAGE_KEY, String(clamped));
+    } catch {
+      // Ignore
+    }
+    const modalSlider = this.modalEl?.querySelector<HTMLInputElement>('#modal-pov-slider');
+    const modalVal = this.modalEl?.querySelector<HTMLElement>('#modal-pov-val');
+    if (modalSlider) modalSlider.value = String(clamped);
+    if (modalVal) modalVal.textContent = `${clamped.toFixed(1)}×`;
+    this.onSensitivityChange?.(clamped);
   }
 
   loadKeybinds(): KeybindMap {
@@ -199,6 +242,7 @@ export class SettingsManager {
 
   resetToDefaults(): void {
     this.applyPreset('default');
+    this.setCameraSensitivity(DEFAULT_CAMERA_SENSITIVITY);
   }
 
   getKeybinds(): KeybindMap {
@@ -251,6 +295,16 @@ export class SettingsManager {
           </button>
         </div>
         <div class="modal-body">
+          <div class="settings-sensitivity-row">
+            <div class="sensitivity-info">
+              <label for="modal-pov-slider" class="keybind-label">Camera POV Sensitivity</label>
+              <span class="keybind-desc">Adjust how fast dragging the background orbits the puzzle</span>
+            </div>
+            <div class="sensitivity-slider-group">
+              <input type="range" id="modal-pov-slider" min="0.5" max="5.0" step="0.1" value="${this.cameraSensitivity.toFixed(1)}" aria-label="Camera POV Sensitivity" />
+              <span id="modal-pov-val" class="speed-val">${this.cameraSensitivity.toFixed(1)}×</span>
+            </div>
+          </div>
           <div class="presets-row">
             <span class="preset-label">Quick Presets:</span>
             <button id="preset-default" class="btn btn-sm btn-secondary">Standard (U, D, L, R, F, B)</button>
@@ -280,6 +334,10 @@ export class SettingsManager {
     modal.querySelector('#btn-reset-keybinds')?.addEventListener('click', () => this.resetToDefaults());
     modal.querySelector('#preset-default')?.addEventListener('click', () => this.applyPreset('default'));
     modal.querySelector('#preset-twohand')?.addEventListener('click', () => this.applyPreset('twohand'));
+    modal.querySelector<HTMLInputElement>('#modal-pov-slider')?.addEventListener('input', (e) => {
+      const val = parseFloat((e.target as HTMLInputElement).value);
+      this.setCameraSensitivity(val);
+    });
 
     modal.addEventListener('click', (e) => {
       if (e.target === modal) this.close();

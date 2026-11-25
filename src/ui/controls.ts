@@ -140,11 +140,17 @@ export class ControlsManager {
             </button>
           </div>
 
-          <!-- Speed Slider -->
+          <!-- Speed & POV Sensitivity Sliders -->
           <div class="speed-control">
             <label for="speed-slider" class="speed-label">Speed</label>
             <input type="range" id="speed-slider" min="60" max="400" step="20" value="200" title="Animation duration" />
             <span id="speed-val" class="speed-val">200ms</span>
+          </div>
+
+          <div class="speed-control sensitivity-control" title="Camera orbit sensitivity">
+            <label for="pov-slider" class="speed-label">POV</label>
+            <input type="range" id="pov-slider" min="0.5" max="5.0" step="0.1" value="${this.settings.getCameraSensitivity().toFixed(1)}" title="Camera POV orbit sensitivity" />
+            <span id="pov-val" class="speed-val">${this.settings.getCameraSensitivity().toFixed(1)}×</span>
           </div>
         </div>
 
@@ -544,6 +550,15 @@ export class ControlsManager {
       if (speedVal) speedVal.textContent = `${val}ms`;
     });
 
+    // Camera POV sensitivity slider
+    const povSlider = this.container.querySelector<HTMLInputElement>('#pov-slider');
+    const povVal = this.container.querySelector<HTMLElement>('#pov-val');
+    povSlider?.addEventListener('input', (e) => {
+      const val = parseFloat((e.target as HTMLInputElement).value);
+      this.settings.setCameraSensitivity(val);
+      if (povVal) povVal.textContent = `${val.toFixed(1)}×`;
+    });
+
     // Move category filter pills inside Moves Pad
     const filterButtons = this.container.querySelectorAll<HTMLButtonElement>('[data-move-group]');
     filterButtons.forEach((btn) => {
@@ -709,6 +724,14 @@ export class ControlsManager {
         }
       }
     });
+  }
+
+  refreshSensitivityDisplay(): void {
+    const val = this.settings.getCameraSensitivity();
+    const povSlider = this.container.querySelector<HTMLInputElement>('#pov-slider');
+    const povVal = this.container.querySelector<HTMLElement>('#pov-val');
+    if (povSlider) povSlider.value = val.toFixed(1);
+    if (povVal) povVal.textContent = `${val.toFixed(1)}×`;
   }
 
   handleScramble(): void {
