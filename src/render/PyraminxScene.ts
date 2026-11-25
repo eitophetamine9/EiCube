@@ -106,7 +106,12 @@ export class PyraminxScene {
     this.renderer.setSize(width, height);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.15;
+    this.renderer.toneMappingExposure = 1.08;
+    this.renderer.domElement.setAttribute('role', 'img');
+    this.renderer.domElement.setAttribute(
+      'aria-label',
+      'Interactive 3D Pyraminx puzzle. Drag layers or tips to turn, drag background to orbit, scroll or pinch to zoom.'
+    );
     this.container.appendChild(this.renderer.domElement);
 
     this.controls = new TrackballControls(this.camera, this.renderer.domElement);
@@ -146,18 +151,21 @@ export class PyraminxScene {
   }
 
   private setupLighting(): void {
-    const ambient = new THREE.AmbientLight(0xffffff, 1.1);
+    const hemi = new THREE.HemisphereLight(0xf4f8fa, 0xd4dfca, 0.85);
+    this.scene.add(hemi);
+
+    const ambient = new THREE.AmbientLight(0xffffff, 0.72);
     this.scene.add(ambient);
 
-    const dirLight1 = new THREE.DirectionalLight(0xffffff, 2.2);
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.85);
     dirLight1.position.set(5, 7, 6);
     this.scene.add(dirLight1);
 
-    const dirLight2 = new THREE.DirectionalLight(0x94a3b8, 1.2);
+    const dirLight2 = new THREE.DirectionalLight(0xdbe5ec, 0.9);
     dirLight2.position.set(-6, -5, -5);
     this.scene.add(dirLight2);
 
-    const rimLight = new THREE.DirectionalLight(0xe2e8f0, 0.9);
+    const rimLight = new THREE.DirectionalLight(0xffffff, 0.75);
     rimLight.position.set(0, 6, -7);
     this.scene.add(rimLight);
   }

@@ -1,7 +1,7 @@
 <h1 align="center">EiCube</h1>
 
 <p align="center">
-  <a href="https://github.com/eitophetamine9/EiCube/releases/tag/v1.0.1"><img src="https://img.shields.io/badge/Release-v1.0.1-007acc?style=flat&logo=github&logoColor=white" alt="Release v1.0.1" /></a>
+  <a href="https://github.com/eitophetamine9/EiCube/releases/tag/v1.0.2"><img src="https://img.shields.io/badge/Release-v1.0.2-3f6212?style=flat&logo=github&logoColor=white" alt="Release v1.0.2" /></a>
   <a href="https://eicube.vercel.app"><img src="https://img.shields.io/badge/Deployment-Vercel-black?style=flat&logo=vercel&logoColor=white" alt="Live Deployment" /></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white" alt="TypeScript" /></a>
   <a href="https://threejs.org/"><img src="https://img.shields.io/badge/Three.js-000000?style=flat&logo=three.js&logoColor=white" alt="Three.js" /></a>
@@ -27,7 +27,7 @@ Unlike conventional digital cube simulators that lock rotations to static world 
 
 - **Live Production App**: [https://eicube.vercel.app](https://eicube.vercel.app)
 - **Technical Documentation**: [DOCUMENTATION.md](DOCUMENTATION.md)
-- **GitHub Release**: [Release v1.0.1](https://github.com/eitophetamine9/EiCube/releases/tag/v1.0.1)
+- **GitHub Release**: [Release v1.0.2](https://github.com/eitophetamine9/EiCube/releases/tag/v1.0.2)
 - **Source Repository**: [https://github.com/eitophetamine9/EiCube](https://github.com/eitophetamine9/EiCube)
 
 ---
@@ -40,7 +40,8 @@ Unlike conventional digital cube simulators that lock rotations to static world 
 - **Direct Mouse & Touch Layer Drag**: Swipe any cubie along a face tangent to rotate that layer, with dynamic camera locking and tactile hand cursor feedback (`grab` / `grabbing`).
 - **Camera-Relative Controls**: Physical keybinds and on-screen pads dynamically map to faces relative to your current camera view angle.
 - **Advanced Speedcubing Guides**: Dedicated pro speedsolving algorithms across all puzzles (3x3 CFOP PLL/OLL, 2x2 Ortega PBL, 4x4 Yau parities, and Pyraminx L4E) with verified video tutorials, chapter timestamps, and interactive 1-click puzzle execution.
-- **Smooth Mobile Ergonomics**: Clean mobile layout with an animated hamburger drawer, dedicated mobile-first onboarding tour, floating thumb dock, and top-bar GitHub Star button.
+- **Daylight Cubing Studio Theme (`v1.0.2`)**: Airy sky-to-sage studio lighting, crisp elevated white frosted panels, competition-style obsidian timer & move telemetry capsule, and an editorial `Newsreader` + `Plus Jakarta Sans` + `JetBrains Mono` typography system tuned for fast readability on desktop and mobile.
+- **Smooth Mobile Ergonomics**: Clean mobile layout with an animated hamburger drawer, dedicated mobile-first onboarding tour, full-width 44px+ bottom thumb dock, and top-bar GitHub Star pill button.
 - **Player-Centric Move History**: Scramble turns are cleanly filtered out; timer automatically starts on the player's first manual turn.
 - **Multi-Puzzle Support**: Universal trainer for 3x3x3, 2x2x2, 4x4x4, and regular tetrahedron Pyraminx with 1-click "Solve this version" sandboxes.
 - **Realistic 3D Pyraminx Model**: Regular tetrahedron geometry with signature speedcube black borders, dynamic 3D layer turning animation, and direct mouse/touch swipe interaction.
@@ -62,7 +63,7 @@ For detailed technical specifications, mathematical equations, raycasting logic,
   - Responsive Viewport & Trackball Kinematics (Aspect-ratio dynamic fitting, polar unlock)
   - Multi-Puzzle Engine & State Separation (`CubeState.ts`, `pyraminxState.ts`)
   - UI Philosophy & Mobile Ergonomics
-  - Testing & Verification Suite (17/17 Vitest unit tests)
+  - Testing & Verification Suite (18/18 Vitest unit tests)
 
 ---
 
@@ -98,7 +99,7 @@ src/
 ├── tests/
 │   └── cube.test.ts        # Vitest suite covering all puzzles, algorithms, keybinds, and videos
 ├── main.ts                 # Application entry point and tab orchestration
-└── style.css               # Clean dark-mode stylesheet, responsive dock, and drawer transitions
+└── style.css               # Daylight Cubing Studio design system, responsive dock, and drawer transitions
 ```
 
 ---

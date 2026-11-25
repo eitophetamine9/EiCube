@@ -85,7 +85,12 @@ export class RubiksCubeScene {
     this.renderer.setSize(width, height);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.15;
+    this.renderer.toneMappingExposure = 1.08;
+    this.renderer.domElement.setAttribute('role', 'img');
+    this.renderer.domElement.setAttribute(
+      'aria-label',
+      `Interactive 3D ${this.size}x${this.size} Rubik's Cube. Drag layers directly to turn, drag background to orbit, scroll or pinch to zoom.`
+    );
     this.container.appendChild(this.renderer.domElement);
 
     // TrackballControls for smooth 360-degree all-angle inspection with zero POV locking
@@ -134,18 +139,21 @@ export class RubiksCubeScene {
   }
 
   private setupLighting(): void {
-    const ambient = new THREE.AmbientLight(0xffffff, 1.1);
+    const hemi = new THREE.HemisphereLight(0xf4f8fa, 0xd4dfca, 0.85);
+    this.scene.add(hemi);
+
+    const ambient = new THREE.AmbientLight(0xffffff, 0.72);
     this.scene.add(ambient);
 
-    const dirLight1 = new THREE.DirectionalLight(0xffffff, 2.2);
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.85);
     dirLight1.position.set(6, 8, 7);
     this.scene.add(dirLight1);
 
-    const dirLight2 = new THREE.DirectionalLight(0x94a3b8, 1.2);
-    dirLight2.position.set(-7, -6, -6);
+    const dirLight2 = new THREE.DirectionalLight(0xdbe5ec, 0.9);
+    dirLight2.position.set(-7, -5, -6);
     this.scene.add(dirLight2);
 
-    const rimLight = new THREE.DirectionalLight(0xe2e8f0, 0.9);
+    const rimLight = new THREE.DirectionalLight(0xffffff, 0.75);
     rimLight.position.set(0, 8, -7);
     this.scene.add(rimLight);
   }
