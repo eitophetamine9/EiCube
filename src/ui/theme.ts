@@ -2,7 +2,7 @@ export type ThemeMode = 'light' | 'dark';
 
 const THEME_STORAGE_KEY = 'eicube_theme_v1';
 const LIGHT_THEME_COLOR = '#D7E6EC';
-const DARK_THEME_COLOR = '#0E1214';
+const DARK_THEME_COLOR = '#0C1410';
 
 export function getStoredTheme(): ThemeMode {
   if (typeof window === 'undefined') return 'light';

@@ -12,6 +12,7 @@ export class OtherCubesManager {
   private container: HTMLElement;
   private currentPuzzle: OtherPuzzleType = '3x3';
   private onSolveVersion?: (puzzle: OtherPuzzleType) => void;
+  private cameraSensitivity: number = 2.0;
 
   // 3D Scenes
   private cubeScene: RubiksCubeScene | null = null;
@@ -20,12 +21,24 @@ export class OtherCubesManager {
 
   constructor(
     container: HTMLElement,
-    callbacks?: { onSolveVersion?: (puzzle: OtherPuzzleType) => void }
+    callbacks?: {
+      onSolveVersion?: (puzzle: OtherPuzzleType) => void;
+      initialSensitivity?: number;
+    }
   ) {
     this.container = container;
     this.onSolveVersion = callbacks?.onSolveVersion;
+    if (typeof callbacks?.initialSensitivity === 'number') {
+      this.cameraSensitivity = callbacks.initialSensitivity;
+    }
     this.cubeState = new CubeState(3);
     this.render();
+  }
+
+  setCameraSensitivity(speed: number): void {
+    this.cameraSensitivity = speed;
+    this.cubeScene?.setRotateSpeed(speed);
+    this.pyraScene?.setRotateSpeed(speed);
   }
 
   setPuzzle(puzzle: OtherPuzzleType): void {
@@ -238,6 +251,7 @@ export class OtherCubesManager {
           if (solved) toast.show('Pyraminx Solved!');
         },
       });
+      this.pyraScene.setRotateSpeed(this.cameraSensitivity);
     } else {
       const size = this.currentPuzzle === '2x2' ? 2 : this.currentPuzzle === '4x4' ? 4 : 3;
       this.cubeState = new CubeState(size);
@@ -246,6 +260,7 @@ export class OtherCubesManager {
           if (solved) toast.show(`${this.currentPuzzle} Solved!`);
         },
       });
+      this.cubeScene.setRotateSpeed(this.cameraSensitivity);
     }
   }
 

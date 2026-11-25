@@ -55,8 +55,10 @@ document.addEventListener('DOMContentLoaded', () => {
             controls?.recordMove(notation);
           },
         });
+        pyraScene.setRotateSpeed(settings.getCameraSensitivity());
       } else {
         pyraScene['renderer'].domElement.style.display = 'block';
+        pyraScene.setRotateSpeed(settings.getCameraSensitivity());
         pyraScene.reset();
       }
     } else {
@@ -71,10 +73,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // 3. Settings Manager
-  const settings = new SettingsManager(() => {
-    controls?.refreshKeybindLabels();
-  });
+  // 3. Settings Manager (Keybinds + Camera POV Sensitivity)
+  let otherCubes: OtherCubesManager | null = null;
+  const settings = new SettingsManager(
+    () => {
+      controls?.refreshKeybindLabels();
+    },
+    (sensitivity) => {
+      cubeScene.setRotateSpeed(sensitivity);
+      pyraScene?.setRotateSpeed(sensitivity);
+      otherCubes?.setCameraSensitivity(sensitivity);
+      controls?.refreshSensitivityDisplay();
+    }
+  );
+  cubeScene.setRotateSpeed(settings.getCameraSensitivity());
 
   // 4. Controls UI
   controls = new ControlsManager(controlsMount, cubeScene, settings, {
@@ -101,7 +113,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // 6. Other Puzzles Tab Manager with "Solve this version" button support!
-  const otherCubes = new OtherCubesManager(otherMount, {
+  otherCubes = new OtherCubesManager(otherMount, {
+    initialSensitivity: settings.getCameraSensitivity(),
     onSolveVersion: (puzzle) => {
       controls.setTrainerPuzzle(puzzle);
       switchTrainerPuzzle(puzzle);
@@ -109,7 +122,6 @@ document.addEventListener('DOMContentLoaded', () => {
       toast.show(`Loaded ${puzzle} into Puzzle Trainer!`);
     },
   });
-  void otherCubes;
 
   // 7. Learn Puzzles Guide UI with Video Tutorials
   const guideRenderer = new GuideRenderer(guideMount, (notation, category) => {

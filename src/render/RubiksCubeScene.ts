@@ -418,6 +418,14 @@ export class RubiksCubeScene {
     this.queue.setBaseDuration(durationMs);
   }
 
+  setRotateSpeed(speed: number): void {
+    this.controls.rotateSpeed = Math.max(0.5, Math.min(5.0, speed));
+  }
+
+  getRotateSpeed(): number {
+    return this.controls.rotateSpeed;
+  }
+
   getSpeed(): number {
     return this.queue.getBaseDuration();
   }

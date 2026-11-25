@@ -187,8 +187,8 @@ export class PyraminxScene {
     this.allPieces = [];
     this.stickerMeshes = [[], [], [], []];
 
-    // Solid inner dark core (scaled to 0.58 so it provides interior shadow without clipping through rotating layers)
-    const coreScale = 0.58;
+    // Solid inner dark core (scaled to 0.72 with opaque interior to prevent any gap transparency)
+    const coreScale = 0.72;
     const coreGeom = new THREE.BufferGeometry();
     const cTop = V_TOP.clone().multiplyScalar(coreScale);
     const cFL = V_FRONT_LEFT.clone().multiplyScalar(coreScale);
@@ -218,11 +218,19 @@ export class PyraminxScene {
 
     const coreMat = new THREE.MeshStandardMaterial({
       color: 0x111317,
-      roughness: 0.35,
-      metalness: 0.1,
+      roughness: 0.4,
+      metalness: 0.08,
+      side: THREE.DoubleSide,
     });
     const coreMesh = new THREE.Mesh(coreGeom, coreMat);
     this.mainGroup.add(coreMesh);
+
+    // Opaque central sphere core so oblique seam rays never leak through the center
+    const innerSphere = new THREE.Mesh(
+      new THREE.SphereGeometry(H * 0.24, 24, 18),
+      coreMat
+    );
+    this.mainGroup.add(innerSphere);
 
     // Faces:
     // Face 0: Front (Green)
@@ -278,8 +286,9 @@ export class PyraminxScene {
 
     const blackPlasticMat = new THREE.MeshStandardMaterial({
       color: 0x111317,
-      roughness: 0.35,
-      metalness: 0.1,
+      roughness: 0.38,
+      metalness: 0.08,
+      side: THREE.DoubleSide,
     });
 
     rawTriangles.forEach((pts, stickerIdx) => {
@@ -299,24 +308,29 @@ export class PyraminxScene {
 
       const center = new THREE.Vector3().add(p0).add(p1).add(p2).divideScalar(3);
 
-      // 1. Black 3D piece backing plate with beveled side walls (coordinates relative to piece center)
+      // 1. Solid opaque 3D piece backing prism extending deep toward core (eliminates see-through gaps)
       const frameOffset = faceNormal.clone().multiplyScalar(0.016);
-      const frameShrink = 0.94;
+      const frameShrink = 0.992;
       const f0 = p0.clone().sub(center).multiplyScalar(frameShrink).add(frameOffset);
       const f1 = p1.clone().sub(center).multiplyScalar(frameShrink).add(frameOffset);
       const f2 = p2.clone().sub(center).multiplyScalar(frameShrink).add(frameOffset);
 
-      // Base footprint on core surface (relative to piece center)
-      const b0 = p0.clone().sub(center).multiplyScalar(frameShrink);
-      const b1 = p1.clone().sub(center).multiplyScalar(frameShrink);
-      const b2 = p2.clone().sub(center).multiplyScalar(frameShrink);
+      // Deep tapered base footprint toward core (0.72 world scale relative to piece center)
+      const innerScale = 0.70;
+      const b0 = p0.clone().multiplyScalar(innerScale).sub(center);
+      const b1 = p1.clone().multiplyScalar(innerScale).sub(center);
+      const b2 = p2.clone().multiplyScalar(innerScale).sub(center);
 
-      // Construct solid 3D piece geometry (top face + 3 beveled side skirts)
+      // Construct closed solid 3D wedge geometry (top cap + 3 deep side walls + bottom cap)
       const frameVertices = new Float32Array([
         // Top cap
         f0.x, f0.y, f0.z,
         f1.x, f1.y, f1.z,
         f2.x, f2.y, f2.z,
+        // Bottom cap
+        b0.x, b0.y, b0.z,
+        b2.x, b2.y, b2.z,
+        b1.x, b1.y, b1.z,
         // Side 0
         f0.x, f0.y, f0.z,
         f1.x, f1.y, f1.z,
@@ -347,8 +361,8 @@ export class PyraminxScene {
       const frameMesh = new THREE.Mesh(frameGeom, blackPlasticMat);
       frameMesh.userData = { faceIdx, stickerIdx };
 
-      // 2. Colored sticker: inset with scale 0.80 for 20% bold black speedcube border (relative to piece center)
-      const stickerShrink = 0.80;
+      // 2. Colored sticker: inset with scale 0.78 for bold opaque black speedcube border
+      const stickerShrink = 0.78;
       const stickerOffset = faceNormal.clone().multiplyScalar(0.024);
       const s0 = p0.clone().sub(center).multiplyScalar(stickerShrink).add(stickerOffset);
       const s1 = p1.clone().sub(center).multiplyScalar(stickerShrink).add(stickerOffset);
@@ -456,6 +470,14 @@ export class PyraminxScene {
 
   setSpeed(durationMs: number): void {
     this.baseDuration = Math.max(40, Math.min(800, durationMs));
+  }
+
+  setRotateSpeed(speed: number): void {
+    this.controls.rotateSpeed = Math.max(0.5, Math.min(5.0, speed));
+  }
+
+  getRotateSpeed(): number {
+    return this.controls.rotateSpeed;
   }
 
   getSpeed(): number {
