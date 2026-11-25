@@ -10,6 +10,7 @@ import { PyraminxState, generatePyraminxScramble } from '../cube/pyraminxState';
 import { OTHER_CUBES_GUIDES } from '../content/otherCubesData';
 import { PUZZLE_VIDEOS } from '../content/videoData';
 import { SettingsManager, DEFAULT_KEYBINDS, TWOHAND_SPEEDCUBE_KEYBINDS } from '../ui/settings';
+import { MOVES_GLOSSARY, MOVE_CATEGORIES } from '../content/movesGlossaryData';
 
 describe("Rubik's Cube Pure Logic", () => {
   it('initializes a solved 3x3 cube', () => {
@@ -391,6 +392,24 @@ describe("Rubik's Cube Pure Logic", () => {
       cube4.applyTurn(turnY4.axis, turnY4.layers, turnY4.angle);
     }
     expect(cube4.isSolved(true)).toBe(true);
+  });
+
+  it('verifies every Move Glossary entry has valid metadata and unique animated GIF path', () => {
+    expect(MOVE_CATEGORIES.length).toBe(6);
+    expect(MOVES_GLOSSARY.length).toBe(64);
+
+    const seenIds = new Set<string>();
+    const seenGifs = new Set<string>();
+    for (const item of MOVES_GLOSSARY) {
+      expect(seenIds.has(item.id)).toBe(false);
+      seenIds.add(item.id);
+      expect(item.notation.length).toBeGreaterThan(0);
+      expect(item.layersDescription.length).toBeGreaterThan(10);
+      expect(item.speedcubingTip.length).toBeGreaterThan(10);
+      expect(item.gifPath).toMatch(/^\.\/gifs\/moves\/[a-zA-Z0-9_]+\.gif$/);
+      expect(seenGifs.has(item.gifPath)).toBe(false);
+      seenGifs.add(item.gifPath);
+    }
   });
 });
 
