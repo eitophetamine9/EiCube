@@ -51,10 +51,12 @@ src/
 ├── content/
 │   ├── guideData.ts        # 3x3 beginner method, notation guide, and CFOP data
 │   ├── otherCubesData.ts   # Structured guides and algorithms for 3x3, 2x2, 4x4, and Pyraminx
+│   ├── movesGlossaryData.ts # 64-move WCA & Pyraminx notation glossary with animated GIF metadata
 │   └── videoData.ts        # Curated YouTube video tutorials with metadata and chapter timestamps
 ├── ui/
+│   ├── theme.ts            # Polar Light/Dark theme persistence and DOM attribute management
 │   ├── tabs.ts             # 3-way tab manager (Puzzle, Other Puzzles, Learn Puzzles)
-│   ├── controls.ts         # Top floating bar with mini picker, left keybind pad, right history, mobile dock
+│   ├── controls.ts         # Top floating bar, scoped Moves Pad tabs + More Info link, move history
 │   ├── settings.ts         # Keybind rebinding modal, direct prime binds, presets
 │   ├── tutorial.ts         # Multi-step onboarding overlay
 │   ├── tipsModal.ts        # Solving diagnostic and quick tips modal
@@ -62,9 +64,10 @@ src/
 │   ├── guideRenderer.ts    # Learn Puzzles guide with embedded YouTube video players
 │   └── toast.ts            # Notification and toast alert manager
 ├── tests/
-│   └── cube.test.ts        # Vitest suite covering all puzzles, algorithms, keybinds, and videos
-├── main.ts                 # Application entry point and tab orchestration
-└── style.css               # Daylight Cubing Studio design system, responsive dock, and drawer transitions
+│   └── cube.test.ts        # Vitest suite covering all puzzles, algorithms, keybinds, glossary, and videos
+├── main.ts                 # Application entry point, query param demonstration, and tab orchestration
+├── movesPage.ts            # Dedicated moves.html encyclopedia page controller
+└── style.css               # Daylight & Dark Studio design system, responsive dock, and drawer transitions
 ```
 
 ---
@@ -240,7 +243,7 @@ The onboarding tutorial (`TutorialOverlay`) guides new users through website nav
 
 ## 6. Testing & Quality Assurance
 
-EiCube includes an automated Vitest unit test suite with 18 tests (`src/tests/cube.test.ts`):
+EiCube includes an automated Vitest unit test suite with 19 tests (`src/tests/cube.test.ts`):
 
 1. **Move Identity Inverses**: Verifies that applying $X$ followed by $X'$ returns the cube to an identity state ($X \cdot X' = I$).
 2. **Cycle Periodicity**: Verifies that repeating any face turn 4 times leaves the state unchanged ($X^4 = I$).

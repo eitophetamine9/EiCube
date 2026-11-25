@@ -10,8 +10,11 @@ import { TipsModal } from './ui/tipsModal';
 import { OtherCubesManager } from './ui/otherCubes';
 import { parseAlgorithm } from './cube/notation';
 import { toast } from './ui/toast';
+import { initThemeControls } from './ui/theme';
 
 document.addEventListener('DOMContentLoaded', () => {
+  initThemeControls();
+
   // 1. Containers
   const viewportContainer = document.getElementById('cube-viewport-container') as HTMLElement;
   const controlsMount = document.getElementById('controls-mount') as HTMLElement;
@@ -245,4 +248,19 @@ document.addEventListener('DOMContentLoaded', () => {
       controls.executeMove(move, true);
     }
   });
+
+  // 10. Optional deep link from Move Glossary page (?puzzle=...&try=...)
+  const params = new URLSearchParams(window.location.search);
+  const reqPuzzle = params.get('puzzle') as TrainerPuzzleType | null;
+  const reqTryMove = params.get('try');
+  if (reqPuzzle && ['3x3', '2x2', '4x4', 'pyraminx'].includes(reqPuzzle)) {
+    controls.setTrainerPuzzle(reqPuzzle);
+    switchTrainerPuzzle(reqPuzzle);
+  }
+  if (reqTryMove) {
+    setTimeout(() => {
+      controls.executeMove(reqTryMove, true);
+      toast.show(`Demonstrating move: ${reqTryMove}`);
+    }, 350);
+  }
 });

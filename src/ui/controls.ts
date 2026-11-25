@@ -12,6 +12,7 @@ export class ControlsManager {
   private scene: RubiksCubeScene;
   private settings: SettingsManager;
   private activePuzzle: TrainerPuzzleType = '3x3';
+  private activeMoveGroup: string = 'faces';
   private onPuzzleChange?: (puzzle: TrainerPuzzleType) => void;
   private onExecuteMoveDirect?: (move: string, isScramble?: boolean) => void;
   private onSpeedChange?: (speedMs: number) => void;
@@ -50,6 +51,7 @@ export class ControlsManager {
   setTrainerPuzzle(puzzle: TrainerPuzzleType, skipNotify: boolean = false): void {
     if (this.activePuzzle === puzzle) return;
     this.activePuzzle = puzzle;
+    this.activeMoveGroup = puzzle === 'pyraminx' ? 'layers' : 'faces';
     this.clearHistory();
     this.resetTimer();
     this.render();
@@ -158,14 +160,14 @@ export class ControlsManager {
           </button>
         </div>
 
-        <!-- LEFT SIDEBAR: Keybinds & Move Controls -->
+        <!-- LEFT SIDEBAR: Beautified Keybinds & Move Controls -->
         <aside class="controls-sidebar-left">
           <div class="sidebar-header">
             <span class="sidebar-title">${this.getPuzzleDisplayName()} Moves</span>
             <div class="sidebar-header-actions">
               <button id="btn-edit-keybinds" class="btn-text-sm" title="Rebind any key">Edit Keys</button>
               <button id="btn-close-left-sidebar" class="btn-icon-subtle btn-close-sidebar" aria-label="Close Moves Pad">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
                   <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
@@ -173,8 +175,28 @@ export class ControlsManager {
             </div>
           </div>
 
-          <!-- Moves Pad according to active puzzle -->
-          ${this.renderMovesPad(getBindDisplay)}
+          <div class="moves-filter-bar" role="tablist" aria-label="Move Category Filter">
+            ${this.renderMoveFilterPills()}
+          </div>
+
+          <!-- Scoped Moves Pad (reduces visual clutter while keeping all moves 1 tap away) -->
+          <div id="moves-pad-scroll" class="moves-pad-scroll">
+            ${this.renderMovesPad(getBindDisplay)}
+          </div>
+
+          <div class="moves-sidebar-footer">
+            <a href="./moves.html?puzzle=${this.activePuzzle}" class="btn-moves-more-info" title="Open visual GIF guide explaining every move">
+              <span class="more-info-left">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <span>More Info</span>
+              </span>
+              <span class="more-info-sub">GIF Guide &rarr;</span>
+            </a>
+          </div>
         </aside>
 
         <!-- RIGHT SIDEBAR: Vertical Move History -->
@@ -260,92 +282,204 @@ export class ControlsManager {
     }
   }
 
+  private getMoveGroups(): { id: string; label: string }[] {
+    if (this.activePuzzle === 'pyraminx') {
+      return [
+        { id: 'layers', label: 'Layers' },
+        { id: 'tips', label: 'Tips' },
+        { id: 'rotations', label: 'Rot.' },
+      ];
+    }
+    if (this.activePuzzle === '2x2') {
+      return [
+        { id: 'faces', label: 'Faces' },
+        { id: 'rotations', label: 'Rot.' },
+      ];
+    }
+    if (this.activePuzzle === '4x4') {
+      return [
+        { id: 'faces', label: 'Faces' },
+        { id: 'slices', label: 'Slices' },
+        { id: 'inner', label: 'Inner' },
+        { id: 'wide', label: 'Wide' },
+        { id: 'rotations', label: 'Rot.' },
+      ];
+    }
+    return [
+      { id: 'faces', label: 'Faces' },
+      { id: 'slices', label: 'Slices' },
+      { id: 'wide', label: 'Wide' },
+      { id: 'rotations', label: 'Rot.' },
+    ];
+  }
+
+  private renderMoveFilterPills(): string {
+    const groups = this.getMoveGroups();
+    if (!groups.some((g) => g.id === this.activeMoveGroup)) {
+      this.activeMoveGroup = groups[0].id;
+    }
+    return groups
+      .map(
+        (g) =>
+          `<button class="btn-move-filter ${this.activeMoveGroup === g.id ? 'is-active' : ''}" data-move-group="${g.id}" role="tab" aria-selected="${this.activeMoveGroup === g.id}">${g.label}</button>`
+      )
+      .join('');
+  }
+
+  private renderPairGrid(
+    pairs: { move: string; prime: string }[],
+    getBindDisplay: (act: string) => string,
+    titlePrefix: string
+  ): string {
+    return `
+      <div class="moves-vertical-grid">
+        ${pairs
+          .map(
+            (p) => `
+          <div class="move-pair-row">
+            <button class="btn-sidebar-move" data-move="${p.move}" title="${titlePrefix} ${p.move}">
+              <span class="move-name">${p.move}</span>
+              <kbd class="key-tag" data-rebind-action="${p.move}">${getBindDisplay(p.move)}</kbd>
+            </button>
+            <button class="btn-sidebar-move btn-prime" data-move="${p.prime}" title="${titlePrefix} ${p.prime}">
+              <span class="move-name">${p.prime}</span>
+              <kbd class="key-tag" data-rebind-action="${p.prime}">${getBindDisplay(p.prime)}</kbd>
+            </button>
+          </div>
+        `
+          )
+          .join('')}
+      </div>
+    `;
+  }
+
   private renderMovesPad(getBindDisplay: (act: string) => string): string {
     if (this.activePuzzle === 'pyraminx') {
+      if (this.activeMoveGroup === 'tips') {
+        return `
+          <div class="moves-section">
+            <div class="moves-section-label">Corner Tips (120°)</div>
+            ${this.renderPairGrid(
+              [
+                { move: 'u', prime: "u'" },
+                { move: 'l', prime: "l'" },
+                { move: 'r', prime: "r'" },
+                { move: 'b', prime: "b'" },
+              ],
+              getBindDisplay,
+              'Tip'
+            )}
+          </div>
+        `;
+      }
+      if (this.activeMoveGroup === 'rotations') {
+        return `
+          <div class="moves-section">
+            <div class="moves-section-label">Puzzle Rotations</div>
+            ${this.renderPairGrid(
+              [
+                { move: 'x', prime: "x'" },
+                { move: 'y', prime: "y'" },
+                { move: 'z', prime: "z'" },
+              ],
+              getBindDisplay,
+              'Rotate'
+            )}
+          </div>
+        `;
+      }
       return `
         <div class="moves-section">
-          <div class="moves-section-label">Layer Turns</div>
-          <div class="moves-vertical-grid">
-            ${[
+          <div class="moves-section-label">Axial Layers (120°)</div>
+          ${this.renderPairGrid(
+            [
               { move: 'U', prime: "U'" },
               { move: 'L', prime: "L'" },
               { move: 'R', prime: "R'" },
               { move: 'B', prime: "B'" },
-            ]
-              .map(
-                (p) => `
-              <div class="move-pair-row">
-                <button class="btn-sidebar-move" data-move="${p.move}" title="Turn ${p.move}">
-                  <span class="move-name">${p.move}</span>
-                  <kbd class="key-tag" data-rebind-action="${p.move}">${getBindDisplay(p.move)}</kbd>
-                </button>
-                <button class="btn-sidebar-move btn-prime" data-move="${p.prime}" title="Turn ${p.prime}">
-                  <span class="move-name">${p.prime}</span>
-                  <kbd class="key-tag" data-rebind-action="${p.prime}">${getBindDisplay(p.prime)}</kbd>
-                </button>
-              </div>
-            `
-              )
-              .join('')}
-          </div>
-        </div>
-
-        <div class="moves-section">
-          <div class="moves-section-label">Tip Rotations</div>
-          <div class="moves-vertical-grid">
-            ${[
-              { move: 'u', prime: "u'" },
-              { move: 'l', prime: "l'" },
-              { move: 'r', prime: "r'" },
-              { move: 'b', prime: "b'" },
-            ]
-              .map(
-                (p) => `
-              <div class="move-pair-row">
-                <button class="btn-sidebar-move" data-move="${p.move}" title="Tip ${p.move}">
-                  <span class="move-name">${p.move}</span>
-                  <kbd class="key-tag" data-rebind-action="${p.move}">${getBindDisplay(p.move)}</kbd>
-                </button>
-                <button class="btn-sidebar-move btn-prime" data-move="${p.prime}" title="Tip ${p.prime}">
-                  <span class="move-name">${p.prime}</span>
-                  <kbd class="key-tag" data-rebind-action="${p.prime}">${getBindDisplay(p.prime)}</kbd>
-                </button>
-              </div>
-            `
-              )
-              .join('')}
-          </div>
-        </div>
-
-        <div class="moves-section">
-          <div class="moves-section-label">Puzzle Rotations</div>
-          <div class="moves-vertical-grid">
-            ${[
-              { move: 'x', prime: "x'" },
-              { move: 'y', prime: "y'" },
-              { move: 'z', prime: "z'" },
-            ]
-              .map(
-                (p) => `
-              <div class="move-pair-row">
-                <button class="btn-sidebar-move" data-move="${p.move}" title="Rotate ${p.move}">
-                  <span class="move-name">${p.move}</span>
-                  <kbd class="key-tag" data-rebind-action="${p.move}">${getBindDisplay(p.move)}</kbd>
-                </button>
-                <button class="btn-sidebar-move btn-prime" data-move="${p.prime}" title="Rotate ${p.prime}">
-                  <span class="move-name">${p.prime}</span>
-                  <kbd class="key-tag" data-rebind-action="${p.prime}">${getBindDisplay(p.prime)}</kbd>
-                </button>
-              </div>
-            `
-              )
-              .join('')}
-          </div>
+            ],
+            getBindDisplay,
+            'Turn'
+          )}
         </div>
       `;
     }
 
-    // 2x2, 3x3, 4x4
+    if (this.activeMoveGroup === 'slices') {
+      const label = this.activePuzzle === '4x4' ? 'Dual Middle Slices (M, E, S)' : 'Middle Slices (M, E, S)';
+      return `
+        <div class="moves-section">
+          <div class="moves-section-label">${label}</div>
+          ${this.renderPairGrid(
+            [
+              { move: 'M', prime: "M'" },
+              { move: 'E', prime: "E'" },
+              { move: 'S', prime: "S'" },
+            ],
+            getBindDisplay,
+            'Slice'
+          )}
+        </div>
+      `;
+    }
+
+    if (this.activeMoveGroup === 'inner' && this.activePuzzle === '4x4') {
+      return `
+        <div class="moves-section">
+          <div class="moves-section-label">4×4 Inner Middle Slices</div>
+          ${this.renderPairGrid(
+            [
+              { move: '2R', prime: "2R'" },
+              { move: '2L', prime: "2L'" },
+              { move: '2U', prime: "2U'" },
+              { move: '2D', prime: "2D'" },
+              { move: '2F', prime: "2F'" },
+              { move: '2B', prime: "2B'" },
+            ],
+            getBindDisplay,
+            'Inner'
+          )}
+        </div>
+      `;
+    }
+
+    if (this.activeMoveGroup === 'wide') {
+      return `
+        <div class="moves-section">
+          <div class="moves-section-label">Wide Two-Layer Turns</div>
+          ${this.renderPairGrid(
+            [
+              { move: 'Rw', prime: "Rw'" },
+              { move: 'Lw', prime: "Lw'" },
+              { move: 'Uw', prime: "Uw'" },
+              { move: 'Dw', prime: "Dw'" },
+              { move: 'Fw', prime: "Fw'" },
+              { move: 'Bw', prime: "Bw'" },
+            ],
+            getBindDisplay,
+            'Wide'
+          )}
+        </div>
+      `;
+    }
+
+    if (this.activeMoveGroup === 'rotations') {
+      return `
+        <div class="moves-section">
+          <div class="moves-section-label">Cube Rotations</div>
+          ${this.renderPairGrid(
+            [
+              { move: 'x', prime: "x'" },
+              { move: 'y', prime: "y'" },
+              { move: 'z', prime: "z'" },
+            ],
+            getBindDisplay,
+            'Rotate'
+          )}
+        </div>
+      `;
+    }
+
     const facePairs =
       this.activePuzzle === '2x2'
         ? [
@@ -367,285 +501,9 @@ export class ControlsManager {
 
     return `
       <div class="moves-section">
-        <div class="moves-section-label">Face Moves</div>
-        <div class="moves-vertical-grid">
-          ${facePairs
-            .map(
-              (pair) => `
-            <div class="move-pair-row">
-              <button class="btn-sidebar-move" data-move="${pair.move}" title="Execute ${pair.move}">
-                <span class="move-name">${pair.move}</span>
-                <kbd class="key-tag" data-rebind-action="${pair.move}">${getBindDisplay(pair.move)}</kbd>
-              </button>
-              <button class="btn-sidebar-move btn-prime" data-move="${pair.prime}" title="Execute ${pair.prime}">
-                <span class="move-name">${pair.prime}</span>
-                <kbd class="key-tag" data-rebind-action="${pair.prime}">${getBindDisplay(pair.prime)}</kbd>
-              </button>
-            </div>
-          `
-            )
-            .join('')}
-        </div>
+        <div class="moves-section-label">Outer Face Turns</div>
+        ${this.renderPairGrid(facePairs, getBindDisplay, 'Execute')}
       </div>
-
-      ${
-        this.activePuzzle === '3x3'
-          ? `<div class="moves-section">
-              <div class="moves-section-label">Slices</div>
-              <div class="moves-vertical-grid">
-                ${[
-                  { move: 'M', prime: "M'", label: 'M (Down / Up)' },
-                  { move: 'E', prime: "E'", label: 'E (Equator)' },
-                  { move: 'S', prime: "S'", label: 'S (Standing)' },
-                ]
-                  .map(
-                    (p) => `
-                  <div class="move-pair-row">
-                    <button class="btn-sidebar-move" data-move="${p.move}" title="Slice ${p.move}">
-                      <span class="move-name">${p.move}</span>
-                      <kbd class="key-tag" data-rebind-action="${p.move}">${getBindDisplay(p.move)}</kbd>
-                    </button>
-                    <button class="btn-sidebar-move btn-prime" data-move="${p.prime}" title="Slice ${p.prime}">
-                      <span class="move-name">${p.prime}</span>
-                      <kbd class="key-tag" data-rebind-action="${p.prime}">${getBindDisplay(p.prime)}</kbd>
-                    </button>
-                  </div>
-                `
-                  )
-                  .join('')}
-              </div>
-            </div>
-
-            <div class="moves-section">
-              <div class="moves-section-label">Cube Rotations</div>
-              <div class="moves-vertical-grid">
-                ${[
-                  { move: 'x', prime: "x'" },
-                  { move: 'y', prime: "y'" },
-                  { move: 'z', prime: "z'" },
-                ]
-                  .map(
-                    (p) => `
-                  <div class="move-pair-row">
-                    <button class="btn-sidebar-move" data-move="${p.move}" title="Rotate ${p.move}">
-                      <span class="move-name">${p.move}</span>
-                      <kbd class="key-tag" data-rebind-action="${p.move}">${getBindDisplay(p.move)}</kbd>
-                    </button>
-                    <button class="btn-sidebar-move btn-prime" data-move="${p.prime}" title="Rotate ${p.prime}">
-                      <span class="move-name">${p.prime}</span>
-                      <kbd class="key-tag" data-rebind-action="${p.prime}">${getBindDisplay(p.prime)}</kbd>
-                    </button>
-                  </div>
-                `
-                  )
-                  .join('')}
-              </div>
-            </div>
-
-            <div class="moves-section">
-              <div class="moves-section-label">Wide Layer Turns</div>
-              <div class="moves-vertical-grid">
-                ${[
-                  { move: 'Rw', prime: "Rw'" },
-                  { move: 'Lw', prime: "Lw'" },
-                  { move: 'Uw', prime: "Uw'" },
-                  { move: 'Dw', prime: "Dw'" },
-                  { move: 'Fw', prime: "Fw'" },
-                  { move: 'Bw', prime: "Bw'" },
-                ]
-                  .map(
-                    (p) => `
-                  <div class="move-pair-row">
-                    <button class="btn-sidebar-move" data-move="${p.move}" title="Wide ${p.move}">
-                      <span class="move-name">${p.move}</span>
-                      <kbd class="key-tag" data-rebind-action="${p.move}">${getBindDisplay(p.move)}</kbd>
-                    </button>
-                    <button class="btn-sidebar-move btn-prime" data-move="${p.prime}" title="Wide ${p.prime}">
-                      <span class="move-name">${p.prime}</span>
-                      <kbd class="key-tag" data-rebind-action="${p.prime}">${getBindDisplay(p.prime)}</kbd>
-                    </button>
-                  </div>
-                `
-                  )
-                  .join('')}
-              </div>
-            </div>`
-          : ''
-      }
-
-      ${
-        this.activePuzzle === '2x2'
-          ? `<div class="moves-section">
-              <div class="moves-section-label">Cube Rotations</div>
-              <div class="moves-vertical-grid">
-                ${[
-                  { move: 'x', prime: "x'" },
-                  { move: 'y', prime: "y'" },
-                  { move: 'z', prime: "z'" },
-                ]
-                  .map(
-                    (p) => `
-                  <div class="move-pair-row">
-                    <button class="btn-sidebar-move" data-move="${p.move}" title="Rotate ${p.move}">
-                      <span class="move-name">${p.move}</span>
-                      <kbd class="key-tag" data-rebind-action="${p.move}">${getBindDisplay(p.move)}</kbd>
-                    </button>
-                    <button class="btn-sidebar-move btn-prime" data-move="${p.prime}" title="Rotate ${p.prime}">
-                      <span class="move-name">${p.prime}</span>
-                      <kbd class="key-tag" data-rebind-action="${p.prime}">${getBindDisplay(p.prime)}</kbd>
-                    </button>
-                  </div>
-                `
-                  )
-                  .join('')}
-              </div>
-            </div>`
-          : ''
-      }
-
-      ${
-        this.activePuzzle === '4x4'
-          ? `<div class="moves-section">
-              <div class="moves-section-label">Middle Slices (M, E, S)</div>
-              <div class="moves-vertical-grid">
-                ${[
-                  { move: 'M', prime: "M'", label: 'M (Down / Up)' },
-                  { move: 'E', prime: "E'", label: 'E (Equator)' },
-                  { move: 'S', prime: "S'", label: 'S (Standing)' },
-                ]
-                  .map(
-                    (p) => `
-                  <div class="move-pair-row">
-                    <button class="btn-sidebar-move" data-move="${p.move}" title="Slice ${p.move}">
-                      <span class="move-name">${p.move}</span>
-                      <kbd class="key-tag" data-rebind-action="${p.move}">${getBindDisplay(p.move)}</kbd>
-                    </button>
-                    <button class="btn-sidebar-move btn-prime" data-move="${p.prime}" title="Slice ${p.prime}">
-                      <span class="move-name">${p.prime}</span>
-                      <kbd class="key-tag" data-rebind-action="${p.prime}">${getBindDisplay(p.prime)}</kbd>
-                    </button>
-                  </div>
-                `
-                  )
-                  .join('')}
-              </div>
-            </div>
-
-            <div class="moves-section">
-              <div class="moves-section-label">Inner Middle Slices</div>
-              <div class="moves-vertical-grid">
-                ${[
-                  { move: '2R', prime: "2R'" },
-                  { move: '2L', prime: "2L'" },
-                  { move: '2U', prime: "2U'" },
-                  { move: '2D', prime: "2D'" },
-                  { move: '2F', prime: "2F'" },
-                  { move: '2B', prime: "2B'" },
-                ]
-                  .map(
-                    (p) => `
-                  <div class="move-pair-row">
-                    <button class="btn-sidebar-move" data-move="${p.move}" title="Inner ${p.move}">
-                      <span class="move-name">${p.move}</span>
-                      <kbd class="key-tag" data-rebind-action="${p.move}">${getBindDisplay(p.move)}</kbd>
-                    </button>
-                    <button class="btn-sidebar-move btn-prime" data-move="${p.prime}" title="Inner ${p.prime}">
-                      <span class="move-name">${p.prime}</span>
-                      <kbd class="key-tag" data-rebind-action="${p.prime}">${getBindDisplay(p.prime)}</kbd>
-                    </button>
-                  </div>
-                `
-                  )
-                  .join('')}
-              </div>
-            </div>
-
-            <div class="moves-section">
-              <div class="moves-section-label">Wide Layer Turns</div>
-              <div class="moves-vertical-grid">
-                ${[
-                  { move: 'Rw', prime: "Rw'" },
-                  { move: 'Lw', prime: "Lw'" },
-                  { move: 'Uw', prime: "Uw'" },
-                  { move: 'Dw', prime: "Dw'" },
-                  { move: 'Fw', prime: "Fw'" },
-                  { move: 'Bw', prime: "Bw'" },
-                ]
-                  .map(
-                    (p) => `
-                  <div class="move-pair-row">
-                    <button class="btn-sidebar-move" data-move="${p.move}" title="Wide ${p.move}">
-                      <span class="move-name">${p.move}</span>
-                      <kbd class="key-tag" data-rebind-action="${p.move}">${getBindDisplay(p.move)}</kbd>
-                    </button>
-                    <button class="btn-sidebar-move btn-prime" data-move="${p.prime}" title="Wide ${p.prime}">
-                      <span class="move-name">${p.prime}</span>
-                      <kbd class="key-tag" data-rebind-action="${p.prime}">${getBindDisplay(p.prime)}</kbd>
-                    </button>
-                  </div>
-                `
-                  )
-                  .join('')}
-              </div>
-            </div>
-
-            <div class="moves-section">
-              <div class="moves-section-label">Cube Rotations</div>
-              <div class="moves-vertical-grid">
-                ${[
-                  { move: 'x', prime: "x'" },
-                  { move: 'y', prime: "y'" },
-                  { move: 'z', prime: "z'" },
-                ]
-                  .map(
-                    (p) => `
-                  <div class="move-pair-row">
-                    <button class="btn-sidebar-move" data-move="${p.move}" title="Rotate ${p.move}">
-                      <span class="move-name">${p.move}</span>
-                      <kbd class="key-tag" data-rebind-action="${p.move}">${getBindDisplay(p.move)}</kbd>
-                    </button>
-                    <button class="btn-sidebar-move btn-prime" data-move="${p.prime}" title="Rotate ${p.prime}">
-                      <span class="move-name">${p.prime}</span>
-                      <kbd class="key-tag" data-rebind-action="${p.prime}">${getBindDisplay(p.prime)}</kbd>
-                    </button>
-                  </div>
-                `
-                  )
-                  .join('')}
-              </div>
-            </div>`
-          : ''
-      }
-
-      ${
-        this.activePuzzle === '2x2'
-          ? `<div class="moves-section">
-              <div class="moves-section-label">Cube Rotations</div>
-              <div class="moves-vertical-grid">
-                ${[
-                  { move: 'x', prime: "x'" },
-                  { move: 'y', prime: "y'" },
-                  { move: 'z', prime: "z'" },
-                ]
-                  .map(
-                    (p) => `
-                  <div class="move-pair-row">
-                    <button class="btn-sidebar-move" data-move="${p.move}" title="Rotate ${p.move}">
-                      <span class="move-name">${p.move}</span>
-                      <kbd class="key-tag" data-rebind-action="${p.move}">${getBindDisplay(p.move)}</kbd>
-                    </button>
-                    <button class="btn-sidebar-move btn-prime" data-move="${p.prime}" title="Rotate ${p.prime}">
-                      <span class="move-name">${p.prime}</span>
-                      <kbd class="key-tag" data-rebind-action="${p.prime}">${getBindDisplay(p.prime)}</kbd>
-                    </button>
-                  </div>
-                `
-                  )
-                  .join('')}
-              </div>
-            </div>`
-          : ''
-      }
     `;
   }
 
@@ -686,41 +544,23 @@ export class ControlsManager {
       if (speedVal) speedVal.textContent = `${val}ms`;
     });
 
-    // Move buttons click
-    const moveButtons = this.container.querySelectorAll<HTMLButtonElement>('[data-move]');
-    moveButtons.forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        const target = e.target as HTMLElement;
-        if (target && target.classList.contains('key-tag')) {
-          const action = target.getAttribute('data-rebind-action');
-          if (action) {
-            this.settings.open(action);
-            return;
-          }
-        }
-
-        const move = btn.getAttribute('data-move');
-        if (move) {
-          this.executeMove(move);
+    // Move category filter pills inside Moves Pad
+    const filterButtons = this.container.querySelectorAll<HTMLButtonElement>('[data-move-group]');
+    filterButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const grp = btn.getAttribute('data-move-group');
+        if (grp && grp !== this.activeMoveGroup) {
+          this.activeMoveGroup = grp;
+          this.refreshMovesPadBody();
         }
       });
     });
+
+    this.attachMovePadButtonListeners();
 
     // Edit keybinds button
     this.container.querySelector('#btn-edit-keybinds')?.addEventListener('click', () => {
       this.settings.open();
-    });
-
-    // Direct click on kbd tags to rebind
-    const rebindTags = this.container.querySelectorAll<HTMLElement>('[data-rebind-action]');
-    rebindTags.forEach((tag) => {
-      tag.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const action = tag.getAttribute('data-rebind-action');
-        if (action) {
-          this.settings.open(action);
-        }
-      });
     });
 
     // Timer reset button
@@ -790,6 +630,64 @@ export class ControlsManager {
           toast.show(notationEl.textContent);
         }
       }
+    });
+  }
+
+  private getBindDisplay(action: string): string {
+    const keybinds = this.settings.getKeybinds();
+    const code = keybinds[action];
+    if (code) return formatKeyCode(code);
+    if (action.endsWith("'")) {
+      const base = action.slice(0, -1);
+      const baseCode = keybinds[base];
+      return baseCode ? `⇧${formatKeyCode(baseCode)}` : '-';
+    }
+    return '-';
+  }
+
+  private refreshMovesPadBody(): void {
+    const filterButtons = this.container.querySelectorAll<HTMLButtonElement>('[data-move-group]');
+    filterButtons.forEach((btn) => {
+      const active = btn.getAttribute('data-move-group') === this.activeMoveGroup;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-selected', String(active));
+    });
+
+    const scrollEl = this.container.querySelector<HTMLElement>('#moves-pad-scroll');
+    if (scrollEl) {
+      scrollEl.innerHTML = this.renderMovesPad((act) => this.getBindDisplay(act));
+      this.attachMovePadButtonListeners();
+    }
+  }
+
+  private attachMovePadButtonListeners(): void {
+    const moveButtons = this.container.querySelectorAll<HTMLButtonElement>('[data-move]');
+    moveButtons.forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        if (target && target.classList.contains('key-tag')) {
+          const action = target.getAttribute('data-rebind-action');
+          if (action) {
+            this.settings.open(action);
+            return;
+          }
+        }
+        const move = btn.getAttribute('data-move');
+        if (move) {
+          this.executeMove(move);
+        }
+      });
+    });
+
+    const rebindTags = this.container.querySelectorAll<HTMLElement>('[data-rebind-action]');
+    rebindTags.forEach((tag) => {
+      tag.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const action = tag.getAttribute('data-rebind-action');
+        if (action) {
+          this.settings.open(action);
+        }
+      });
     });
   }
 
