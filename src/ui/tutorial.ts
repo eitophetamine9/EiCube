@@ -32,8 +32,8 @@ export class TutorialOverlay {
       title: 'Move Pad & Keybinds',
       badge: 'Desktop Tour 3/4: Controls',
       description:
-        'Execute face, slice (M/M\'), and rotation turns. Click any key chip to customize keyboard shortcuts.',
-      targetSelector: '.trainer-left-sidebar',
+        'Execute face, slice (M/E/S), inner middle (2R..2B), and rotation turns. Click any key chip to customize keyboard shortcuts.',
+      targetSelector: '.controls-sidebar-left',
     },
     {
       title: 'Video Guides & Speedcubing',

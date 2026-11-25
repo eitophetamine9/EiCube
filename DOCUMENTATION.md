@@ -64,7 +64,7 @@ src/
 ├── tests/
 │   └── cube.test.ts        # Vitest suite covering all puzzles, algorithms, keybinds, and videos
 ├── main.ts                 # Application entry point and tab orchestration
-└── style.css               # Clean dark-mode stylesheet, responsive dock, and drawer transitions
+└── style.css               # Daylight Cubing Studio design system, responsive dock, and drawer transitions
 ```
 
 ---
@@ -240,7 +240,7 @@ The onboarding tutorial (`TutorialOverlay`) guides new users through website nav
 
 ## 6. Testing & Quality Assurance
 
-EiCube includes an automated Vitest unit test suite with 17 tests (`src/tests/cube.test.ts`):
+EiCube includes an automated Vitest unit test suite with 18 tests (`src/tests/cube.test.ts`):
 
 1. **Move Identity Inverses**: Verifies that applying $X$ followed by $X'$ returns the cube to an identity state ($X \cdot X' = I$).
 2. **Cycle Periodicity**: Verifies that repeating any face turn 4 times leaves the state unchanged ($X^4 = I$).

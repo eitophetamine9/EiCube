@@ -82,7 +82,12 @@ export class ControlsManager {
             <button class="btn-picker ${this.activePuzzle === '3x3' ? 'is-active' : ''}" data-trainer-puzzle="3x3">3×3</button>
             <button class="btn-picker ${this.activePuzzle === '2x2' ? 'is-active' : ''}" data-trainer-puzzle="2x2">2×2</button>
             <button class="btn-picker ${this.activePuzzle === '4x4' ? 'is-active' : ''}" data-trainer-puzzle="4x4">4×4</button>
-            <button class="btn-picker ${this.activePuzzle === 'pyraminx' ? 'is-active' : ''}" data-trainer-puzzle="pyraminx">▲ Pyra</button>
+            <button class="btn-picker ${this.activePuzzle === 'pyraminx' ? 'is-active' : ''}" data-trainer-puzzle="pyraminx">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
+                <polygon points="12 3 3 20 21 20"></polygon>
+              </svg>
+              Pyra
+            </button>
           </div>
 
           <div class="status-group">
@@ -94,12 +99,13 @@ export class ControlsManager {
               <span class="timer-label">TIMER</span>
               <span id="timer-display" class="timer-display">00:00.00</span>
               <button id="btn-timer-reset" class="btn-icon-subtle" title="Reset timer" aria-label="Reset timer">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                   <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
                   <path d="M3 3v5h5"></path>
                 </svg>
               </button>
             </div>
+            <span id="telemetry-moves-pill" class="telemetry-moves-pill">0 moves</span>
           </div>
 
           <!-- Quick Action Buttons -->
@@ -895,10 +901,13 @@ export class ControlsManager {
     const list = this.container.querySelector<HTMLElement>('#history-vertical-list');
     const count = this.container.querySelector<HTMLElement>('#history-count');
     const mobileCount = this.container.querySelector<HTMLElement>('#mobile-history-count');
+    const telemetryMoves = this.container.querySelector<HTMLElement>('#telemetry-moves-pill');
     if (!list) return;
 
-    if (count) count.textContent = String(this.moveHistory.length);
-    if (mobileCount) mobileCount.textContent = String(this.moveHistory.length);
+    const total = this.moveHistory.length;
+    if (count) count.textContent = String(total);
+    if (mobileCount) mobileCount.textContent = String(total);
+    if (telemetryMoves) telemetryMoves.textContent = `${total} ${total === 1 ? 'move' : 'moves'}`;
 
     if (this.moveHistory.length === 0) {
       list.innerHTML = `
