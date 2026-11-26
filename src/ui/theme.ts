@@ -2,7 +2,7 @@ export type ThemeMode = 'light' | 'dark';
 
 const THEME_STORAGE_KEY = 'eicube_theme_v1';
 const LIGHT_THEME_COLOR = '#D7E6EC';
-const DARK_THEME_COLOR = '#0C1410';
+const DARK_THEME_COLOR = '#040A06';
 
 export function getStoredTheme(): ThemeMode {
   if (typeof window === 'undefined') return 'light';
@@ -29,6 +29,8 @@ export function applyTheme(mode: ThemeMode): void {
   } catch {
     // Ignore storage write errors
   }
+
+  window.dispatchEvent(new CustomEvent('eicube-themechange', { detail: { theme: mode } }));
 
   // Sync any toggle buttons on the page
   const buttons = document.querySelectorAll<HTMLElement>('[data-theme-toggle]');

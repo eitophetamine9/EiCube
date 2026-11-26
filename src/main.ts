@@ -11,9 +11,11 @@ import { OtherCubesManager } from './ui/otherCubes';
 import { parseAlgorithm } from './cube/notation';
 import { toast } from './ui/toast';
 import { initThemeControls } from './ui/theme';
+import { MatrixBackdrop } from './ui/matrixBackdrop';
 
 document.addEventListener('DOMContentLoaded', () => {
   initThemeControls();
+  new MatrixBackdrop();
 
   // 1. Containers
   const viewportContainer = document.getElementById('cube-viewport-container') as HTMLElement;
