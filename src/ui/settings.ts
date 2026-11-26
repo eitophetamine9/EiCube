@@ -1,4 +1,5 @@
 import { toast } from './toast';
+import { COLOR_SCHEMES, ColorSchemeId } from '../cube/types';
 
 export interface KeybindMap {
   [action: string]: string; // action e.g. 'U', 'U\'', 'D', 'D\'', 'L', 'L\'', 'R', 'R\'', 'F', 'F\'', 'B', 'B\'', 'M', 'E', 'S', etc.
@@ -117,25 +118,31 @@ export const TWOHAND_SPEEDCUBE_KEYBINDS: KeybindMap = {
 
 const STORAGE_KEY = 'eicube_keybinds_v2';
 const SENSITIVITY_STORAGE_KEY = 'eicube_cam_sensitivity_v1';
+const SCHEME_STORAGE_KEY = 'eicube_color_scheme_v1';
 const DEFAULT_CAMERA_SENSITIVITY = 2.0;
 
 export class SettingsManager {
   private keybinds: KeybindMap;
   private cameraSensitivity: number;
+  private colorScheme: ColorSchemeId;
   private modalEl: HTMLElement | null = null;
   private isModalOpen: boolean = false;
   private listeningAction: string | null = null;
   private onKeybindsChange?: (keybinds: KeybindMap) => void;
   private onSensitivityChange?: (speed: number) => void;
+  private onColorSchemeChange?: (scheme: ColorSchemeId) => void;
 
   constructor(
     onKeybindsChange?: (keybinds: KeybindMap) => void,
-    onSensitivityChange?: (speed: number) => void
+    onSensitivityChange?: (speed: number) => void,
+    onColorSchemeChange?: (scheme: ColorSchemeId) => void
   ) {
     this.onKeybindsChange = onKeybindsChange;
     this.onSensitivityChange = onSensitivityChange;
+    this.onColorSchemeChange = onColorSchemeChange;
     this.keybinds = this.loadKeybinds();
     this.cameraSensitivity = this.loadCameraSensitivity();
+    this.colorScheme = this.loadColorScheme();
     if (typeof document !== 'undefined') {
       this.createModal();
     }
@@ -173,6 +180,36 @@ export class SettingsManager {
     if (modalSlider) modalSlider.value = String(clamped);
     if (modalVal) modalVal.textContent = `${clamped.toFixed(1)}×`;
     this.onSensitivityChange?.(clamped);
+  }
+
+  loadColorScheme(): ColorSchemeId {
+    try {
+      const raw = localStorage.getItem(SCHEME_STORAGE_KEY) as ColorSchemeId | null;
+      if (raw && raw in COLOR_SCHEMES) {
+        return raw;
+      }
+    } catch {
+      // Ignore
+    }
+    return 'classic';
+  }
+
+  getColorScheme(): ColorSchemeId {
+    return this.colorScheme;
+  }
+
+  setColorScheme(scheme: ColorSchemeId): void {
+    if (!(scheme in COLOR_SCHEMES)) return;
+    this.colorScheme = scheme;
+    try {
+      localStorage.setItem(SCHEME_STORAGE_KEY, scheme);
+    } catch {
+      // Ignore
+    }
+    this.modalEl?.querySelectorAll<HTMLButtonElement>('[data-scheme-choice]').forEach((btn) => {
+      btn.classList.toggle('is-active', btn.dataset.schemeChoice === scheme);
+    });
+    this.onColorSchemeChange?.(scheme);
   }
 
   loadKeybinds(): KeybindMap {
@@ -243,6 +280,7 @@ export class SettingsManager {
   resetToDefaults(): void {
     this.applyPreset('default');
     this.setCameraSensitivity(DEFAULT_CAMERA_SENSITIVITY);
+    this.setColorScheme('classic');
   }
 
   getKeybinds(): KeybindMap {
@@ -297,12 +335,28 @@ export class SettingsManager {
         <div class="modal-body">
           <div class="settings-sensitivity-row">
             <div class="sensitivity-info">
-              <label for="modal-pov-slider" class="keybind-label">Camera POV Sensitivity</label>
-              <span class="keybind-desc">Adjust how fast dragging the background orbits the puzzle</span>
+              <label for="modal-pov-slider" class="keybind-label">Drag Sensitivity</label>
+              <span class="keybind-desc">Adjust how fast dragging rotates across all X, Y, Z sphere axes</span>
             </div>
             <div class="sensitivity-slider-group">
-              <input type="range" id="modal-pov-slider" min="0.5" max="5.0" step="0.1" value="${this.cameraSensitivity.toFixed(1)}" aria-label="Camera POV Sensitivity" />
+              <input type="range" id="modal-pov-slider" min="0.5" max="5.0" step="0.1" value="${this.cameraSensitivity.toFixed(1)}" aria-label="Drag Sensitivity" />
               <span id="modal-pov-val" class="speed-val">${this.cameraSensitivity.toFixed(1)}×</span>
+            </div>
+          </div>
+          <div class="settings-scheme-row">
+            <div class="sensitivity-info">
+              <span class="keybind-label">3D Color Scheme</span>
+              <span class="keybind-desc">Switch plastic bezel finish and sticker palette live</span>
+            </div>
+            <div class="scheme-pills-group" role="group" aria-label="Color Scheme">
+              ${(Object.keys(COLOR_SCHEMES) as ColorSchemeId[])
+                .map(
+                  (id) =>
+                    `<button type="button" class="btn-picker ${
+                      this.colorScheme === id ? 'is-active' : ''
+                    }" data-scheme-choice="${id}">${COLOR_SCHEMES[id].name}</button>`
+                )
+                .join('')}
             </div>
           </div>
           <div class="presets-row">
@@ -337,6 +391,12 @@ export class SettingsManager {
     modal.querySelector<HTMLInputElement>('#modal-pov-slider')?.addEventListener('input', (e) => {
       const val = parseFloat((e.target as HTMLInputElement).value);
       this.setCameraSensitivity(val);
+    });
+    modal.querySelectorAll<HTMLButtonElement>('[data-scheme-choice]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const scheme = btn.dataset.schemeChoice as ColorSchemeId;
+        if (scheme) this.setColorScheme(scheme);
+      });
     });
 
     modal.addEventListener('click', (e) => {

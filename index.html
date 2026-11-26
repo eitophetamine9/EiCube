@@ -29,19 +29,26 @@
         <a class="skip-link" href="#app-main">Skip to content</a>
 
         <!-- Brand -->
-        <div class="brand-group">
+        <button type="button" id="btn-brand-home" class="brand-group brand-home-btn" aria-label="Go to EiCube Home">
           <svg class="brand-logo" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
             <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
             <line x1="12" y1="22.08" x2="12" y2="12"></line>
           </svg>
           <span class="brand-name">EiCube</span>
-          <span class="brand-tag">v1.0.2</span>
-        </div>
+          <span class="brand-tag">v1.0.3</span>
+        </button>
 
         <!-- Navigation Tabs -->
         <nav class="nav-tabs" role="tablist" aria-label="Main Navigation">
-          <button class="nav-tab is-active" data-tab-target="cube" role="tab" aria-selected="true" aria-controls="tab-cube-panel" id="tab-cube-btn">
+          <button class="nav-tab is-active" data-tab-target="home" role="tab" aria-selected="true" aria-controls="tab-home-panel" id="tab-home-btn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            Home
+          </button>
+          <button class="nav-tab" data-tab-target="cube" role="tab" aria-selected="false" aria-controls="tab-cube-panel" id="tab-cube-btn">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
               <line x1="9" y1="3" x2="9" y2="21"></line>
@@ -153,7 +160,17 @@
         <div class="mobile-drawer-section">
           <div class="mobile-drawer-heading">Puzzles</div>
           <nav class="mobile-nav-list" aria-label="Puzzle Views">
-            <button class="mobile-nav-link is-active" data-tab-target="cube">
+            <button class="mobile-nav-link is-active" data-tab-target="home">
+              <span class="link-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                  <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+              </span>
+              <span class="link-label">Home Landing</span>
+            </button>
+
+            <button class="mobile-nav-link" data-tab-target="cube">
               <span class="link-icon" aria-hidden="true">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -261,8 +278,15 @@
     </aside>
 
     <main id="app-main" class="app-main">
+      <!-- Panel 0: No-login Editorial Landing Page -->
+      <section id="tab-home-panel" class="tab-panel is-active" role="tabpanel" aria-labelledby="tab-home-btn">
+        <div id="landing-mount" class="landing-mount">
+          <!-- Editorial Landing Page mounts here -->
+        </div>
+      </section>
+
       <!-- Panel 1: Interactive 3D Cube (3x3 / 2x2 / 4x4 / Pyraminx) -->
-      <section id="tab-cube-panel" class="tab-panel is-active" role="tabpanel" aria-labelledby="tab-cube-btn">
+      <section id="tab-cube-panel" class="tab-panel" role="tabpanel" aria-labelledby="tab-cube-btn" aria-hidden="true">
         <div class="studio-stage-glow" aria-hidden="true"></div>
         <div id="cube-viewport-container" class="cube-viewport-container">
           <!-- Three.js canvas mounts here -->

@@ -4,6 +4,9 @@ import { generatePyraminxScramble } from '../cube/pyraminxState';
 import { invertMove, parseAlgorithm } from '../cube/notation';
 import { SettingsManager, formatKeyCode } from './settings';
 import { toast } from './toast';
+import { SessionStatsManager, SolvePenalty, formatSolveTime } from './sessionStats';
+import { DrillCaseSelection, DrillModal } from './drillModal';
+import { SmartCubeClient, isBluetoothSupported } from '../cube/smartCube';
 
 export type TrainerPuzzleType = '3x3' | '2x2' | '4x4' | 'pyraminx';
 
@@ -11,6 +14,9 @@ export class ControlsManager {
   private container: HTMLElement;
   private scene: RubiksCubeScene;
   private settings: SettingsManager;
+  private statsManager: SessionStatsManager;
+  private drillModal: DrillModal;
+  private smartCube: SmartCubeClient;
   private activePuzzle: TrainerPuzzleType = '3x3';
   private activeMoveGroup: string = 'faces';
   private onPuzzleChange?: (puzzle: TrainerPuzzleType) => void;
@@ -18,12 +24,26 @@ export class ControlsManager {
   private onSpeedChange?: (speedMs: number) => void;
   private moveHistory: string[] = [];
 
-  // Timer state
+  // Timer & WCA 15s Inspection state
   private timerInterval: number | null = null;
   private timerStartTime: number = 0;
   private timerElapsedMs: number = 0;
   private isTimerRunning: boolean = false;
   private isAwaitingFirstMoveAfterScramble: boolean = false;
+  private wcaInspectionEnabled: boolean = false;
+  private isInspecting: boolean = false;
+  private inspectionInterval: number | null = null;
+  private inspectionStartTime: number = 0;
+  private pendingPenalty: SolvePenalty = 'OK';
+  private playedBeep8s: boolean = false;
+  private playedBeep12s: boolean = false;
+
+  // Drill & Hint state
+  private activeDrill: DrillCaseSelection | null = null;
+  private drillStepIndex: number = 0;
+  private drillHintRevealed: boolean = false;
+  private hintEnabled: boolean = false;
+  private blePopoverOpen: boolean = false;
 
   constructor(
     container: HTMLElement,
@@ -41,7 +61,30 @@ export class ControlsManager {
     this.onPuzzleChange = callbacks?.onPuzzleChange;
     this.onExecuteMoveDirect = callbacks?.onExecuteMoveDirect;
     this.onSpeedChange = callbacks?.onSpeedChange;
+
+    this.statsManager = new SessionStatsManager(() => {
+      this.refreshStatsPill();
+    });
+
+    this.drillModal = new DrillModal((selection) => {
+      this.startDrillCase(selection);
+    });
+
+    this.smartCube = new SmartCubeClient(
+      (move) => {
+        this.executeMove(move, false);
+        this.refreshBleUi();
+      },
+      () => {
+        this.refreshBleUi();
+      }
+    );
+
     this.render();
+  }
+
+  public isAnyModalOpen(): boolean {
+    return this.statsManager.isOpen() || this.drillModal.isOpen();
   }
 
   getActivePuzzle(): TrainerPuzzleType {
@@ -76,6 +119,7 @@ export class ControlsManager {
 
     this.container.innerHTML = `
       <div class="trainer-viewport-overlay">
+        <div class="trainer-top-stack">
         <!-- Top Floating Status Bar -->
         <div class="floating-top-bar">
           <!-- Puzzle Selector inside Trainer -->
@@ -138,21 +182,70 @@ export class ControlsManager {
               </svg>
               Undo
             </button>
+
+            <button id="btn-open-drill" class="btn btn-sm btn-secondary" title="Drill OLL, PLL, PBL, Parity or L4E cases">
+              Drill
+            </button>
+
+            <button id="btn-open-stats" class="btn btn-sm btn-secondary" title="View session Ao5 / Ao12 timing history">
+              Stats
+            </button>
+
+            <button id="btn-toggle-wca" class="btn btn-sm ${this.wcaInspectionEnabled ? 'btn-primary' : 'btn-secondary'}" aria-pressed="${this.wcaInspectionEnabled}" title="Toggle WCA 15-second inspection countdown">
+              WCA 15s
+            </button>
+
+            <button id="btn-toggle-hint" class="btn btn-sm ${this.hintEnabled ? 'btn-primary' : 'btn-secondary'}" aria-pressed="${this.hintEnabled}" title="Toggle Next Move Hint">
+              Hint
+            </button>
+
+            <button id="btn-smart-cube" class="btn btn-sm btn-secondary" aria-expanded="${this.blePopoverOpen}" title="WebBLE Smart Cube connection and turn tester">
+              BLE
+            </button>
           </div>
 
-          <!-- Speed & POV Sensitivity Sliders -->
+          <!-- Speed & Drag Sensitivity Sliders -->
           <div class="speed-control">
             <label for="speed-slider" class="speed-label">Speed</label>
             <input type="range" id="speed-slider" min="60" max="400" step="20" value="200" title="Animation duration" />
             <span id="speed-val" class="speed-val">200ms</span>
           </div>
 
-          <div class="speed-control sensitivity-control" title="Camera orbit sensitivity">
-            <label for="pov-slider" class="speed-label">POV</label>
-            <input type="range" id="pov-slider" min="0.5" max="5.0" step="0.1" value="${this.settings.getCameraSensitivity().toFixed(1)}" title="Camera POV orbit sensitivity" />
+          <div class="speed-control sensitivity-control" title="Free-hand drag sensitivity">
+            <label for="pov-slider" class="speed-label">Drag</label>
+            <input type="range" id="pov-slider" min="0.5" max="5.0" step="0.1" value="${this.settings.getCameraSensitivity().toFixed(1)}" title="Drag sensitivity" aria-label="Drag sensitivity" />
             <span id="pov-val" class="speed-val">${this.settings.getCameraSensitivity().toFixed(1)}×</span>
           </div>
         </div>
+
+        <!-- Drill & Hint / Smart BLE Popover Strip -->
+        <div id="drill-banner" class="scramble-banner drill-banner" style="display: none;">
+          <div class="scramble-label" id="drill-banner-label">Drill</div>
+          <div id="drill-banner-info" class="scramble-notation"></div>
+          <div class="drill-banner-actions">
+            <button type="button" id="btn-drill-hint" class="btn btn-sm btn-secondary">Reveal</button>
+            <button type="button" id="btn-drill-retry" class="btn btn-sm btn-secondary">Retry</button>
+            <button type="button" id="btn-drill-exit" class="btn btn-sm btn-secondary">Exit</button>
+          </div>
+        </div>
+
+        <div id="hint-banner" class="hint-chip-banner" style="display: none;"></div>
+
+        <div id="ble-popover" class="ble-popover" style="display: ${this.blePopoverOpen ? 'flex' : 'none'};">
+          <div class="ble-popover-head">
+            <strong>Smart Cube (WebBLE)</strong>
+            <span id="ble-status-badge" class="ble-status-text">Disconnected</span>
+          </div>
+          <p class="ble-popover-desc">
+            Pair GAN, Giiker, or Moyu Bluetooth smart cubes over GATT, or fire virtual test turns directly into the timer.
+          </p>
+          <div class="ble-popover-actions">
+            <button type="button" id="btn-ble-connect" class="btn btn-sm btn-primary">Connect Cube</button>
+            <button type="button" id="btn-ble-disconnect" class="btn btn-sm btn-secondary" style="display: none;">Disconnect</button>
+            <button type="button" id="btn-ble-virtual-turn" class="btn btn-sm btn-secondary">Test Smart Turn</button>
+          </div>
+        </div>
+        </div><!-- /.trainer-top-stack -->
 
         <!-- Scramble notation banner -->
         <div id="scramble-banner" class="scramble-banner" style="display: none;">
@@ -540,6 +633,96 @@ export class ControlsManager {
       this.handleUndo();
     });
 
+    // Drill, Stats, WCA Inspect, Hint, and Smart BLE controls
+    this.container.querySelector('#btn-open-drill')?.addEventListener('click', () => {
+      this.drillModal.open(this.activePuzzle);
+    });
+
+    this.container.querySelector('#btn-open-stats')?.addEventListener('click', () => {
+      this.statsManager.open(this.activePuzzle);
+    });
+
+    this.container.querySelector('#btn-toggle-wca')?.addEventListener('click', () => {
+      this.wcaInspectionEnabled = !this.wcaInspectionEnabled;
+      const btn = this.container.querySelector<HTMLButtonElement>('#btn-toggle-wca');
+      if (btn) {
+        btn.classList.toggle('btn-primary', this.wcaInspectionEnabled);
+        btn.classList.toggle('btn-secondary', !this.wcaInspectionEnabled);
+        btn.setAttribute('aria-pressed', String(this.wcaInspectionEnabled));
+      }
+      toast.show(
+        this.wcaInspectionEnabled
+          ? 'WCA 15s Inspection enabled before Scramble solves.'
+          : 'WCA Inspection disabled.'
+      );
+    });
+
+    this.container.querySelector('#btn-toggle-hint')?.addEventListener('click', () => {
+      this.hintEnabled = !this.hintEnabled;
+      const btn = this.container.querySelector<HTMLButtonElement>('#btn-toggle-hint');
+      if (btn) {
+        btn.classList.toggle('btn-primary', this.hintEnabled);
+        btn.classList.toggle('btn-secondary', !this.hintEnabled);
+        btn.setAttribute('aria-pressed', String(this.hintEnabled));
+      }
+      this.refreshHintBanner();
+    });
+
+    this.container.querySelector('#btn-smart-cube')?.addEventListener('click', () => {
+      this.blePopoverOpen = !this.blePopoverOpen;
+      const pop = this.container.querySelector<HTMLElement>('#ble-popover');
+      const btn = this.container.querySelector<HTMLButtonElement>('#btn-smart-cube');
+      if (pop) pop.style.display = this.blePopoverOpen ? 'flex' : 'none';
+      btn?.setAttribute('aria-expanded', String(this.blePopoverOpen));
+      this.refreshBleUi();
+    });
+
+    this.container.querySelector('#btn-ble-connect')?.addEventListener('click', async () => {
+      try {
+        await this.smartCube.connect();
+        toast.show('Smart Cube paired over WebBLE!');
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Bluetooth pairing cancelled or unavailable.';
+        toast.show(msg);
+      }
+      this.refreshBleUi();
+    });
+
+    this.container.querySelector('#btn-ble-disconnect')?.addEventListener('click', () => {
+      this.smartCube.disconnect();
+      toast.show('Smart Cube disconnected.');
+    });
+
+    this.container.querySelector('#btn-ble-virtual-turn')?.addEventListener('click', () => {
+      const move = this.smartCube.triggerVirtualTurn();
+      toast.show(`Smart Cube turn: ${move}`);
+    });
+
+    this.container.querySelector('#btn-drill-hint')?.addEventListener('click', () => {
+      this.drillHintRevealed = !this.drillHintRevealed;
+      this.refreshDrillBanner();
+      this.refreshHintBanner();
+    });
+
+    this.container.querySelector('#btn-drill-retry')?.addEventListener('click', () => {
+      if (this.activeDrill) {
+        this.startDrillCase(this.activeDrill);
+      }
+    });
+
+    this.container.querySelector('#btn-drill-exit')?.addEventListener('click', () => {
+      this.activeDrill = null;
+      this.drillStepIndex = 0;
+      this.drillHintRevealed = false;
+      this.refreshDrillBanner();
+      this.refreshHintBanner();
+    });
+
+    this.refreshStatsPill();
+    this.refreshBleUi();
+    this.refreshDrillBanner();
+    this.refreshHintBanner();
+
     // Speed slider
     const speedSlider = this.container.querySelector<HTMLInputElement>('#speed-slider');
     const speedVal = this.container.querySelector<HTMLElement>('#speed-val');
@@ -762,7 +945,14 @@ export class ControlsManager {
 
     this.stopTimer();
     this.resetTimer();
-    this.isAwaitingFirstMoveAfterScramble = true;
+    this.activeDrill = null;
+    this.refreshDrillBanner();
+
+    if (this.wcaInspectionEnabled) {
+      this.startInspection();
+    } else {
+      this.isAwaitingFirstMoveAfterScramble = true;
+    }
   }
 
   handleReset(): void {
@@ -771,9 +961,13 @@ export class ControlsManager {
     } else {
       this.scene.resetCube();
     }
+    this.stopInspection();
     this.stopTimer();
     this.resetTimer();
     this.isAwaitingFirstMoveAfterScramble = false;
+    this.activeDrill = null;
+    this.refreshDrillBanner();
+    this.refreshHintBanner();
     const banner = this.container.querySelector<HTMLElement>('#scramble-banner');
     if (banner) banner.style.display = 'none';
     toast.show('Puzzle reset to solved state.');
@@ -789,10 +983,13 @@ export class ControlsManager {
     const inverse = invertMove(lastMove);
     this.executeMove(inverse, false);
     this.renderHistory();
+    this.refreshHintBanner();
   }
 
   executeMove(notation: string, viewRelative: boolean = true): void {
-    if (this.isAwaitingFirstMoveAfterScramble) {
+    if (this.isInspecting) {
+      this.finishInspectionAndStartTimer();
+    } else if (this.isAwaitingFirstMoveAfterScramble) {
       this.isAwaitingFirstMoveAfterScramble = false;
       this.startTimer();
     }
@@ -805,12 +1002,22 @@ export class ControlsManager {
   }
 
   recordMove(notation: string): void {
-    if (this.isAwaitingFirstMoveAfterScramble) {
+    if (this.isInspecting) {
+      this.finishInspectionAndStartTimer();
+    } else if (this.isAwaitingFirstMoveAfterScramble) {
       this.isAwaitingFirstMoveAfterScramble = false;
       this.startTimer();
     }
     this.moveHistory.push(notation);
+    if (this.activeDrill) {
+      const expected = this.activeDrill.solutionMoves[this.drillStepIndex];
+      if (expected && notation === expected) {
+        this.drillStepIndex += 1;
+      }
+      this.refreshDrillBanner();
+    }
     this.renderHistory();
+    this.refreshHintBanner();
   }
 
   clearHistory(): void {
@@ -866,7 +1073,28 @@ export class ControlsManager {
 
         if (this.isTimerRunning) {
           this.stopTimer();
-          toast.show(`Puzzle Solved in ${this.formatTime(this.timerElapsedMs)}!`);
+          const finalMs = Math.round(this.timerElapsedMs);
+          const penalty = this.pendingPenalty;
+          this.pendingPenalty = 'OK';
+          const mode = this.activeDrill ? 'drill' : 'free';
+          const label = this.activeDrill ? this.activeDrill.item.name : undefined;
+
+          this.statsManager.addSolve({
+            puzzle: this.activePuzzle,
+            rawMs: finalMs,
+            penalty,
+            moves: this.moveHistory.length,
+            mode,
+            label,
+          });
+
+          const penaltyTag = penalty === 'OK' ? '' : ` (${penalty})`;
+          toast.show(`Puzzle Solved in ${this.formatTime(finalMs)}${penaltyTag}!`);
+
+          if (this.activeDrill) {
+            this.drillStepIndex = this.activeDrill.solutionMoves.length;
+            this.refreshDrillBanner();
+          }
         }
       } else {
         badge.classList.remove('is-solved');
@@ -876,11 +1104,218 @@ export class ControlsManager {
     }
   }
 
+  // WCA 15s Inspection helpers
+  private startInspection(): void {
+    this.stopInspection();
+    this.isInspecting = true;
+    this.inspectionStartTime = performance.now();
+    this.pendingPenalty = 'OK';
+    this.playedBeep8s = false;
+    this.playedBeep12s = false;
+    this.updateInspectionDisplay();
+
+    this.inspectionInterval = window.setInterval(() => {
+      if (!this.isInspecting) return;
+      const elapsedSec = (performance.now() - this.inspectionStartTime) / 1000;
+      if (elapsedSec >= 8 && !this.playedBeep8s) {
+        this.playedBeep8s = true;
+        this.playInspectionTone(660, 0.09);
+      }
+      if (elapsedSec >= 12 && !this.playedBeep12s) {
+        this.playedBeep12s = true;
+        this.playInspectionTone(880, 0.09);
+      }
+      if (elapsedSec >= 17) {
+        this.pendingPenalty = 'DNF';
+      } else if (elapsedSec >= 15) {
+        this.pendingPenalty = '+2';
+      }
+      this.updateInspectionDisplay();
+    }, 80);
+  }
+
+  private stopInspection(): void {
+    this.isInspecting = false;
+    if (this.inspectionInterval !== null) {
+      clearInterval(this.inspectionInterval);
+      this.inspectionInterval = null;
+    }
+  }
+
+  private finishInspectionAndStartTimer(): void {
+    const elapsedSec = (performance.now() - this.inspectionStartTime) / 1000;
+    this.pendingPenalty = elapsedSec >= 17 ? 'DNF' : elapsedSec >= 15 ? '+2' : 'OK';
+    this.stopInspection();
+    this.isAwaitingFirstMoveAfterScramble = false;
+    this.startTimer();
+  }
+
+  private updateInspectionDisplay(): void {
+    const display = this.container.querySelector<HTMLElement>('#timer-display');
+    const label = this.container.querySelector<HTMLElement>('.timer-label');
+    if (!display) return;
+    if (!this.isInspecting) {
+      if (label) label.textContent = 'TIMER';
+      display.textContent = this.formatTime(this.timerElapsedMs);
+      return;
+    }
+    const elapsedSec = (performance.now() - this.inspectionStartTime) / 1000;
+    if (elapsedSec < 15) {
+      if (label) label.textContent = 'INSPECT';
+      display.textContent = `${Math.ceil(15 - elapsedSec)}s`;
+    } else if (elapsedSec < 17) {
+      if (label) label.textContent = 'PENALTY';
+      display.textContent = '+2';
+    } else {
+      if (label) label.textContent = 'PENALTY';
+      display.textContent = 'DNF';
+    }
+  }
+
+  private playInspectionTone(freq: number, durationSec: number): void {
+    try {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.value = 0.06;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + durationSec);
+    } catch {
+      // Ignore audio blocks
+    }
+  }
+
+  public startDrillCase(selection: DrillCaseSelection): void {
+    if (selection.puzzle !== this.activePuzzle) {
+      this.setTrainerPuzzle(selection.puzzle);
+    } else {
+      this.clearHistory();
+      if (this.activePuzzle === 'pyraminx') {
+        this.onExecuteMoveDirect?.('RESET');
+      } else {
+        this.scene.resetCube();
+      }
+    }
+
+    this.stopInspection();
+    this.stopTimer();
+    this.resetTimer();
+    this.pendingPenalty = 'OK';
+    this.activeDrill = selection;
+    this.drillStepIndex = 0;
+    this.drillHintRevealed = false;
+    this.isAwaitingFirstMoveAfterScramble = true;
+
+    if (selection.puzzle === 'pyraminx') {
+      selection.setupMoves.forEach((m) => this.onExecuteMoveDirect?.(m, true));
+    } else {
+      this.scene.executeAlgorithm(selection.setupMoves, false, true);
+    }
+
+    this.refreshDrillBanner();
+    this.refreshHintBanner();
+    toast.show(`Drill ready: ${selection.item.name}`);
+  }
+
+  private refreshDrillBanner(): void {
+    const banner = this.container.querySelector<HTMLElement>('#drill-banner');
+    const label = this.container.querySelector<HTMLElement>('#drill-banner-label');
+    const info = this.container.querySelector<HTMLElement>('#drill-banner-info');
+    const revealBtn = this.container.querySelector<HTMLButtonElement>('#btn-drill-hint');
+    if (!banner || !label || !info) return;
+
+    if (!this.activeDrill) {
+      banner.style.display = 'none';
+      return;
+    }
+
+    banner.style.display = 'flex';
+    label.textContent = `Drill (${this.activeDrill.item.category}): ${this.activeDrill.item.name}`;
+    const total = this.activeDrill.solutionMoves.length;
+    const progress = `${Math.min(this.drillStepIndex, total)}/${total} steps`;
+    info.textContent = this.drillHintRevealed
+      ? `${this.activeDrill.item.notation} • ${progress}`
+      : `${this.activeDrill.item.recognition || 'Recognize & solve'} • ${progress}`;
+
+    if (revealBtn) {
+      revealBtn.textContent = this.drillHintRevealed ? 'Hide Alg' : 'Reveal';
+    }
+  }
+
+  private refreshHintBanner(): void {
+    const el = this.container.querySelector<HTMLElement>('#hint-banner');
+    if (!el) return;
+
+    if (!this.hintEnabled) {
+      el.style.display = 'none';
+      return;
+    }
+
+    el.style.display = 'inline-flex';
+    if (this.activeDrill) {
+      const next = this.activeDrill.solutionMoves[this.drillStepIndex];
+      el.textContent = next
+        ? `Next Drill Move: ${next}`
+        : `Drill Complete! Execute or Retry.`;
+    } else if (this.moveHistory.length > 0) {
+      const last = this.moveHistory[this.moveHistory.length - 1];
+      el.textContent = `Quick Undo Hint: ${invertMove(last)} (reverses ${last})`;
+    } else {
+      el.textContent = `Hint Active: Make moves or open Drill for guided step-by-step hints.`;
+    }
+  }
+
+  private refreshStatsPill(): void {
+    const btn = this.container.querySelector<HTMLButtonElement>('#btn-open-stats');
+    if (!btn) return;
+    const summary = this.statsManager.getSummary(this.activePuzzle);
+    btn.textContent =
+      summary.ao5 !== null
+        ? `Ao5 ${formatSolveTime(summary.ao5)}`
+        : summary.count > 0
+          ? `Stats (${summary.count})`
+          : 'Stats';
+  }
+
+  private refreshBleUi(): void {
+    const status = this.smartCube.getStatus();
+    const badge = this.container.querySelector<HTMLElement>('#ble-status-badge');
+    const connectBtn = this.container.querySelector<HTMLButtonElement>('#btn-ble-connect');
+    const disconnectBtn = this.container.querySelector<HTMLButtonElement>('#btn-ble-disconnect');
+    const topBtn = this.container.querySelector<HTMLButtonElement>('#btn-smart-cube');
+
+    if (topBtn) {
+      topBtn.classList.toggle('btn-primary', status.connected);
+      topBtn.classList.toggle('btn-secondary', !status.connected);
+      topBtn.textContent = status.connected ? `BLE (${status.turnsReceived})` : 'BLE';
+    }
+
+    if (badge) {
+      if (status.connected) {
+        badge.textContent = `${status.deviceName} • ${status.protocol} (${status.turnsReceived} turns)`;
+      } else {
+        badge.textContent = isBluetoothSupported()
+          ? 'Ready to pair (Chrome / Edge)'
+          : 'WebBLE unavailable here (Virtual Turn ready)';
+      }
+    }
+    if (connectBtn) connectBtn.style.display = status.connected ? 'none' : 'inline-flex';
+    if (disconnectBtn) disconnectBtn.style.display = status.connected ? 'inline-flex' : 'none';
+  }
+
   // Timer functions
   private startTimer(): void {
     if (this.isTimerRunning) return;
     this.isTimerRunning = true;
     this.timerStartTime = performance.now() - this.timerElapsedMs;
+    const label = this.container.querySelector<HTMLElement>('.timer-label');
+    if (label) label.textContent = 'TIMER';
 
     this.timerInterval = window.setInterval(() => {
       this.timerElapsedMs = performance.now() - this.timerStartTime;
@@ -898,13 +1333,21 @@ export class ControlsManager {
   }
 
   private resetTimer(): void {
+    this.stopInspection();
     this.stopTimer();
     this.timerElapsedMs = 0;
+    this.pendingPenalty = 'OK';
     this.isAwaitingFirstMoveAfterScramble = false;
     this.updateTimerDisplay();
   }
 
   private updateTimerDisplay(): void {
+    if (this.isInspecting) {
+      this.updateInspectionDisplay();
+      return;
+    }
+    const label = this.container.querySelector<HTMLElement>('.timer-label');
+    if (label) label.textContent = 'TIMER';
     const display = this.container.querySelector<HTMLElement>('#timer-display');
     if (display) {
       display.textContent = this.formatTime(this.timerElapsedMs);

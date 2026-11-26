@@ -5,9 +5,11 @@ import {
   MoveGlossaryItem,
 } from './content/movesGlossaryData';
 import { initThemeControls } from './ui/theme';
+import { MatrixBackdrop } from './ui/matrixBackdrop';
 
 document.addEventListener('DOMContentLoaded', () => {
   initThemeControls();
+  new MatrixBackdrop();
 
   const mount = document.getElementById('moves-glossary-mount');
   if (!mount) return;

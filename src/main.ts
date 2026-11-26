@@ -11,17 +11,21 @@ import { OtherCubesManager } from './ui/otherCubes';
 import { parseAlgorithm } from './cube/notation';
 import { toast } from './ui/toast';
 import { initThemeControls } from './ui/theme';
+import { MatrixBackdrop } from './ui/matrixBackdrop';
+import { LandingPageManager } from './ui/landing';
 
 document.addEventListener('DOMContentLoaded', () => {
   initThemeControls();
+  new MatrixBackdrop();
 
   // 1. Containers
+  const landingMount = document.getElementById('landing-mount') as HTMLElement;
   const viewportContainer = document.getElementById('cube-viewport-container') as HTMLElement;
   const controlsMount = document.getElementById('controls-mount') as HTMLElement;
   const otherMount = document.getElementById('other-mount') as HTMLElement;
   const guideMount = document.getElementById('guide-mount') as HTMLElement;
 
-  if (!viewportContainer || !controlsMount || !otherMount || !guideMount) {
+  if (!landingMount || !viewportContainer || !controlsMount || !otherMount || !guideMount) {
     console.error('Critical container element missing');
     return;
   }
@@ -56,9 +60,11 @@ document.addEventListener('DOMContentLoaded', () => {
           },
         });
         pyraScene.setRotateSpeed(settings.getCameraSensitivity());
+        pyraScene.setColorScheme(settings.getColorScheme());
       } else {
         pyraScene['renderer'].domElement.style.display = 'block';
         pyraScene.setRotateSpeed(settings.getCameraSensitivity());
+        pyraScene.setColorScheme(settings.getColorScheme());
         pyraScene.reset();
       }
     } else {
@@ -73,8 +79,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // 3. Settings Manager (Keybinds + Camera POV Sensitivity)
+  // 3. Settings Manager (Keybinds + Drag Sensitivity)
   let otherCubes: OtherCubesManager | null = null;
+  let landingPage: LandingPageManager | null = null;
   const settings = new SettingsManager(
     () => {
       controls?.refreshKeybindLabels();
@@ -83,10 +90,17 @@ document.addEventListener('DOMContentLoaded', () => {
       cubeScene.setRotateSpeed(sensitivity);
       pyraScene?.setRotateSpeed(sensitivity);
       otherCubes?.setCameraSensitivity(sensitivity);
+      landingPage?.setCameraSensitivity(sensitivity);
       controls?.refreshSensitivityDisplay();
+    },
+    (scheme) => {
+      cubeScene.setColorScheme(scheme);
+      pyraScene?.setColorScheme(scheme);
+      landingPage?.setColorScheme(scheme);
     }
   );
   cubeScene.setRotateSpeed(settings.getCameraSensitivity());
+  cubeScene.setColorScheme(settings.getColorScheme());
 
   // 4. Controls UI
   controls = new ControlsManager(controlsMount, cubeScene, settings, {
@@ -105,12 +119,32 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   });
 
-  // 5. Tab Manager
+  // 5. Tab Manager & Landing Page
   const tabManager = new TabManager((tab) => {
+    landingPage?.setActive(tab === 'home');
     if (tab === 'cube') {
       window.dispatchEvent(new Event('resize'));
     }
   });
+
+  document.getElementById('btn-brand-home')?.addEventListener('click', () => {
+    tabManager.setTab('home');
+  });
+
+  landingPage = new LandingPageManager(landingMount, {
+    initialSensitivity: settings.getCameraSensitivity(),
+    onLaunchTrainer: (puzzle) => {
+      if (puzzle) {
+        controls.setTrainerPuzzle(puzzle);
+        switchTrainerPuzzle(puzzle);
+      }
+      tabManager.setTab('cube');
+    },
+    onNavigateTab: (tab) => {
+      tabManager.setTab(tab);
+    },
+  });
+  landingPage.setColorScheme(settings.getColorScheme());
 
   // 6. Other Puzzles Tab Manager with "Solve this version" button support!
   otherCubes = new OtherCubesManager(otherMount, {
@@ -226,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 9. Global Keyboard Listener for Cube Moves
   window.addEventListener('keydown', (e) => {
-    if (settings.isOpen() || tipsModal.isOpen()) return;
+    if (settings.isOpen() || tipsModal.isOpen() || controls.isAnyModalOpen()) return;
 
     const target = e.target as HTMLElement;
     if (
@@ -265,11 +299,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   const reqPuzzle = params.get('puzzle') as TrainerPuzzleType | null;
   const reqTryMove = params.get('try');
+  const reqTab = params.get('tab');
   if (reqPuzzle && ['3x3', '2x2', '4x4', 'pyraminx'].includes(reqPuzzle)) {
     controls.setTrainerPuzzle(reqPuzzle);
     switchTrainerPuzzle(reqPuzzle);
+    tabManager.setTab('cube');
+  } else if (reqTab === 'cube' || reqTab === 'other' || reqTab === 'learn') {
+    tabManager.setTab(reqTab);
   }
   if (reqTryMove) {
+    tabManager.setTab('cube');
     setTimeout(() => {
       controls.executeMove(reqTryMove, true);
       toast.show(`Demonstrating move: ${reqTryMove}`);

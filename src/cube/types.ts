@@ -56,14 +56,81 @@ export const FACE_NORMALS: Record<Face, Vector3Tuple> = {
   B: [0, 0, -1],
 };
 
-export const FACE_COLORS: Record<Face, string> = {
-  U: '#f8fafc', // White
-  D: '#facc15', // Yellow
-  F: '#16a34a', // Green
-  B: '#2563eb', // Blue
-  R: '#dc2626', // Red
-  L: '#ea580c', // Orange
+export type ColorSchemeId = 'classic' | 'stickerless' | 'contrast';
+
+export interface ColorSchemePalette {
+  id: ColorSchemeId;
+  name: string;
+  bodyColor: string;
+  isStickerless: boolean;
+  cubeFaces: Record<Face, string>;
+  pyraFaces: Record<PyraFace, string>;
+}
+
+export const COLOR_SCHEMES: Record<ColorSchemeId, ColorSchemePalette> = {
+  classic: {
+    id: 'classic',
+    name: 'Classic Black Bezel',
+    bodyColor: '#111317',
+    isStickerless: false,
+    cubeFaces: {
+      U: '#f8fafc',
+      D: '#facc15',
+      F: '#16a34a',
+      B: '#2563eb',
+      R: '#dc2626',
+      L: '#ea580c',
+    },
+    pyraFaces: {
+      U: '#facc15',
+      L: '#16a34a',
+      R: '#dc2626',
+      B: '#2563eb',
+    },
+  },
+  stickerless: {
+    id: 'stickerless',
+    name: 'Stickerless Bright',
+    bodyColor: '#262b33',
+    isStickerless: true,
+    cubeFaces: {
+      U: '#ffffff',
+      D: '#fde047',
+      F: '#22c55e',
+      B: '#3b82f6',
+      R: '#ef4444',
+      L: '#fb923c',
+    },
+    pyraFaces: {
+      U: '#fde047',
+      L: '#22c55e',
+      R: '#ef4444',
+      B: '#3b82f6',
+    },
+  },
+  contrast: {
+    id: 'contrast',
+    name: 'High-Contrast Carbon',
+    bodyColor: '#090b0e',
+    isStickerless: false,
+    cubeFaces: {
+      U: '#f8fafc',
+      D: '#fef08a',
+      F: '#34d399',
+      B: '#38bdf8',
+      R: '#fb7185',
+      L: '#fbbf24',
+    },
+    pyraFaces: {
+      U: '#fef08a',
+      L: '#34d399',
+      R: '#fb7185',
+      B: '#38bdf8',
+    },
+  },
 };
+
+export const FACE_COLORS: Record<Face, string> = COLOR_SCHEMES.classic.cubeFaces;
 
 export const FACE_NAMES: Record<Face, string> = {
   U: 'Up (White)',
@@ -76,9 +143,4 @@ export const FACE_NAMES: Record<Face, string> = {
 
 // Pyraminx types
 export type PyraFace = 'U' | 'L' | 'R' | 'B'; // or Yellow, Green, Red, Blue
-export const PYRA_COLORS: Record<string, string> = {
-  U: '#facc15', // Yellow
-  L: '#16a34a', // Green
-  R: '#dc2626', // Red
-  B: '#2563eb', // Blue
-};
+export const PYRA_COLORS: Record<string, string> = COLOR_SCHEMES.classic.pyraFaces;

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
-import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
-import { PyraminxState, PYRA_COLOR_HEX, generatePyraminxScramble } from '../cube/pyraminxState';
+import { SphereArcballControls } from './SphereArcballControls';
+import { PyraminxState, PyraColor, generatePyraminxScramble } from '../cube/pyraminxState';
+import { COLOR_SCHEMES, ColorSchemeId } from '../cube/types';
 
 // Regular tetrahedron dimensions
 const S = 2.4;
@@ -49,7 +50,7 @@ export class PyraminxScene {
   private scene: THREE.Scene;
   private camera: THREE.PerspectiveCamera;
   private renderer: THREE.WebGLRenderer;
-  private controls: TrackballControls;
+  private controls: SphereArcballControls;
   private state: PyraminxState;
   private mainGroup: THREE.Group;
   private pivotGroup: THREE.Group;
@@ -61,6 +62,8 @@ export class PyraminxScene {
   private resizeObserver: ResizeObserver;
   private onSolvedChange?: (isSolved: boolean) => void;
   private onMoveExecuted?: (notation: string) => void;
+  private colorScheme: ColorSchemeId = 'classic';
+  private frameMaterials: THREE.MeshStandardMaterial[] = [];
 
   // Animation Queue State
   private queue: PyraQueuedMove[] = [];
@@ -114,12 +117,9 @@ export class PyraminxScene {
     );
     this.container.appendChild(this.renderer.domElement);
 
-    this.controls = new TrackballControls(this.camera, this.renderer.domElement);
-    this.controls.noPan = true;
-    this.controls.rotateSpeed = 2.2;
-    this.controls.zoomSpeed = 1.2;
-    this.controls.staticMoving = false;
-    this.controls.dynamicDampingFactor = 0.28;
+    this.controls = new SphereArcballControls(this.camera, this.renderer.domElement);
+    this.controls.rotateSpeed = 2.0;
+    this.controls.zoomSpeed = 1.15;
     this.updateCameraDistance();
 
     // Three-point studio lighting
@@ -284,12 +284,14 @@ export class PyraminxScene {
     rawTriangles.push([getPoint(1 / 3, 2 / 3), getPoint(0, 2 / 3), getPoint(1 / 3, 1 / 3)]); // inverted
     rawTriangles.push([getPoint(0, 2 / 3), getPoint(1 / 3, 2 / 3), getPoint(0, 1)]);
 
+    const palette = COLOR_SCHEMES[this.colorScheme];
     const blackPlasticMat = new THREE.MeshStandardMaterial({
-      color: 0x111317,
+      color: palette.bodyColor,
       roughness: 0.38,
       metalness: 0.08,
       side: THREE.DoubleSide,
     });
+    this.frameMaterials.push(blackPlasticMat);
 
     rawTriangles.forEach((pts, stickerIdx) => {
       let p0 = pts[0].clone();
@@ -406,11 +408,28 @@ export class PyraminxScene {
     });
   }
 
+  setColorScheme(scheme: ColorSchemeId): void {
+    this.colorScheme = scheme;
+    const palette = COLOR_SCHEMES[scheme];
+    this.frameMaterials.forEach((mat) => {
+      mat.color.set(palette.bodyColor);
+    });
+    this.updateColors();
+  }
+
   updateColors(): void {
+    const pyraPalette = COLOR_SCHEMES[this.colorScheme].pyraFaces;
+    const mapColor = (key: PyraColor): string => {
+      if (key === 'Y') return pyraPalette.U;
+      if (key === 'G') return pyraPalette.L;
+      if (key === 'R') return pyraPalette.R;
+      return pyraPalette.B;
+    };
+
     for (let f = 0; f < 4; f++) {
       for (let s = 0; s < 9; s++) {
         const colorKey = this.state.faces[f][s];
-        const hex = PYRA_COLOR_HEX[colorKey];
+        const hex = mapColor(colorKey);
         const mesh = this.stickerMeshes[f]?.[s];
         if (mesh && mesh.material instanceof THREE.MeshStandardMaterial) {
           mesh.material.color.set(hex);
@@ -629,7 +648,7 @@ export class PyraminxScene {
 
     // User clicked ON THE PYRAMINX: Immediately freeze camera controls!
     this.controls.enabled = false;
-    (this.controls as any)._lastAngle = 0;
+    this.controls.stopInertia();
     this.renderer.domElement.style.cursor = 'grabbing';
 
     this.dragTarget = {
@@ -669,7 +688,7 @@ export class PyraminxScene {
 
   private onPointerUp(e: PointerEvent): void {
     this.controls.enabled = true; // Always restore camera control for subsequent background drags
-    (this.controls as any)._lastAngle = 0;
+    this.controls.stopInertia();
 
     const target = this.dragTarget;
     this.dragTarget = null;
@@ -805,7 +824,7 @@ export class PyraminxScene {
     const delta = Math.min(time - this.lastTime, 100);
     this.lastTime = time;
 
-    this.controls.update();
+    this.controls.update(delta);
 
     // Step active animation
     if (this.activeMove) {
@@ -830,7 +849,7 @@ export class PyraminxScene {
     this.camera.position.copy(defaultDir);
     this.camera.up.set(0, 1, 0);
     this.controls.target.set(0, 0, 0);
-    (this.controls as any)._lastAngle = 0;
+    this.controls.stopInertia();
     this.updateCameraDistance();
   }
 

@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
+import { SphereArcballControls } from './SphereArcballControls';
 import { CubeState } from '../cube/CubeState';
 import { AnimationQueue, QueuedMove } from './AnimationQueue';
-import { Axis, CameraVectors, Face, FACE_COLORS, FaceOrientationMap, ResolvedTurn } from '../cube/types';
+import { Axis, CameraVectors, COLOR_SCHEMES, ColorSchemeId, Face, FaceOrientationMap, ResolvedTurn } from '../cube/types';
 import { resolveCameraFaces } from '../cube/cameraResolver';
 import { resolveTurn } from '../cube/moves';
 
@@ -26,7 +26,7 @@ export class RubiksCubeScene {
   private scene: THREE.Scene;
   private camera: THREE.PerspectiveCamera;
   private renderer: THREE.WebGLRenderer;
-  private controls: TrackballControls;
+  private controls: SphereArcballControls;
   private cubeGroup: THREE.Group;
   private pivotGroup: THREE.Group;
   private cubieItems: CubieMeshItem[] = [];
@@ -39,6 +39,10 @@ export class RubiksCubeScene {
   private onSolvedChange?: (isSolved: boolean) => void;
   private onMoveExecuted?: (notation: string, viewRelativeNotation: string) => void;
   private resizeObserver: ResizeObserver;
+  private colorScheme: ColorSchemeId = 'classic';
+  private bodyMaterial: THREE.MeshStandardMaterial | null = null;
+  private stickerMaterials: Record<Face, THREE.MeshStandardMaterial> | null = null;
+  private stickerMeshes: THREE.Mesh[] = [];
 
   // Mouse & Touch Drag-to-Turn State
   private raycaster: THREE.Raycaster = new THREE.Raycaster();
@@ -93,13 +97,10 @@ export class RubiksCubeScene {
     );
     this.container.appendChild(this.renderer.domElement);
 
-    // TrackballControls for smooth 360-degree all-angle inspection with zero POV locking
-    this.controls = new TrackballControls(this.camera, this.renderer.domElement);
-    this.controls.noPan = true;
-    this.controls.rotateSpeed = 2.2;
-    this.controls.zoomSpeed = 1.2;
-    this.controls.staticMoving = false;
-    this.controls.dynamicDampingFactor = 0.28;
+    // Full-sphere X/Y/Z Arcball controls for smooth unconstrained inspection
+    this.controls = new SphereArcballControls(this.camera, this.renderer.domElement);
+    this.controls.rotateSpeed = 2.0;
+    this.controls.zoomSpeed = 1.15;
     this.updateCameraDistance();
 
     // Lighting
@@ -174,27 +175,33 @@ export class RubiksCubeScene {
       });
     });
     this.cubieItems = [];
+    this.stickerMeshes = [];
 
+    const palette = COLOR_SCHEMES[this.colorScheme];
     const cubieSize = 0.94;
     const stickerSize = 0.82;
     const stickerOffset = 0.472;
     const bodyGeometry = new THREE.BoxGeometry(cubieSize, cubieSize, cubieSize);
     const bodyMaterial = new THREE.MeshStandardMaterial({
-      color: 0x111317,
+      color: palette.bodyColor,
       roughness: 0.35,
       metalness: 0.1,
     });
+    this.bodyMaterial = bodyMaterial;
 
     const stickerGeometry = new THREE.PlaneGeometry(stickerSize, stickerSize);
 
     const stickerMaterials: Record<Face, THREE.MeshStandardMaterial> = {
-      U: new THREE.MeshStandardMaterial({ color: FACE_COLORS.U, roughness: 0.2, metalness: 0.05 }),
-      D: new THREE.MeshStandardMaterial({ color: FACE_COLORS.D, roughness: 0.2, metalness: 0.05 }),
-      F: new THREE.MeshStandardMaterial({ color: FACE_COLORS.F, roughness: 0.2, metalness: 0.05 }),
-      B: new THREE.MeshStandardMaterial({ color: FACE_COLORS.B, roughness: 0.2, metalness: 0.05 }),
-      R: new THREE.MeshStandardMaterial({ color: FACE_COLORS.R, roughness: 0.2, metalness: 0.05 }),
-      L: new THREE.MeshStandardMaterial({ color: FACE_COLORS.L, roughness: 0.2, metalness: 0.05 }),
+      U: new THREE.MeshStandardMaterial({ color: palette.cubeFaces.U, roughness: 0.2, metalness: 0.05 }),
+      D: new THREE.MeshStandardMaterial({ color: palette.cubeFaces.D, roughness: 0.2, metalness: 0.05 }),
+      F: new THREE.MeshStandardMaterial({ color: palette.cubeFaces.F, roughness: 0.2, metalness: 0.05 }),
+      B: new THREE.MeshStandardMaterial({ color: palette.cubeFaces.B, roughness: 0.2, metalness: 0.05 }),
+      R: new THREE.MeshStandardMaterial({ color: palette.cubeFaces.R, roughness: 0.2, metalness: 0.05 }),
+      L: new THREE.MeshStandardMaterial({ color: palette.cubeFaces.L, roughness: 0.2, metalness: 0.05 }),
     };
+    this.stickerMaterials = stickerMaterials;
+
+    const stickerScale = palette.isStickerless ? 1.09 : 1.0;
 
     for (const cubieData of this.cubeState.cubies) {
       const [x, y, z] = cubieData.coords;
@@ -211,6 +218,8 @@ export class RubiksCubeScene {
         const [nx, ny, nz] = sticker.normal;
 
         stickerMesh.position.set(nx * stickerOffset, ny * stickerOffset, nz * stickerOffset);
+        stickerMesh.scale.set(stickerScale, stickerScale, 1);
+        this.stickerMeshes.push(stickerMesh);
 
         if (nx === 1) stickerMesh.rotation.y = Math.PI / 2;
         else if (nx === -1) stickerMesh.rotation.y = -Math.PI / 2;
@@ -422,6 +431,23 @@ export class RubiksCubeScene {
     this.controls.rotateSpeed = Math.max(0.5, Math.min(5.0, speed));
   }
 
+  setColorScheme(scheme: ColorSchemeId): void {
+    this.colorScheme = scheme;
+    const palette = COLOR_SCHEMES[scheme];
+    if (this.bodyMaterial) {
+      this.bodyMaterial.color.set(palette.bodyColor);
+    }
+    if (this.stickerMaterials) {
+      (Object.keys(palette.cubeFaces) as Face[]).forEach((face) => {
+        this.stickerMaterials![face]?.color.set(palette.cubeFaces[face]);
+      });
+    }
+    const stickerScale = palette.isStickerless ? 1.09 : 1.0;
+    this.stickerMeshes.forEach((mesh) => {
+      mesh.scale.set(stickerScale, stickerScale, 1);
+    });
+  }
+
   getRotateSpeed(): number {
     return this.controls.rotateSpeed;
   }
@@ -481,7 +507,7 @@ export class RubiksCubeScene {
     const delta = Math.min(time - this.lastTime, 100);
     this.lastTime = time;
 
-    this.controls.update();
+    this.controls.update(delta);
     this.queue.tick(delta, this.reducedMotion);
 
     this.renderer.render(this.scene, this.camera);
@@ -493,7 +519,7 @@ export class RubiksCubeScene {
     this.camera.position.copy(defaultDir);
     this.camera.up.set(0, 1, 0);
     this.controls.target.set(0, 0, 0);
-    (this.controls as any)._lastAngle = 0;
+    this.controls.stopInertia();
     this.updateCameraDistance();
   }
 
@@ -553,7 +579,7 @@ export class RubiksCubeScene {
 
     // User clicked ON THE CUBE: Immediately lock camera controls so perspective does NOT follow or tilt!
     this.controls.enabled = false;
-    (this.controls as any)._lastAngle = 0;
+    this.controls.stopInertia();
     this.renderer.domElement.style.cursor = 'grabbing';
 
     const hit = intersects[0];
@@ -624,7 +650,7 @@ export class RubiksCubeScene {
 
   private onPointerUp(e: PointerEvent): void {
     this.controls.enabled = true; // Always restore camera control for subsequent background drags
-    (this.controls as any)._lastAngle = 0;
+    this.controls.stopInertia();
 
     const target = this.dragTarget;
     this.dragTarget = null;
