@@ -183,42 +183,90 @@ export class ControlsManager {
               Undo
             </button>
 
-            <button id="btn-open-drill" class="btn btn-sm btn-secondary" title="Drill OLL, PLL, PBL, Parity or L4E cases">
-              Drill
+            <button id="btn-tools-menu" class="btn btn-sm btn-secondary btn-tools-toggle" aria-expanded="${this.blePopoverOpen}" aria-controls="tools-popover" title="Drills, Stats, WCA Timer, Sensitivity & Smart Cube">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="4" y1="21" x2="4" y2="14"></line>
+                <line x1="4" y1="10" x2="4" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12" y2="3"></line>
+                <line x1="20" y1="21" x2="20" y2="16"></line>
+                <line x1="20" y1="12" x2="20" y2="3"></line>
+                <line x1="1" y1="14" x2="7" y2="14"></line>
+                <line x1="9" y1="8" x2="15" y2="8"></line>
+                <line x1="17" y1="16" x2="23" y2="16"></line>
+              </svg>
+              <span>Tools</span>
+              <span id="tools-active-dot" class="tools-active-dot" style="display: none;" aria-hidden="true"></span>
             </button>
-
-            <button id="btn-open-stats" class="btn btn-sm btn-secondary" title="View session Ao5 / Ao12 timing history">
-              Stats
-            </button>
-
-            <button id="btn-toggle-wca" class="btn btn-sm ${this.wcaInspectionEnabled ? 'btn-primary' : 'btn-secondary'}" aria-pressed="${this.wcaInspectionEnabled}" title="Toggle WCA 15-second inspection countdown">
-              WCA 15s
-            </button>
-
-            <button id="btn-toggle-hint" class="btn btn-sm ${this.hintEnabled ? 'btn-primary' : 'btn-secondary'}" aria-pressed="${this.hintEnabled}" title="Toggle Next Move Hint">
-              Hint
-            </button>
-
-            <button id="btn-smart-cube" class="btn btn-sm btn-secondary" aria-expanded="${this.blePopoverOpen}" title="WebBLE Smart Cube connection and turn tester">
-              BLE
-            </button>
-          </div>
-
-          <!-- Speed & Drag Sensitivity Sliders -->
-          <div class="speed-control">
-            <label for="speed-slider" class="speed-label">Speed</label>
-            <input type="range" id="speed-slider" min="60" max="400" step="20" value="200" title="Animation duration" />
-            <span id="speed-val" class="speed-val">200ms</span>
-          </div>
-
-          <div class="speed-control sensitivity-control" title="Free-hand drag sensitivity">
-            <label for="pov-slider" class="speed-label">Drag</label>
-            <input type="range" id="pov-slider" min="0.5" max="5.0" step="0.1" value="${this.settings.getCameraSensitivity().toFixed(1)}" title="Drag sensitivity" aria-label="Drag sensitivity" />
-            <span id="pov-val" class="speed-val">${this.settings.getCameraSensitivity().toFixed(1)}×</span>
           </div>
         </div>
 
-        <!-- Drill & Hint / Smart BLE Popover Strip -->
+        <!-- Unified Organized Tools Drawer (Drills, Stats, WCA, Hints, Speed, Drag, WebBLE) -->
+        <div id="tools-popover" class="ble-popover tools-popover" role="region" aria-label="Trainer Tools" style="display: ${this.blePopoverOpen ? 'flex' : 'none'};">
+          <div class="tools-section">
+            <div class="tools-section-heading">Training & Timing</div>
+            <div class="tools-actions-grid">
+              <button id="btn-open-drill" class="btn btn-sm btn-secondary" title="Drill OLL, PLL, PBL, Parity or L4E cases">
+                Algorithm Drills
+              </button>
+              <button id="btn-open-stats" class="btn btn-sm btn-secondary" title="View session Ao5 / Ao12 timing history">
+                Stats
+              </button>
+              <button id="btn-toggle-wca" class="btn btn-sm ${this.wcaInspectionEnabled ? 'btn-primary' : 'btn-secondary'}" aria-pressed="${this.wcaInspectionEnabled}" title="Toggle WCA 15-second inspection countdown">
+                WCA 15s Inspect
+              </button>
+              <button id="btn-toggle-hint" class="btn btn-sm ${this.hintEnabled ? 'btn-primary' : 'btn-secondary'}" aria-pressed="${this.hintEnabled}" title="Toggle Next Move Hint">
+                Next-Move Hint
+              </button>
+            </div>
+          </div>
+
+          <div class="tools-section">
+            <div class="tools-section-heading">Motion & Control</div>
+            <div class="tools-sliders-grid">
+              <div class="tools-slider-row">
+                <label for="speed-slider" class="speed-label">Turn Speed</label>
+                <div class="tools-slider-input">
+                  <input type="range" id="speed-slider" min="60" max="400" step="20" value="200" title="Animation duration" />
+                  <span id="speed-val" class="speed-val">200ms</span>
+                </div>
+              </div>
+              <div class="tools-slider-row">
+                <label for="pov-slider" class="speed-label">Drag Sensitivity</label>
+                <div class="tools-slider-input">
+                  <input type="range" id="pov-slider" min="0.5" max="5.0" step="0.1" value="${this.settings.getCameraSensitivity().toFixed(1)}" title="Drag sensitivity" aria-label="Drag sensitivity" />
+                  <span id="pov-val" class="speed-val">${this.settings.getCameraSensitivity().toFixed(1)}×</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tools-section">
+            <div class="ble-popover-head">
+              <span class="tools-section-heading">Smart Cube (WebBLE)</span>
+              <span id="ble-status-badge" class="ble-status-text">Disconnected</span>
+            </div>
+            <div class="ble-popover-actions">
+              <button type="button" id="btn-ble-connect" class="btn btn-sm btn-primary">Connect Cube</button>
+              <button type="button" id="btn-ble-disconnect" class="btn btn-sm btn-secondary" style="display: none;">Disconnect</button>
+              <button type="button" id="btn-ble-virtual-turn" class="btn btn-sm btn-secondary">Test Smart Turn</button>
+              <button type="button" id="btn-tools-settings" class="btn btn-sm btn-secondary">Keybinds & Colors</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scramble, Drill & Hint Banners stacked cleanly inside top column -->
+        <div id="scramble-banner" class="scramble-banner" style="display: none;">
+          <div class="scramble-label">Scramble:</div>
+          <div id="scramble-notation" class="scramble-notation"></div>
+          <button id="btn-copy-scramble" class="btn-icon-subtle" title="Copy scramble" aria-label="Copy scramble notation">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+        </div>
+
         <div id="drill-banner" class="scramble-banner drill-banner" style="display: none;">
           <div class="scramble-label" id="drill-banner-label">Drill</div>
           <div id="drill-banner-info" class="scramble-notation"></div>
@@ -230,34 +278,7 @@ export class ControlsManager {
         </div>
 
         <div id="hint-banner" class="hint-chip-banner" style="display: none;"></div>
-
-        <div id="ble-popover" class="ble-popover" style="display: ${this.blePopoverOpen ? 'flex' : 'none'};">
-          <div class="ble-popover-head">
-            <strong>Smart Cube (WebBLE)</strong>
-            <span id="ble-status-badge" class="ble-status-text">Disconnected</span>
-          </div>
-          <p class="ble-popover-desc">
-            Pair GAN, Giiker, or Moyu Bluetooth smart cubes over GATT, or fire virtual test turns directly into the timer.
-          </p>
-          <div class="ble-popover-actions">
-            <button type="button" id="btn-ble-connect" class="btn btn-sm btn-primary">Connect Cube</button>
-            <button type="button" id="btn-ble-disconnect" class="btn btn-sm btn-secondary" style="display: none;">Disconnect</button>
-            <button type="button" id="btn-ble-virtual-turn" class="btn btn-sm btn-secondary">Test Smart Turn</button>
-          </div>
-        </div>
         </div><!-- /.trainer-top-stack -->
-
-        <!-- Scramble notation banner -->
-        <div id="scramble-banner" class="scramble-banner" style="display: none;">
-          <div class="scramble-label">Scramble:</div>
-          <div id="scramble-notation" class="scramble-notation"></div>
-          <button id="btn-copy-scramble" class="btn-icon-subtle" title="Copy scramble" aria-label="Copy scramble notation">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-            </svg>
-          </button>
-        </div>
 
         <!-- LEFT SIDEBAR: Beautified Keybinds & Move Controls -->
         <aside class="controls-sidebar-left">
@@ -633,13 +654,46 @@ export class ControlsManager {
       this.handleUndo();
     });
 
-    // Drill, Stats, WCA Inspect, Hint, and Smart BLE controls
+    // Drill, Stats, WCA Inspect, Hint, and Tools Popover controls
+    const setToolsOpen = (open: boolean) => {
+      this.blePopoverOpen = open;
+      const pop = this.container.querySelector<HTMLElement>('#tools-popover');
+      const btn = this.container.querySelector<HTMLButtonElement>('#btn-tools-menu');
+      if (pop) pop.style.display = open ? 'flex' : 'none';
+      btn?.setAttribute('aria-expanded', String(open));
+      btn?.classList.toggle('btn-primary', open);
+      btn?.classList.toggle('btn-secondary', !open);
+      this.refreshBleUi();
+    };
+
+    this.container.querySelector('#btn-tools-menu')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setToolsOpen(!this.blePopoverOpen);
+    });
+
+    this.container.querySelector('#tools-popover')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
+    document.addEventListener('click', () => {
+      if (this.blePopoverOpen) {
+        setToolsOpen(false);
+      }
+    });
+
     this.container.querySelector('#btn-open-drill')?.addEventListener('click', () => {
+      setToolsOpen(false);
       this.drillModal.open(this.activePuzzle);
     });
 
     this.container.querySelector('#btn-open-stats')?.addEventListener('click', () => {
+      setToolsOpen(false);
       this.statsManager.open(this.activePuzzle);
+    });
+
+    this.container.querySelector('#btn-tools-settings')?.addEventListener('click', () => {
+      setToolsOpen(false);
+      this.settings.open();
     });
 
     this.container.querySelector('#btn-toggle-wca')?.addEventListener('click', () => {
@@ -650,6 +704,7 @@ export class ControlsManager {
         btn.classList.toggle('btn-secondary', !this.wcaInspectionEnabled);
         btn.setAttribute('aria-pressed', String(this.wcaInspectionEnabled));
       }
+      this.refreshToolsIndicator();
       toast.show(
         this.wcaInspectionEnabled
           ? 'WCA 15s Inspection enabled before Scramble solves.'
@@ -666,15 +721,7 @@ export class ControlsManager {
         btn.setAttribute('aria-pressed', String(this.hintEnabled));
       }
       this.refreshHintBanner();
-    });
-
-    this.container.querySelector('#btn-smart-cube')?.addEventListener('click', () => {
-      this.blePopoverOpen = !this.blePopoverOpen;
-      const pop = this.container.querySelector<HTMLElement>('#ble-popover');
-      const btn = this.container.querySelector<HTMLButtonElement>('#btn-smart-cube');
-      if (pop) pop.style.display = this.blePopoverOpen ? 'flex' : 'none';
-      btn?.setAttribute('aria-expanded', String(this.blePopoverOpen));
-      this.refreshBleUi();
+      this.refreshToolsIndicator();
     });
 
     this.container.querySelector('#btn-ble-connect')?.addEventListener('click', async () => {
@@ -686,11 +733,13 @@ export class ControlsManager {
         toast.show(msg);
       }
       this.refreshBleUi();
+      this.refreshToolsIndicator();
     });
 
     this.container.querySelector('#btn-ble-disconnect')?.addEventListener('click', () => {
       this.smartCube.disconnect();
       toast.show('Smart Cube disconnected.');
+      this.refreshToolsIndicator();
     });
 
     this.container.querySelector('#btn-ble-virtual-turn')?.addEventListener('click', () => {
@@ -716,12 +765,14 @@ export class ControlsManager {
       this.drillHintRevealed = false;
       this.refreshDrillBanner();
       this.refreshHintBanner();
+      this.refreshToolsIndicator();
     });
 
     this.refreshStatsPill();
     this.refreshBleUi();
     this.refreshDrillBanner();
     this.refreshHintBanner();
+    this.refreshToolsIndicator();
 
     // Speed slider
     const speedSlider = this.container.querySelector<HTMLInputElement>('#speed-slider');
@@ -1220,6 +1271,7 @@ export class ControlsManager {
 
     this.refreshDrillBanner();
     this.refreshHintBanner();
+    this.refreshToolsIndicator();
     toast.show(`Drill ready: ${selection.item.name}`);
   }
 
@@ -1277,10 +1329,10 @@ export class ControlsManager {
     const summary = this.statsManager.getSummary(this.activePuzzle);
     btn.textContent =
       summary.ao5 !== null
-        ? `Ao5 ${formatSolveTime(summary.ao5)}`
+        ? `Session Stats (Ao5 ${formatSolveTime(summary.ao5)})`
         : summary.count > 0
-          ? `Stats (${summary.count})`
-          : 'Stats';
+          ? `Session Stats (${summary.count})`
+          : 'Session Stats';
   }
 
   private refreshBleUi(): void {
@@ -1288,13 +1340,6 @@ export class ControlsManager {
     const badge = this.container.querySelector<HTMLElement>('#ble-status-badge');
     const connectBtn = this.container.querySelector<HTMLButtonElement>('#btn-ble-connect');
     const disconnectBtn = this.container.querySelector<HTMLButtonElement>('#btn-ble-disconnect');
-    const topBtn = this.container.querySelector<HTMLButtonElement>('#btn-smart-cube');
-
-    if (topBtn) {
-      topBtn.classList.toggle('btn-primary', status.connected);
-      topBtn.classList.toggle('btn-secondary', !status.connected);
-      topBtn.textContent = status.connected ? `BLE (${status.turnsReceived})` : 'BLE';
-    }
 
     if (badge) {
       if (status.connected) {
@@ -1307,6 +1352,18 @@ export class ControlsManager {
     }
     if (connectBtn) connectBtn.style.display = status.connected ? 'none' : 'inline-flex';
     if (disconnectBtn) disconnectBtn.style.display = status.connected ? 'inline-flex' : 'none';
+    this.refreshToolsIndicator();
+  }
+
+  private refreshToolsIndicator(): void {
+    const dot = this.container.querySelector<HTMLElement>('#tools-active-dot');
+    if (!dot) return;
+    const anyActive =
+      this.wcaInspectionEnabled ||
+      this.hintEnabled ||
+      Boolean(this.activeDrill) ||
+      this.smartCube.getStatus().connected;
+    dot.style.display = anyActive ? 'inline-block' : 'none';
   }
 
   // Timer functions

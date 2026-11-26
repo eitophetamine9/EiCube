@@ -60,7 +60,7 @@ src/
 │   ├── matrixBackdrop.ts   # Dual-theme animated binary matrix background canvas
 │   ├── tabs.ts             # 4-way tab manager (Home, Puzzle, Other Puzzles, Learn Puzzles)
 │   ├── landing.ts          # Zero-login editorial landing page with live 3D showcase
-│   ├── controls.ts         # Top floating stack, WCA 15s inspection, Drills, Hints, BLE, Moves Pad
+│   ├── controls.ts         # Single-row trainer topbar, Tools popover (Drills, Stats, WCA, BLE), Moves Pad
 │   ├── sessionStats.ts     # LocalStorage solve history, Ao5/Ao12 calculation, stats modal
 │   ├── drillModal.ts       # Inverted setup OLL/PLL/PBL/Parity drill trainer modal
 │   ├── settings.ts         # Keybind rebinding modal, Drag Sensitivity, Color Schemes
