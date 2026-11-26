@@ -387,6 +387,63 @@ body {
   flex-shrink: 0;
 }
 
+.help-dropdown-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.help-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 224px;
+  padding: 6px;
+  background: var(--bg-surface-frosted);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 90;
+}
+
+.help-dropdown-menu.is-open {
+  display: flex;
+}
+
+.help-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ink-primary);
+  font-family: var(--font-sans);
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.help-dropdown-item:hover {
+  background: var(--bg-surface-soft);
+}
+
+.nav-question-mark-sm {
+  width: 16px;
+  height: 16px;
+  font-size: 0.68rem;
+  flex-shrink: 0;
+}
+
 :root[data-theme="dark"] .header-utility-capsule {
   background: rgba(9, 18, 12, 0.86);
 }
