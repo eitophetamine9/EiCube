@@ -11,6 +11,11 @@ import { OTHER_CUBES_GUIDES } from '../content/otherCubesData';
 import { PUZZLE_VIDEOS } from '../content/videoData';
 import { SettingsManager, DEFAULT_KEYBINDS, TWOHAND_SPEEDCUBE_KEYBINDS } from '../ui/settings';
 import { MOVES_GLOSSARY, MOVE_CATEGORIES } from '../content/movesGlossaryData';
+import * as THREE from 'three';
+import {
+  projectPointerToArcballSphere,
+  computeArcballDeltaQuaternion,
+} from '../render/SphereArcballControls';
 
 describe("Rubik's Cube Pure Logic", () => {
   it('initializes a solved 3x3 cube', () => {
@@ -410,6 +415,32 @@ describe("Rubik's Cube Pure Logic", () => {
       expect(seenGifs.has(item.gifPath)).toBe(false);
       seenGifs.add(item.gifPath);
     }
+  });
+
+  it('supports unconstrained X, Y, and Z sphere arcball rotation without singularities', () => {
+    const cam = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+    cam.position.set(0, 0, 6);
+    cam.lookAt(0, 0, 0);
+
+    // 1. Horizontal center drag -> Y-axis rotation
+    const vStartH = projectPointerToArcballSphere(-0.2, 0);
+    const vEndH = projectPointerToArcballSphere(0.2, 0);
+    const rotH = computeArcballDeltaQuaternion(vStartH, vEndH, cam, 2.0);
+    expect(Math.abs(rotH.axis.y)).toBeGreaterThan(0.95);
+    expect(Math.abs(rotH.angle)).toBeGreaterThan(0.5);
+
+    // 2. Vertical center drag -> X-axis rotation
+    const vStartV = projectPointerToArcballSphere(0, -0.2);
+    const vEndV = projectPointerToArcballSphere(0, 0.2);
+    const rotV = computeArcballDeltaQuaternion(vStartV, vEndV, cam, 2.0);
+    expect(Math.abs(rotV.axis.x)).toBeGreaterThan(0.95);
+
+    // 3. Outer circular arc drag -> non-zero Z-axis view roll
+    const vStartZ = projectPointerToArcballSphere(0.85, 0.0);
+    const vEndZ = projectPointerToArcballSphere(0.80, 0.35);
+    const rotZ = computeArcballDeltaQuaternion(vStartZ, vEndZ, cam, 2.0);
+    expect(Math.abs(rotZ.axis.z)).toBeGreaterThan(0.5);
+    expect(Number.isNaN(rotZ.quaternion.x)).toBe(false);
   });
 });
 

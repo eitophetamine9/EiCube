@@ -140,16 +140,16 @@ export class ControlsManager {
             </button>
           </div>
 
-          <!-- Speed & POV Sensitivity Sliders -->
+          <!-- Speed & Drag Sensitivity Sliders -->
           <div class="speed-control">
             <label for="speed-slider" class="speed-label">Speed</label>
             <input type="range" id="speed-slider" min="60" max="400" step="20" value="200" title="Animation duration" />
             <span id="speed-val" class="speed-val">200ms</span>
           </div>
 
-          <div class="speed-control sensitivity-control" title="Camera orbit sensitivity">
-            <label for="pov-slider" class="speed-label">POV</label>
-            <input type="range" id="pov-slider" min="0.5" max="5.0" step="0.1" value="${this.settings.getCameraSensitivity().toFixed(1)}" title="Camera POV orbit sensitivity" />
+          <div class="speed-control sensitivity-control" title="Free-hand drag sensitivity">
+            <label for="pov-slider" class="speed-label">Drag</label>
+            <input type="range" id="pov-slider" min="0.5" max="5.0" step="0.1" value="${this.settings.getCameraSensitivity().toFixed(1)}" title="Drag sensitivity" aria-label="Drag sensitivity" />
             <span id="pov-val" class="speed-val">${this.settings.getCameraSensitivity().toFixed(1)}×</span>
           </div>
         </div>

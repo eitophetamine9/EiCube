@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
+import { SphereArcballControls } from './SphereArcballControls';
 import { CubeState } from '../cube/CubeState';
 import { AnimationQueue, QueuedMove } from './AnimationQueue';
 import { Axis, CameraVectors, Face, FACE_COLORS, FaceOrientationMap, ResolvedTurn } from '../cube/types';
@@ -26,7 +26,7 @@ export class RubiksCubeScene {
   private scene: THREE.Scene;
   private camera: THREE.PerspectiveCamera;
   private renderer: THREE.WebGLRenderer;
-  private controls: TrackballControls;
+  private controls: SphereArcballControls;
   private cubeGroup: THREE.Group;
   private pivotGroup: THREE.Group;
   private cubieItems: CubieMeshItem[] = [];
@@ -93,13 +93,10 @@ export class RubiksCubeScene {
     );
     this.container.appendChild(this.renderer.domElement);
 
-    // TrackballControls for smooth 360-degree all-angle inspection with zero POV locking
-    this.controls = new TrackballControls(this.camera, this.renderer.domElement);
-    this.controls.noPan = true;
-    this.controls.rotateSpeed = 2.2;
-    this.controls.zoomSpeed = 1.2;
-    this.controls.staticMoving = false;
-    this.controls.dynamicDampingFactor = 0.28;
+    // Full-sphere X/Y/Z Arcball controls for smooth unconstrained inspection
+    this.controls = new SphereArcballControls(this.camera, this.renderer.domElement);
+    this.controls.rotateSpeed = 2.0;
+    this.controls.zoomSpeed = 1.15;
     this.updateCameraDistance();
 
     // Lighting
@@ -481,7 +478,7 @@ export class RubiksCubeScene {
     const delta = Math.min(time - this.lastTime, 100);
     this.lastTime = time;
 
-    this.controls.update();
+    this.controls.update(delta);
     this.queue.tick(delta, this.reducedMotion);
 
     this.renderer.render(this.scene, this.camera);
@@ -493,7 +490,7 @@ export class RubiksCubeScene {
     this.camera.position.copy(defaultDir);
     this.camera.up.set(0, 1, 0);
     this.controls.target.set(0, 0, 0);
-    (this.controls as any)._lastAngle = 0;
+    this.controls.stopInertia();
     this.updateCameraDistance();
   }
 
@@ -553,7 +550,7 @@ export class RubiksCubeScene {
 
     // User clicked ON THE CUBE: Immediately lock camera controls so perspective does NOT follow or tilt!
     this.controls.enabled = false;
-    (this.controls as any)._lastAngle = 0;
+    this.controls.stopInertia();
     this.renderer.domElement.style.cursor = 'grabbing';
 
     const hit = intersects[0];
@@ -624,7 +621,7 @@ export class RubiksCubeScene {
 
   private onPointerUp(e: PointerEvent): void {
     this.controls.enabled = true; // Always restore camera control for subsequent background drags
-    (this.controls as any)._lastAngle = 0;
+    this.controls.stopInertia();
 
     const target = this.dragTarget;
     this.dragTarget = null;

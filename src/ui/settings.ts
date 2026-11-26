@@ -297,11 +297,11 @@ export class SettingsManager {
         <div class="modal-body">
           <div class="settings-sensitivity-row">
             <div class="sensitivity-info">
-              <label for="modal-pov-slider" class="keybind-label">Camera POV Sensitivity</label>
-              <span class="keybind-desc">Adjust how fast dragging the background orbits the puzzle</span>
+              <label for="modal-pov-slider" class="keybind-label">Drag Sensitivity</label>
+              <span class="keybind-desc">Adjust how fast dragging rotates across all X, Y, Z sphere axes</span>
             </div>
             <div class="sensitivity-slider-group">
-              <input type="range" id="modal-pov-slider" min="0.5" max="5.0" step="0.1" value="${this.cameraSensitivity.toFixed(1)}" aria-label="Camera POV Sensitivity" />
+              <input type="range" id="modal-pov-slider" min="0.5" max="5.0" step="0.1" value="${this.cameraSensitivity.toFixed(1)}" aria-label="Drag Sensitivity" />
               <span id="modal-pov-val" class="speed-val">${this.cameraSensitivity.toFixed(1)}×</span>
             </div>
           </div>

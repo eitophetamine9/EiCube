@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
+import { SphereArcballControls } from './SphereArcballControls';
 import { PyraminxState, PYRA_COLOR_HEX, generatePyraminxScramble } from '../cube/pyraminxState';
 
 // Regular tetrahedron dimensions
@@ -49,7 +49,7 @@ export class PyraminxScene {
   private scene: THREE.Scene;
   private camera: THREE.PerspectiveCamera;
   private renderer: THREE.WebGLRenderer;
-  private controls: TrackballControls;
+  private controls: SphereArcballControls;
   private state: PyraminxState;
   private mainGroup: THREE.Group;
   private pivotGroup: THREE.Group;
@@ -114,12 +114,9 @@ export class PyraminxScene {
     );
     this.container.appendChild(this.renderer.domElement);
 
-    this.controls = new TrackballControls(this.camera, this.renderer.domElement);
-    this.controls.noPan = true;
-    this.controls.rotateSpeed = 2.2;
-    this.controls.zoomSpeed = 1.2;
-    this.controls.staticMoving = false;
-    this.controls.dynamicDampingFactor = 0.28;
+    this.controls = new SphereArcballControls(this.camera, this.renderer.domElement);
+    this.controls.rotateSpeed = 2.0;
+    this.controls.zoomSpeed = 1.15;
     this.updateCameraDistance();
 
     // Three-point studio lighting
@@ -629,7 +626,7 @@ export class PyraminxScene {
 
     // User clicked ON THE PYRAMINX: Immediately freeze camera controls!
     this.controls.enabled = false;
-    (this.controls as any)._lastAngle = 0;
+    this.controls.stopInertia();
     this.renderer.domElement.style.cursor = 'grabbing';
 
     this.dragTarget = {
@@ -669,7 +666,7 @@ export class PyraminxScene {
 
   private onPointerUp(e: PointerEvent): void {
     this.controls.enabled = true; // Always restore camera control for subsequent background drags
-    (this.controls as any)._lastAngle = 0;
+    this.controls.stopInertia();
 
     const target = this.dragTarget;
     this.dragTarget = null;
@@ -805,7 +802,7 @@ export class PyraminxScene {
     const delta = Math.min(time - this.lastTime, 100);
     this.lastTime = time;
 
-    this.controls.update();
+    this.controls.update(delta);
 
     // Step active animation
     if (this.activeMove) {
@@ -830,7 +827,7 @@ export class PyraminxScene {
     this.camera.position.copy(defaultDir);
     this.camera.up.set(0, 1, 0);
     this.controls.target.set(0, 0, 0);
-    (this.controls as any)._lastAngle = 0;
+    this.controls.stopInertia();
     this.updateCameraDistance();
   }
 
