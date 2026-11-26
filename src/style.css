@@ -796,17 +796,32 @@ body {
   pointer-events: auto;
 }
 
-/* Top Floating Bar */
-.floating-top-bar {
+/* Top Floating Stack & Bar */
+.trainer-top-stack {
   position: absolute;
   top: 14px;
   left: 50%;
   transform: translateX(-50%);
+  width: min(1360px, calc(100% - 24px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.trainer-top-stack > * {
+  pointer-events: auto;
+}
+
+.floating-top-bar {
+  position: relative;
   width: max-content;
-  max-width: calc(100% - 32px);
+  max-width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   background: var(--bg-surface-frosted);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
@@ -989,24 +1004,23 @@ body {
   min-width: 28px;
 }
 
-/* Scramble Banner */
+/* Scramble & Drill Banner */
 .scramble-banner {
-  position: absolute;
-  top: 74px;
-  left: 50%;
-  transform: translateX(-50%);
+  position: relative;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 8px 10px;
   background: var(--bg-surface-frosted);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-subtle);
   padding: 7px 14px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
-  max-width: min(92%, 720px);
-  overflow-x: auto;
+  max-width: min(100%, 780px);
+  box-sizing: border-box;
   z-index: 15;
 }
 
@@ -1019,10 +1033,12 @@ body {
 
 .scramble-notation {
   font-family: var(--font-mono);
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   font-weight: 600;
   color: var(--ink-primary);
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
+  min-width: 0;
 }
 
 /* ==========================================================================
@@ -1484,14 +1500,20 @@ body {
     pointer-events: auto;
   }
 
+  .trainer-top-stack {
+    top: 10px;
+    width: calc(100% - 16px);
+  }
+
   .floating-top-bar {
     padding: 5px 10px;
     gap: 8px;
-    top: 10px;
     border-radius: var(--radius-lg);
   }
 
-  .top-action-buttons {
+  .top-action-buttons #btn-scramble,
+  .top-action-buttons #btn-reset,
+  .top-action-buttons #btn-undo {
     display: none;
   }
 
@@ -1502,8 +1524,7 @@ body {
 
 @media (max-width: 520px) {
   .floating-top-bar {
-    width: max-content;
-    max-width: calc(100% - 16px);
+    width: 100%;
     flex-direction: column;
     justify-content: center;
     align-items: center;
@@ -1559,8 +1580,7 @@ body {
   }
 
   .scramble-banner {
-    top: 98px;
-    max-width: calc(100% - 16px);
+    max-width: 100%;
   }
 }
 
@@ -3636,6 +3656,8 @@ body.moves-glossary-body {
   grid-template-columns: minmax(0, 1.04fr) minmax(0, 0.96fr);
   gap: 44px;
   align-items: center;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .landing-hero-copy {
@@ -3643,6 +3665,8 @@ body.moves-glossary-body {
   flex-direction: column;
   align-items: flex-start;
   gap: 20px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .landing-eyebrow {
@@ -3659,6 +3683,8 @@ body.moves-glossary-body {
   letter-spacing: 0.06em;
   color: var(--accent-olive-dark);
   box-shadow: var(--shadow-sm);
+  max-width: 100%;
+  flex-wrap: wrap;
 }
 
 .landing-eyebrow-dot {
@@ -3735,6 +3761,8 @@ body.moves-glossary-body {
 
 .landing-hero-stage {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .landing-stage-frame {
@@ -3745,6 +3773,10 @@ body.moves-glossary-body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .landing-stage-topbar {
@@ -3990,7 +4022,7 @@ body.moves-glossary-body {
 
 @media (max-width: 1024px) {
   .landing-hero-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 28px;
   }
 
@@ -4003,11 +4035,28 @@ body.moves-glossary-body {
 @media (max-width: 640px) {
   .landing-wrap {
     padding: 0 16px;
+    box-sizing: border-box;
   }
 
   .landing-hero {
     min-height: auto;
-    padding: 24px 0 34px;
+    padding: 22px 0 34px;
+  }
+
+  .landing-eyebrow {
+    font-size: 0.64rem;
+    letter-spacing: 0.03em;
+    line-height: 1.35;
+  }
+
+  .landing-title {
+    font-size: clamp(1.85rem, 8.2vw, 2.45rem);
+    max-width: 100%;
+  }
+
+  .landing-lead {
+    font-size: 0.96rem;
+    max-width: 100%;
   }
 
   .landing-meta-strip {
@@ -4017,11 +4066,17 @@ body.moves-glossary-body {
 
   .landing-hero-actions {
     width: 100%;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .btn-landing-cta {
-    flex: 1 1 auto;
+    width: 100%;
     justify-content: center;
+  }
+
+  .landing-stage-topbar {
+    flex-wrap: wrap;
   }
 
   .landing-cap-grid,
@@ -4056,10 +4111,7 @@ body.moves-glossary-body {
 }
 
 .hint-chip-banner {
-  position: absolute;
-  top: 66px;
-  left: 50%;
-  transform: translateX(-50%);
+  position: relative;
   z-index: 12;
   padding: 6px 14px;
   border-radius: var(--radius-pill);
@@ -4070,7 +4122,8 @@ body.moves-glossary-body {
   font-size: 0.78rem;
   font-weight: 700;
   box-shadow: var(--shadow-md);
-  pointer-events: none;
+  max-width: 100%;
+  text-align: center;
 }
 
 .drill-banner {
@@ -4086,11 +4139,9 @@ body.moves-glossary-body {
 }
 
 .ble-popover {
-  position: absolute;
-  top: 66px;
-  right: 24px;
+  position: relative;
   z-index: 25;
-  width: min(340px, calc(100vw - 24px));
+  width: min(360px, 100%);
   background: var(--bg-surface);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
@@ -4296,13 +4347,11 @@ body.moves-glossary-body {
   }
 
   .ble-popover {
-    right: 12px;
-    top: 112px;
+    width: 100%;
   }
 
   .hint-chip-banner {
-    top: 112px;
-    max-width: calc(100vw - 24px);
+    max-width: 100%;
     text-align: center;
   }
 }

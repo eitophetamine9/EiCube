@@ -119,6 +119,7 @@ export class ControlsManager {
 
     this.container.innerHTML = `
       <div class="trainer-viewport-overlay">
+        <div class="trainer-top-stack">
         <!-- Top Floating Status Bar -->
         <div class="floating-top-bar">
           <!-- Puzzle Selector inside Trainer -->
@@ -244,6 +245,7 @@ export class ControlsManager {
             <button type="button" id="btn-ble-virtual-turn" class="btn btn-sm btn-secondary">Test Smart Turn</button>
           </div>
         </div>
+        </div><!-- /.trainer-top-stack -->
 
         <!-- Scramble notation banner -->
         <div id="scramble-banner" class="scramble-banner" style="display: none;">
