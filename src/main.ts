@@ -60,9 +60,11 @@ document.addEventListener('DOMContentLoaded', () => {
           },
         });
         pyraScene.setRotateSpeed(settings.getCameraSensitivity());
+        pyraScene.setColorScheme(settings.getColorScheme());
       } else {
         pyraScene['renderer'].domElement.style.display = 'block';
         pyraScene.setRotateSpeed(settings.getCameraSensitivity());
+        pyraScene.setColorScheme(settings.getColorScheme());
         pyraScene.reset();
       }
     } else {
@@ -90,9 +92,15 @@ document.addEventListener('DOMContentLoaded', () => {
       otherCubes?.setCameraSensitivity(sensitivity);
       landingPage?.setCameraSensitivity(sensitivity);
       controls?.refreshSensitivityDisplay();
+    },
+    (scheme) => {
+      cubeScene.setColorScheme(scheme);
+      pyraScene?.setColorScheme(scheme);
+      landingPage?.setColorScheme(scheme);
     }
   );
   cubeScene.setRotateSpeed(settings.getCameraSensitivity());
+  cubeScene.setColorScheme(settings.getColorScheme());
 
   // 4. Controls UI
   controls = new ControlsManager(controlsMount, cubeScene, settings, {
@@ -136,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
       tabManager.setTab(tab);
     },
   });
+  landingPage.setColorScheme(settings.getColorScheme());
 
   // 6. Other Puzzles Tab Manager with "Solve this version" button support!
   otherCubes = new OtherCubesManager(otherMount, {
@@ -251,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 9. Global Keyboard Listener for Cube Moves
   window.addEventListener('keydown', (e) => {
-    if (settings.isOpen() || tipsModal.isOpen()) return;
+    if (settings.isOpen() || tipsModal.isOpen() || controls.isAnyModalOpen()) return;
 
     const target = e.target as HTMLElement;
     if (

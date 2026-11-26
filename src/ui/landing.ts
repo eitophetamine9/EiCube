@@ -1,5 +1,6 @@
 import { CubeState } from '../cube/CubeState';
 import { RubiksCubeScene } from '../render/RubiksCubeScene';
+import { COLOR_SCHEMES, ColorSchemeId } from '../cube/types';
 import { parseAlgorithm } from '../cube/notation';
 import { TrainerPuzzleType } from './controls';
 import { TabId } from './tabs';
@@ -298,6 +299,12 @@ export class LandingPageManager {
 
   public setCameraSensitivity(sensitivity: number): void {
     this.showcaseScene?.setRotateSpeed(sensitivity);
+  }
+
+  public setColorScheme(scheme: ColorSchemeId): void {
+    if (scheme in COLOR_SCHEMES) {
+      this.showcaseScene?.setColorScheme(scheme);
+    }
   }
 
   public destroy(): void {

@@ -4,13 +4,15 @@ import { resolveTurn } from '../cube/moves';
 import { parseAlgorithm, invertAlgorithm } from '../cube/notation';
 import { generateScramble } from '../cube/scramble';
 import { resolveCameraFaces } from '../cube/cameraResolver';
-import { CameraVectors } from '../cube/types';
+import { CameraVectors, COLOR_SCHEMES } from '../cube/types';
 import { GUIDE_DATA } from '../content/guideData';
 import { PyraminxState, generatePyraminxScramble } from '../cube/pyraminxState';
 import { OTHER_CUBES_GUIDES } from '../content/otherCubesData';
 import { PUZZLE_VIDEOS } from '../content/videoData';
 import { SettingsManager, DEFAULT_KEYBINDS, TWOHAND_SPEEDCUBE_KEYBINDS } from '../ui/settings';
 import { MOVES_GLOSSARY, MOVE_CATEGORIES } from '../content/movesGlossaryData';
+import { calculateWcaAverage, summarizePuzzleStats, SolveRecord } from '../ui/sessionStats';
+import { buildDrillMoves } from '../ui/drillModal';
 import * as THREE from 'three';
 import {
   projectPointerToArcballSphere,
@@ -441,6 +443,63 @@ describe("Rubik's Cube Pure Logic", () => {
     const rotZ = computeArcballDeltaQuaternion(vStartZ, vEndZ, cam, 2.0);
     expect(Math.abs(rotZ.axis.z)).toBeGreaterThan(0.5);
     expect(Number.isNaN(rotZ.quaternion.x)).toBe(false);
+  });
+
+  it('computes WCA Ao5 and Ao12 trimmed averages accurately with +2 and DNF penalties', () => {
+    const makeRec = (id: string, rawMs: number, penalty: 'OK' | '+2' | 'DNF' = 'OK'): SolveRecord => ({
+      id,
+      timestamp: 1000,
+      puzzle: '3x3',
+      rawMs,
+      penalty,
+      moves: 40,
+      mode: 'free',
+    });
+
+    // 5 solves: 10s, 11s, 12s, 13s, 20s -> drops 10s and 20s -> mean(11,12,13) = 12000ms
+    const basic5 = [makeRec('1', 10000), makeRec('2', 11000), makeRec('3', 12000), makeRec('4', 13000), makeRec('5', 20000)];
+    expect(calculateWcaAverage(basic5, 5)).toBe(12000);
+
+    // 1 DNF replaces slowest dropped solve + +2 adds 2000ms -> drops 10s and DNF -> mean(12s + 2s=14s, 12s, 13s) = 13000ms
+    const oneDnf = [makeRec('1', 10000), makeRec('2', 12000, '+2'), makeRec('3', 12000), makeRec('4', 13000), makeRec('5', 9000, 'DNF')];
+    expect(calculateWcaAverage(oneDnf, 5)).toBe(13000);
+
+    // 2 DNFs in window -> DNF average (null)
+    const twoDnfs = [makeRec('1', 10000), makeRec('2', 11000), makeRec('3', 12000), makeRec('4', 9000, 'DNF'), makeRec('5', 9000, 'DNF')];
+    expect(calculateWcaAverage(twoDnfs, 5)).toBeNull();
+
+    // Summary on 12 solves computes PB, Mean, Ao5, Ao12
+    const twelve = Array.from({ length: 12 }, (_, idx) => makeRec(String(idx), 10000 + idx * 1000));
+    const summary = summarizePuzzleStats(twelve, '3x3');
+    expect(summary.pb).toBe(10000);
+    expect(summary.ao5).toBe(12000);
+    expect(summary.ao12).toBe(15500);
+  });
+
+  it('provides complete Color Scheme palettes and reversible Drill setups', () => {
+    expect(Object.keys(COLOR_SCHEMES)).toEqual(['classic', 'stickerless', 'contrast']);
+    for (const scheme of Object.values(COLOR_SCHEMES)) {
+      expect(Object.keys(scheme.cubeFaces).length).toBe(6);
+      expect(Object.keys(scheme.pyraFaces).length).toBe(4);
+      expect(scheme.bodyColor).toMatch(/^#[0-9a-f]{6}$/i);
+    }
+
+    // Verify 3x3 T-Perm drill setup + solution restores solved state
+    const drill = buildDrillMoves('3x3', "R U R' U' R' F R2 U' R' U' R U R' F'");
+    expect(drill.setupMoves.length).toBe(14);
+    expect(drill.solutionMoves.length).toBe(14);
+
+    const cube = new CubeState(3);
+    for (const m of drill.setupMoves) {
+      const turn = resolveTurn(m, undefined, 3);
+      cube.applyTurn(turn.axis, turn.layers, turn.angle);
+    }
+    expect(cube.isSolved()).toBe(false);
+    for (const m of drill.solutionMoves) {
+      const turn = resolveTurn(m, undefined, 3);
+      cube.applyTurn(turn.axis, turn.layers, turn.angle);
+    }
+    expect(cube.isSolved()).toBe(true);
   });
 });
 

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { SphereArcballControls } from './SphereArcballControls';
-import { PyraminxState, PYRA_COLOR_HEX, generatePyraminxScramble } from '../cube/pyraminxState';
+import { PyraminxState, PyraColor, generatePyraminxScramble } from '../cube/pyraminxState';
+import { COLOR_SCHEMES, ColorSchemeId } from '../cube/types';
 
 // Regular tetrahedron dimensions
 const S = 2.4;
@@ -61,6 +62,8 @@ export class PyraminxScene {
   private resizeObserver: ResizeObserver;
   private onSolvedChange?: (isSolved: boolean) => void;
   private onMoveExecuted?: (notation: string) => void;
+  private colorScheme: ColorSchemeId = 'classic';
+  private frameMaterials: THREE.MeshStandardMaterial[] = [];
 
   // Animation Queue State
   private queue: PyraQueuedMove[] = [];
@@ -281,12 +284,14 @@ export class PyraminxScene {
     rawTriangles.push([getPoint(1 / 3, 2 / 3), getPoint(0, 2 / 3), getPoint(1 / 3, 1 / 3)]); // inverted
     rawTriangles.push([getPoint(0, 2 / 3), getPoint(1 / 3, 2 / 3), getPoint(0, 1)]);
 
+    const palette = COLOR_SCHEMES[this.colorScheme];
     const blackPlasticMat = new THREE.MeshStandardMaterial({
-      color: 0x111317,
+      color: palette.bodyColor,
       roughness: 0.38,
       metalness: 0.08,
       side: THREE.DoubleSide,
     });
+    this.frameMaterials.push(blackPlasticMat);
 
     rawTriangles.forEach((pts, stickerIdx) => {
       let p0 = pts[0].clone();
@@ -403,11 +408,28 @@ export class PyraminxScene {
     });
   }
 
+  setColorScheme(scheme: ColorSchemeId): void {
+    this.colorScheme = scheme;
+    const palette = COLOR_SCHEMES[scheme];
+    this.frameMaterials.forEach((mat) => {
+      mat.color.set(palette.bodyColor);
+    });
+    this.updateColors();
+  }
+
   updateColors(): void {
+    const pyraPalette = COLOR_SCHEMES[this.colorScheme].pyraFaces;
+    const mapColor = (key: PyraColor): string => {
+      if (key === 'Y') return pyraPalette.U;
+      if (key === 'G') return pyraPalette.L;
+      if (key === 'R') return pyraPalette.R;
+      return pyraPalette.B;
+    };
+
     for (let f = 0; f < 4; f++) {
       for (let s = 0; s < 9; s++) {
         const colorKey = this.state.faces[f][s];
-        const hex = PYRA_COLOR_HEX[colorKey];
+        const hex = mapColor(colorKey);
         const mesh = this.stickerMeshes[f]?.[s];
         if (mesh && mesh.material instanceof THREE.MeshStandardMaterial) {
           mesh.material.color.set(hex);
