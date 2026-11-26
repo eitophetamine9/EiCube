@@ -190,16 +190,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 150);
   });
 
-  // Header Buttons (Desktop)
+  // Header Buttons (Desktop Help Dropdown + Settings)
+  const helpDropdownWrap = document.getElementById('help-dropdown-wrap');
+  const btnHelpDropdown = document.getElementById('btn-help-dropdown');
+  const helpDropdownMenu = document.getElementById('help-dropdown-menu');
+
+  const closeHelpDropdown = () => {
+    helpDropdownMenu?.classList.remove('is-open');
+    btnHelpDropdown?.setAttribute('aria-expanded', 'false');
+  };
+
+  btnHelpDropdown?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const willOpen = !helpDropdownMenu?.classList.contains('is-open');
+    helpDropdownMenu?.classList.toggle('is-open', Boolean(willOpen));
+    btnHelpDropdown.setAttribute('aria-expanded', String(Boolean(willOpen)));
+  });
+
+  document.addEventListener('click', (e) => {
+    if (helpDropdownWrap && !helpDropdownWrap.contains(e.target as Node)) {
+      closeHelpDropdown();
+    }
+  });
+
   document.getElementById('btn-open-tips')?.addEventListener('click', () => {
+    closeHelpDropdown();
     tipsModal.open();
   });
 
   document.getElementById('btn-open-help')?.addEventListener('click', () => {
+    closeHelpDropdown();
     tutorial.open();
   });
 
   document.getElementById('btn-open-settings')?.addEventListener('click', () => {
+    closeHelpDropdown();
     settings.open();
   });
 

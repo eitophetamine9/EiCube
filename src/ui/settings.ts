@@ -1,5 +1,6 @@
 import { toast } from './toast';
 import { COLOR_SCHEMES, ColorSchemeId } from '../cube/types';
+import { applyTheme, getStoredTheme, ThemeMode } from './theme';
 
 export interface KeybindMap {
   [action: string]: string; // action e.g. 'U', 'U\'', 'D', 'D\'', 'L', 'L\'', 'R', 'R\'', 'F', 'F\'', 'B', 'B\'', 'M', 'E', 'S', etc.
@@ -345,6 +346,16 @@ export class SettingsManager {
           </div>
           <div class="settings-scheme-row">
             <div class="sensitivity-info">
+              <span class="keybind-label">Theme Appearance</span>
+              <span class="keybind-desc">Switch between Daylight Matrix and Dark Matrix mode</span>
+            </div>
+            <div class="scheme-pills-group" role="group" aria-label="Theme Appearance">
+              <button type="button" class="btn-picker ${getStoredTheme() === 'light' ? 'is-active' : ''}" data-settings-theme="light">Daylight</button>
+              <button type="button" class="btn-picker ${getStoredTheme() === 'dark' ? 'is-active' : ''}" data-settings-theme="dark">Dark Matrix</button>
+            </div>
+          </div>
+          <div class="settings-scheme-row">
+            <div class="sensitivity-info">
               <span class="keybind-label">3D Color Scheme</span>
               <span class="keybind-desc">Switch plastic bezel finish and sticker palette live</span>
             </div>
@@ -397,6 +408,27 @@ export class SettingsManager {
         const scheme = btn.dataset.schemeChoice as ColorSchemeId;
         if (scheme) this.setColorScheme(scheme);
       });
+    });
+
+    const syncThemePills = (mode: ThemeMode) => {
+      modal.querySelectorAll<HTMLButtonElement>('[data-settings-theme]').forEach((btn) => {
+        btn.classList.toggle('is-active', btn.dataset.settingsTheme === mode);
+      });
+    };
+
+    modal.querySelectorAll<HTMLButtonElement>('[data-settings-theme]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.settingsTheme as ThemeMode;
+        if (mode === 'light' || mode === 'dark') {
+          applyTheme(mode);
+          syncThemePills(mode);
+        }
+      });
+    });
+
+    window.addEventListener('eicube-themechange', (e) => {
+      const mode = (e as CustomEvent<{ theme: ThemeMode }>).detail?.theme;
+      if (mode) syncThemePills(mode);
     });
 
     modal.addEventListener('click', (e) => {
