@@ -1,9 +1,50 @@
 import { GUIDE_DATA, GuideStep, ADVANCED_SPEEDCUBING_DATA } from '../content/guideData';
 import { OTHER_CUBES_GUIDES } from '../content/otherCubesData';
 import { PUZZLE_VIDEOS, VideoTutorial } from '../content/videoData';
+import { MOVES_GLOSSARY, MoveGlossaryItem } from '../content/movesGlossaryData';
 import { toast } from './toast';
 
 export type GuidePuzzleCategory = '3x3' | '2x2' | '4x4' | 'pyraminx';
+
+function resolveGuideGif(notationOrCode: string, puzzle: GuidePuzzleCategory): MoveGlossaryItem | null {
+  const cleanTokens = notationOrCode
+    .replace(/[()+]/g, ' ')
+    .split(/\s+/)
+    .map((t) => t.replace(/2$/, ''))
+    .filter(Boolean);
+
+  const preferredPool =
+    puzzle === 'pyraminx'
+      ? MOVES_GLOSSARY.filter((m) => m.category === 'pyraminx')
+      : puzzle === '4x4'
+        ? MOVES_GLOSSARY.filter((m) => m.category !== 'pyraminx')
+        : MOVES_GLOSSARY.filter((m) => m.category !== 'pyraminx' && m.category !== 'inner4x4');
+
+  for (const tok of cleanTokens) {
+    const exact = preferredPool.find((m) => m.notation === tok);
+    if (exact) return exact;
+  }
+
+  // Fallback to matching base letter (e.g. R' -> R)
+  for (const tok of cleanTokens) {
+    const base = tok.replace("'", '');
+    const match = preferredPool.find((m) => m.notation === base);
+    if (match) return match;
+  }
+
+  return preferredPool[0] || MOVES_GLOSSARY[0] || null;
+}
+
+function renderInlineGifPreview(notationOrCode: string, puzzle: GuidePuzzleCategory): string {
+  const item = resolveGuideGif(notationOrCode, puzzle);
+  if (!item) return '';
+  return `
+    <div class="guide-inline-gif-box" title="${item.title} (${item.direction})">
+      <img class="guide-inline-gif" src="${item.gifPath}" alt="${item.notation} turn visual animation" loading="lazy" />
+      <span class="guide-inline-gif-tag">${item.notation}</span>
+    </div>
+  `;
+}
 
 export class GuideRenderer {
   private container: HTMLElement;
@@ -228,6 +269,7 @@ export class GuideRenderer {
                     .map(
                       (alg) => `
                     <div class="alg-card">
+                      ${renderInlineGifPreview(alg.notation, this.currentCategory)}
                       <div class="alg-meta">
                         <div class="alg-name">${alg.name}</div>
                         <div class="alg-notation"><code>${alg.notation}</code></div>
@@ -289,8 +331,11 @@ export class GuideRenderer {
               (alg) => `
             <div class="speedcube-alg-card">
               <div class="speedcube-card-header">
-                <span class="speedcube-category-chip">${alg.category}</span>
-                <h3 class="speedcube-alg-name">${alg.name}</h3>
+                ${renderInlineGifPreview(alg.notation, this.currentCategory)}
+                <div class="speedcube-card-titles">
+                  <span class="speedcube-category-chip">${alg.category}</span>
+                  <h3 class="speedcube-alg-name">${alg.name}</h3>
+                </div>
               </div>
               <div class="speedcube-notation-box">
                 <code>${alg.notation}</code>
@@ -335,6 +380,7 @@ export class GuideRenderer {
             .map(
               (item) => `
             <div class="notation-item">
+              ${renderInlineGifPreview(item.demoAlgorithm || item.code, '3x3')}
               <div class="notation-code-box">
                 <code>${item.code}</code>
               </div>
@@ -395,6 +441,7 @@ export class GuideRenderer {
               .map(
                 (alg) => `
               <div class="alg-card">
+                ${renderInlineGifPreview(alg.notation, '3x3')}
                 <div class="alg-meta">
                   <div class="alg-name">${alg.name}</div>
                   <div class="alg-notation"><code>${alg.notation}</code></div>

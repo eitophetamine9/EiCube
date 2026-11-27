@@ -7,7 +7,6 @@ import { GuideRenderer } from './ui/guideRenderer';
 import { SettingsManager } from './ui/settings';
 import { TutorialOverlay } from './ui/tutorial';
 import { TipsModal } from './ui/tipsModal';
-import { OtherCubesManager } from './ui/otherCubes';
 import { parseAlgorithm } from './cube/notation';
 import { toast } from './ui/toast';
 import { initThemeControls } from './ui/theme';
@@ -22,10 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const landingMount = document.getElementById('landing-mount') as HTMLElement;
   const viewportContainer = document.getElementById('cube-viewport-container') as HTMLElement;
   const controlsMount = document.getElementById('controls-mount') as HTMLElement;
-  const otherMount = document.getElementById('other-mount') as HTMLElement;
   const guideMount = document.getElementById('guide-mount') as HTMLElement;
 
-  if (!landingMount || !viewportContainer || !controlsMount || !otherMount || !guideMount) {
+  if (!landingMount || !viewportContainer || !controlsMount || !guideMount) {
     console.error('Critical container element missing');
     return;
   }
@@ -79,8 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // 3. Settings Manager (Keybinds + Drag Sensitivity)
-  let otherCubes: OtherCubesManager | null = null;
+  // 3. Settings Manager (Keybinds + Drag Sensitivity + Theme + SFX + Color Schemes)
   let landingPage: LandingPageManager | null = null;
   const settings = new SettingsManager(
     () => {
@@ -89,7 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
     (sensitivity) => {
       cubeScene.setRotateSpeed(sensitivity);
       pyraScene?.setRotateSpeed(sensitivity);
-      otherCubes?.setCameraSensitivity(sensitivity);
       landingPage?.setCameraSensitivity(sensitivity);
       controls?.refreshSensitivityDisplay();
     },
@@ -146,18 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   landingPage.setColorScheme(settings.getColorScheme());
 
-  // 6. Other Puzzles Tab Manager with "Solve this version" button support!
-  otherCubes = new OtherCubesManager(otherMount, {
-    initialSensitivity: settings.getCameraSensitivity(),
-    onSolveVersion: (puzzle) => {
-      controls.setTrainerPuzzle(puzzle);
-      switchTrainerPuzzle(puzzle);
-      tabManager.setTab('cube');
-      toast.show(`Loaded ${puzzle} into Puzzle Trainer!`);
-    },
-  });
-
-  // 7. Learn Puzzles Guide UI with Video Tutorials
+  // 6. Learn Puzzles Guide UI with Video Tutorials & Visual Move GIFs
   const guideRenderer = new GuideRenderer(guideMount, (notation, category) => {
     // Switch to trainer and load that puzzle!
     controls.setTrainerPuzzle(category);
@@ -329,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
     controls.setTrainerPuzzle(reqPuzzle);
     switchTrainerPuzzle(reqPuzzle);
     tabManager.setTab('cube');
-  } else if (reqTab === 'cube' || reqTab === 'other' || reqTab === 'learn') {
+  } else if (reqTab === 'cube' || reqTab === 'learn') {
     tabManager.setTab(reqTab);
   }
   if (reqTryMove) {

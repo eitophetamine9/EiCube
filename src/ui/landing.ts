@@ -46,13 +46,14 @@ export class LandingPageManager {
             <div class="landing-hero-copy">
               <div class="landing-eyebrow">
                 <span class="landing-eyebrow-dot" aria-hidden="true"></span>
-                <span>ZERO-LOGIN 3D SPEEDSOLVING STUDIO // v1.0.3</span>
+                <span>ZERO-LOGIN SPEEDSOLVING STUDIO // v1.0.4</span>
               </div>
               <h1 id="landing-hero-title" class="landing-title">
-                Precision 3D cubing, straight from the browser.
+                EiCube
               </h1>
+              <p class="landing-subhead">3D cubing in browser.</p>
               <p class="landing-lead">
-                Practice 2x2, 3x3, 4x4, and Pyraminx with quaternion full-sphere camera rotation, WCA 15-second inspection, and OLL/PLL drills — no account required.
+                Practice 2x2, 3x3, 4x4, and Pyraminx with quaternion full-sphere camera rotation, WCA 15-second inspection, tactile turn SFX, and OLL/PLL drills — no account required.
               </p>
 
               <div class="landing-hero-actions">

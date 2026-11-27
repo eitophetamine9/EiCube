@@ -1,4 +1,4 @@
-export type TabId = 'home' | 'cube' | 'other' | 'learn';
+export type TabId = 'home' | 'cube' | 'learn';
 
 export class TabManager {
   private activeTab: TabId = 'home';
@@ -29,7 +29,6 @@ export class TabManager {
     // Update panels
     const homePanel = document.getElementById('tab-home-panel');
     const cubePanel = document.getElementById('tab-cube-panel');
-    const otherPanel = document.getElementById('tab-other-panel');
     const learnPanel = document.getElementById('tab-learn-panel');
 
     if (homePanel) {
@@ -39,10 +38,6 @@ export class TabManager {
     if (cubePanel) {
       cubePanel.classList.toggle('is-active', tab === 'cube');
       cubePanel.setAttribute('aria-hidden', tab === 'cube' ? 'false' : 'true');
-    }
-    if (otherPanel) {
-      otherPanel.classList.toggle('is-active', tab === 'other');
-      otherPanel.setAttribute('aria-hidden', tab === 'other' ? 'false' : 'true');
     }
     if (learnPanel) {
       learnPanel.classList.toggle('is-active', tab === 'learn');
