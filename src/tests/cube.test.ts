@@ -13,6 +13,7 @@ import { SettingsManager, DEFAULT_KEYBINDS, TWOHAND_SPEEDCUBE_KEYBINDS } from '.
 import { MOVES_GLOSSARY, MOVE_CATEGORIES } from '../content/movesGlossaryData';
 import { calculateWcaAverage, summarizePuzzleStats, SolveRecord } from '../ui/sessionStats';
 import { buildDrillMoves } from '../ui/drillModal';
+import { clampVolume, TURN_SOUND_PROFILES } from '../audio/soundEngine';
 import * as THREE from 'three';
 import {
   projectPointerToArcballSphere,
@@ -476,13 +477,25 @@ describe("Rubik's Cube Pure Logic", () => {
     expect(summary.ao12).toBe(15500);
   });
 
-  it('provides complete Color Scheme palettes and reversible Drill setups', () => {
-    expect(Object.keys(COLOR_SCHEMES)).toEqual(['classic', 'stickerless', 'contrast']);
+  it('provides 6 IRL Color Scheme palettes, SFX profiles, and reversible Drill setups', () => {
+    expect(Object.keys(COLOR_SCHEMES)).toEqual([
+      'classic',
+      'stickerless',
+      'primary',
+      'pastel',
+      'carbon',
+      'contrast',
+    ]);
     for (const scheme of Object.values(COLOR_SCHEMES)) {
       expect(Object.keys(scheme.cubeFaces).length).toBe(6);
       expect(Object.keys(scheme.pyraFaces).length).toBe(4);
       expect(scheme.bodyColor).toMatch(/^#[0-9a-f]{6}$/i);
     }
+
+    expect(Object.keys(TURN_SOUND_PROFILES)).toEqual(['magnetic', 'clack', 'lubed']);
+    expect(clampVolume(-0.25)).toBe(0);
+    expect(clampVolume(1.75)).toBe(1);
+    expect(clampVolume(0.42)).toBe(0.42);
 
     // Verify 3x3 T-Perm drill setup + solution restores solved state
     const drill = buildDrillMoves('3x3', "R U R' U' R' F R2 U' R' U' R U R' F'");
