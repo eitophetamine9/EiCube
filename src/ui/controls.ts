@@ -122,18 +122,34 @@ export class ControlsManager {
         <div class="trainer-top-stack">
         <!-- Top Floating Status Bar -->
         <div class="floating-top-bar">
-          <!-- Puzzle Selector inside Trainer -->
-          <div class="puzzle-mini-picker">
-            <span class="picker-label">Puzzle:</span>
-            <button class="btn-picker ${this.activePuzzle === '3x3' ? 'is-active' : ''}" data-trainer-puzzle="3x3">3×3</button>
-            <button class="btn-picker ${this.activePuzzle === '2x2' ? 'is-active' : ''}" data-trainer-puzzle="2x2">2×2</button>
-            <button class="btn-picker ${this.activePuzzle === '4x4' ? 'is-active' : ''}" data-trainer-puzzle="4x4">4×4</button>
-            <button class="btn-picker ${this.activePuzzle === 'pyraminx' ? 'is-active' : ''}" data-trainer-puzzle="pyraminx">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
-                <polygon points="12 3 3 20 21 20"></polygon>
+          <!-- Choose Puzzle Dropdown inside Trainer -->
+          <div class="puzzle-dropdown-wrap" id="puzzle-dropdown-wrap">
+            <button type="button" id="btn-puzzle-dropdown" class="btn btn-sm btn-secondary btn-puzzle-dropdown"
+              aria-haspopup="menu" aria-expanded="false" aria-controls="puzzle-dropdown-menu">
+              <span>Choose Puzzle:</span>
+              <strong>${this.getPuzzleDisplayName()}</strong>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
-              Pyra
             </button>
+            <div id="puzzle-dropdown-menu" class="puzzle-dropdown-menu" role="menu" aria-labelledby="btn-puzzle-dropdown">
+              <button type="button" class="puzzle-dropdown-item ${this.activePuzzle === '3x3' ? 'is-active' : ''}" data-trainer-puzzle="3x3" role="menuitem">
+                <span class="puzzle-item-code">3×3</span>
+                <span class="puzzle-item-meta"><strong>Rubik's Cube</strong><small>Standard CFOP & slices</small></span>
+              </button>
+              <button type="button" class="puzzle-dropdown-item ${this.activePuzzle === '2x2' ? 'is-active' : ''}" data-trainer-puzzle="2x2" role="menuitem">
+                <span class="puzzle-item-code">2×2</span>
+                <span class="puzzle-item-meta"><strong>Pocket Cube</strong><small>Ortega OLL & PBL</small></span>
+              </button>
+              <button type="button" class="puzzle-dropdown-item ${this.activePuzzle === '4x4' ? 'is-active' : ''}" data-trainer-puzzle="4x4" role="menuitem">
+                <span class="puzzle-item-code">4×4</span>
+                <span class="puzzle-item-meta"><strong>Rubik's Revenge</strong><small>Inner slices & parity</small></span>
+              </button>
+              <button type="button" class="puzzle-dropdown-item ${this.activePuzzle === 'pyraminx' ? 'is-active' : ''}" data-trainer-puzzle="pyraminx" role="menuitem">
+                <span class="puzzle-item-code">Pyra</span>
+                <span class="puzzle-item-meta"><strong>Pyraminx</strong><small>Solid tetrahedron L4E</small></span>
+              </button>
+            </div>
           </div>
 
           <div class="status-group">
@@ -628,11 +644,34 @@ export class ControlsManager {
   }
 
   private attachEventListeners(): void {
-    // Puzzle mini-picker tabs
+    // Choose Puzzle dropdown toggle & selection
+    const puzzleDropWrap = this.container.querySelector<HTMLElement>('#puzzle-dropdown-wrap');
+    const puzzleDropBtn = this.container.querySelector<HTMLButtonElement>('#btn-puzzle-dropdown');
+    const puzzleDropMenu = this.container.querySelector<HTMLElement>('#puzzle-dropdown-menu');
+
+    const closePuzzleMenu = () => {
+      puzzleDropMenu?.classList.remove('is-open');
+      puzzleDropBtn?.setAttribute('aria-expanded', 'false');
+    };
+
+    puzzleDropBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const willOpen = !puzzleDropMenu?.classList.contains('is-open');
+      puzzleDropMenu?.classList.toggle('is-open', Boolean(willOpen));
+      puzzleDropBtn.setAttribute('aria-expanded', String(Boolean(willOpen)));
+    });
+
+    document.addEventListener('click', (e) => {
+      if (puzzleDropWrap && !puzzleDropWrap.contains(e.target as Node)) {
+        closePuzzleMenu();
+      }
+    });
+
     const pickers = this.container.querySelectorAll<HTMLButtonElement>('[data-trainer-puzzle]');
     pickers.forEach((btn) => {
       btn.addEventListener('click', () => {
         const pz = btn.getAttribute('data-trainer-puzzle') as TrainerPuzzleType;
+        closePuzzleMenu();
         if (pz && pz !== this.activePuzzle) {
           this.setTrainerPuzzle(pz);
         }

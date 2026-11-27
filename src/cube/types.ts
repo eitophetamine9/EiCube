@@ -56,7 +56,13 @@ export const FACE_NORMALS: Record<Face, Vector3Tuple> = {
   B: [0, 0, -1],
 };
 
-export type ColorSchemeId = 'classic' | 'stickerless' | 'contrast';
+export type ColorSchemeId =
+  | 'classic'
+  | 'stickerless'
+  | 'primary'
+  | 'pastel'
+  | 'carbon'
+  | 'contrast';
 
 export interface ColorSchemePalette {
   id: ColorSchemeId;
@@ -108,9 +114,69 @@ export const COLOR_SCHEMES: Record<ColorSchemeId, ColorSchemePalette> = {
       B: '#3b82f6',
     },
   },
+  primary: {
+    id: 'primary',
+    name: 'Primary Internals',
+    bodyColor: '#e5dcc8',
+    isStickerless: false,
+    cubeFaces: {
+      U: '#ffffff',
+      D: '#facc15',
+      F: '#16a34a',
+      B: '#2563eb',
+      R: '#dc2626',
+      L: '#f97316',
+    },
+    pyraFaces: {
+      U: '#facc15',
+      L: '#16a34a',
+      R: '#dc2626',
+      B: '#2563eb',
+    },
+  },
+  pastel: {
+    id: 'pastel',
+    name: 'Macaron Pastel',
+    bodyColor: '#f5efe6',
+    isStickerless: true,
+    cubeFaces: {
+      U: '#fffef7',
+      D: '#fef08a',
+      F: '#86efac',
+      B: '#7dd3fc',
+      R: '#fda4af',
+      L: '#fdba74',
+    },
+    pyraFaces: {
+      U: '#fef08a',
+      L: '#86efac',
+      R: '#fda4af',
+      B: '#7dd3fc',
+    },
+  },
+  carbon: {
+    id: 'carbon',
+    name: 'Carbon Contrast',
+    bodyColor: '#0b0d10',
+    isStickerless: false,
+    cubeFaces: {
+      U: '#e2e8f0',
+      D: '#eab308',
+      F: '#15803d',
+      B: '#1d4ed8',
+      R: '#b91c1c',
+      L: '#c2410c',
+    },
+    pyraFaces: {
+      U: '#eab308',
+      L: '#15803d',
+      R: '#b91c1c',
+      B: '#1d4ed8',
+    },
+  },
   contrast: {
     id: 'contrast',
-    name: 'High-Contrast Carbon',
+    name: 'High-Contrast Night',
     bodyColor: '#090b0e',
     isStickerless: false,
     cubeFaces: {

@@ -36,8 +36,10 @@ EiCube is structured with strict separation between pure logic, 3D rendering sce
 
 ```
 src/
+├── audio/
+│   └── soundEngine.ts      # Web Audio turn SFX synthesizer (Magnetic Snap, Crisp Clack, Soft Lubed)
 ├── cube/
-│   ├── types.ts            # Type definitions, face normals, Color Scheme palettes
+│   ├── types.ts            # Type definitions, face normals, 6 IRL Color Scheme palettes
 │   ├── CubeState.ts        # Pure logical representation supporting arbitrary cube sizes (2x2, 3x3, 4x4)
 │   ├── pyraminxState.ts    # Pure logical representation, moves, and scramble for Pyraminx
 │   ├── moves.ts            # Physical layer and axis rotation mappings
@@ -58,16 +60,15 @@ src/
 ├── ui/
 │   ├── theme.ts            # Daylight / Pine-Emerald Dark persistence and custom change events
 │   ├── matrixBackdrop.ts   # Dual-theme animated binary matrix background canvas
-│   ├── tabs.ts             # 4-way tab manager (Home, Puzzle, Other Puzzles, Learn Puzzles)
-│   ├── landing.ts          # Zero-login editorial landing page with live 3D showcase
-│   ├── controls.ts         # Single-row trainer topbar, Tools popover (Drills, Stats, WCA, BLE), Moves Pad
+│   ├── tabs.ts             # 3-way tab manager (Home, Puzzle, Learn Puzzles)
+│   ├── landing.ts          # Zero-login editorial landing page (EiCube — 3D cubing in browser)
+│   ├── controls.ts         # Single-row trainer topbar, Choose Puzzle dropdown, Tools popover, Moves Pad
 │   ├── sessionStats.ts     # LocalStorage solve history, Ao5/Ao12 calculation, stats modal
 │   ├── drillModal.ts       # Inverted setup OLL/PLL/PBL/Parity drill trainer modal
-│   ├── settings.ts         # Keybind rebinding modal, Drag Sensitivity, Color Schemes
+│   ├── settings.ts         # Two-page Settings modal (General w/ Sun/Moon, SFX, Colors | Custom Keybinds)
 │   ├── tutorial.ts         # Multi-step onboarding overlay
 │   ├── tipsModal.ts        # Solving diagnostic and quick tips modal
-│   ├── otherCubes.ts       # Other Puzzles manager with "Solve this version" button
-│   ├── guideRenderer.ts    # Learn Puzzles guide with embedded YouTube video players
+│   ├── guideRenderer.ts    # Learn Puzzles guide with embedded videos and inline looping move GIFs
 │   └── toast.ts            # Notification and toast alert manager
 ├── tests/
 │   └── cube.test.ts        # Vitest suite (22 tests) covering puzzles, arcball XYZ, WCA averages, drills

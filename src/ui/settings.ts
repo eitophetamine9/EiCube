@@ -1,6 +1,7 @@
 import { toast } from './toast';
 import { COLOR_SCHEMES, ColorSchemeId } from '../cube/types';
 import { applyTheme, getStoredTheme, ThemeMode } from './theme';
+import { soundEngine, TURN_SOUND_PROFILES, TurnSoundProfile } from '../audio/soundEngine';
 
 export interface KeybindMap {
   [action: string]: string; // action e.g. 'U', 'U\'', 'D', 'D\'', 'L', 'L\'', 'R', 'R\'', 'F', 'F\'', 'B', 'B\'', 'M', 'E', 'S', etc.
@@ -128,6 +129,7 @@ export class SettingsManager {
   private colorScheme: ColorSchemeId;
   private modalEl: HTMLElement | null = null;
   private isModalOpen: boolean = false;
+  private activePage: 'general' | 'keybinds' = 'general';
   private listeningAction: string | null = null;
   private onKeybindsChange?: (keybinds: KeybindMap) => void;
   private onSensitivityChange?: (speed: number) => void;
@@ -298,9 +300,28 @@ export class SettingsManager {
     this.modalEl.classList.add('is-open');
     this.modalEl.setAttribute('aria-hidden', 'false');
     this.listeningAction = initialActionToRebind || null;
+    if (initialActionToRebind) {
+      this.setPage('keybinds');
+    } else {
+      this.setPage(this.activePage);
+    }
     this.renderKeybindRows();
     const closeBtn = this.modalEl.querySelector<HTMLButtonElement>('.modal-close');
     closeBtn?.focus();
+  }
+
+  public setPage(page: 'general' | 'keybinds'): void {
+    this.activePage = page;
+    if (!this.modalEl) return;
+    this.modalEl.querySelectorAll<HTMLButtonElement>('[data-settings-page]').forEach((btn) => {
+      const active = btn.dataset.settingsPage === page;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-selected', String(active));
+    });
+    this.modalEl.querySelectorAll<HTMLElement>('[data-settings-panel]').forEach((panel) => {
+      const active = panel.dataset.settingsPanel === page;
+      panel.style.display = active ? 'block' : 'none';
+    });
   }
 
   close(): void {
@@ -323,8 +344,8 @@ export class SettingsManager {
       <div class="modal-card">
         <div class="modal-header">
           <div class="modal-header-left">
-            <h2 id="settings-modal-title" class="modal-title">Custom Keybinds & Controls</h2>
-            <span class="modal-badge">Full Customization</span>
+            <h2 id="settings-modal-title" class="modal-title">Studio Settings</h2>
+            <span class="modal-badge">v1.0.4</span>
           </div>
           <button class="modal-close" aria-label="Close settings">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -333,54 +354,116 @@ export class SettingsManager {
             </svg>
           </button>
         </div>
+
+        <div class="settings-tabs-bar" role="tablist" aria-label="Settings Pages">
+          <button type="button" class="btn-picker is-active" data-settings-page="general" role="tab" aria-selected="true">General</button>
+          <button type="button" class="btn-picker" data-settings-page="keybinds" role="tab" aria-selected="false">Custom Keybinds</button>
+        </div>
+
         <div class="modal-body">
-          <div class="settings-sensitivity-row">
-            <div class="sensitivity-info">
-              <label for="modal-pov-slider" class="keybind-label">Drag Sensitivity</label>
-              <span class="keybind-desc">Adjust how fast dragging rotates across all X, Y, Z sphere axes</span>
+          <!-- Page 1: General Settings -->
+          <div class="settings-page" data-settings-panel="general">
+            <div class="settings-scheme-row settings-theme-icon-row">
+              <div class="sensitivity-info">
+                <span class="keybind-label">Theme Appearance</span>
+                <span class="keybind-desc">Switch between Daylight and Dark Matrix mode</span>
+              </div>
+              <div class="theme-icons-group" role="group" aria-label="Theme Appearance">
+                <button type="button" class="btn-picker btn-theme-icon ${getStoredTheme() === 'light' ? 'is-active' : ''}" data-settings-theme="light" title="Daylight Theme" aria-label="Daylight Theme">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                  </svg>
+                </button>
+                <button type="button" class="btn-picker btn-theme-icon ${getStoredTheme() === 'dark' ? 'is-active' : ''}" data-settings-theme="dark" title="Dark Matrix Theme" aria-label="Dark Matrix Theme">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
-            <div class="sensitivity-slider-group">
-              <input type="range" id="modal-pov-slider" min="0.5" max="5.0" step="0.1" value="${this.cameraSensitivity.toFixed(1)}" aria-label="Drag Sensitivity" />
-              <span id="modal-pov-val" class="speed-val">${this.cameraSensitivity.toFixed(1)}×</span>
+
+            <div class="settings-scheme-row">
+              <div class="sensitivity-info">
+                <span class="keybind-label">Turn Sound Effects</span>
+                <span class="keybind-desc">Choose 1 of 3 tactile speedcubing sound profiles and adjust volume</span>
+              </div>
+              <div class="sfx-controls-stack">
+                <div class="scheme-pills-group" role="group" aria-label="Sound Effect Profile">
+                  ${(Object.keys(TURN_SOUND_PROFILES) as TurnSoundProfile[])
+                    .map(
+                      (id) =>
+                        `<button type="button" class="btn-picker ${
+                          soundEngine.getProfile() === id ? 'is-active' : ''
+                        }" data-sfx-profile="${id}" title="${TURN_SOUND_PROFILES[id].description}">${TURN_SOUND_PROFILES[id].name}</button>`
+                    )
+                    .join('')}
+                  <button type="button" id="btn-sfx-preview" class="btn btn-sm btn-secondary">Preview</button>
+                </div>
+                <div class="sensitivity-slider-group sfx-volume-row">
+                  <label for="modal-sfx-volume" class="speed-label">Volume</label>
+                  <input type="range" id="modal-sfx-volume" min="0" max="100" step="5" value="${Math.round(soundEngine.getVolume() * 100)}" aria-label="Turn Sound Volume" />
+                  <span id="modal-sfx-vol-val" class="speed-val">${Math.round(soundEngine.getVolume() * 100)}%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-scheme-row">
+              <div class="sensitivity-info">
+                <span class="keybind-label">IRL Cube Color Themes</span>
+                <span class="keybind-desc">Switch between real-world speedcube plastics and color palettes</span>
+              </div>
+              <div class="scheme-swatch-grid" role="group" aria-label="Cube Color Scheme">
+                ${(Object.keys(COLOR_SCHEMES) as ColorSchemeId[])
+                  .map((id) => {
+                    const p = COLOR_SCHEMES[id];
+                    const swatches = [p.cubeFaces.U, p.cubeFaces.F, p.cubeFaces.R, p.cubeFaces.B, p.cubeFaces.L, p.cubeFaces.D]
+                      .map((hex) => `<span class="scheme-swatch-dot" style="background:${hex};"></span>`)
+                      .join('');
+                    return `
+                      <button type="button" class="scheme-swatch-card ${this.colorScheme === id ? 'is-active' : ''}" data-scheme-choice="${id}">
+                        <span class="scheme-swatch-dots">${swatches}</span>
+                        <span class="scheme-swatch-name">${p.name}</span>
+                      </button>
+                    `;
+                  })
+                  .join('')}
+              </div>
+            </div>
+
+            <div class="settings-sensitivity-row">
+              <div class="sensitivity-info">
+                <label for="modal-pov-slider" class="keybind-label">Drag Sensitivity</label>
+                <span class="keybind-desc">Adjust how fast dragging rotates across all X, Y, Z sphere axes</span>
+              </div>
+              <div class="sensitivity-slider-group">
+                <input type="range" id="modal-pov-slider" min="0.5" max="5.0" step="0.1" value="${this.cameraSensitivity.toFixed(1)}" aria-label="Drag Sensitivity" />
+                <span id="modal-pov-val" class="speed-val">${this.cameraSensitivity.toFixed(1)}×</span>
+              </div>
             </div>
           </div>
-          <div class="settings-scheme-row">
-            <div class="sensitivity-info">
-              <span class="keybind-label">Theme Appearance</span>
-              <span class="keybind-desc">Switch between Daylight Matrix and Dark Matrix mode</span>
+
+          <!-- Page 2: Custom Keybinds -->
+          <div class="settings-page" data-settings-panel="keybinds" style="display: none;">
+            <div class="presets-row">
+              <span class="preset-label">Quick Presets:</span>
+              <button id="preset-default" class="btn btn-sm btn-secondary">Standard (U, D, L, R, F, B)</button>
+              <button id="preset-twohand" class="btn btn-sm btn-primary">Two-Hand Pro Speedcubing</button>
             </div>
-            <div class="scheme-pills-group" role="group" aria-label="Theme Appearance">
-              <button type="button" class="btn-picker ${getStoredTheme() === 'light' ? 'is-active' : ''}" data-settings-theme="light">Daylight</button>
-              <button type="button" class="btn-picker ${getStoredTheme() === 'dark' ? 'is-active' : ''}" data-settings-theme="dark">Dark Matrix</button>
+            <p class="modal-intro">
+              Click any button to assign your preferred key (e.g. set <strong>R</strong> to <strong>D</strong>, or assign single dedicated keys to prime moves like <strong>R'</strong> or <strong>U'</strong> without holding Shift!).
+            </p>
+            <div id="keybind-conflict-warning" class="settings-warning" style="display: none;"></div>
+            <div class="keybinds-table-container">
+              <div class="keybinds-grid" id="keybinds-grid"></div>
             </div>
-          </div>
-          <div class="settings-scheme-row">
-            <div class="sensitivity-info">
-              <span class="keybind-label">3D Color Scheme</span>
-              <span class="keybind-desc">Switch plastic bezel finish and sticker palette live</span>
-            </div>
-            <div class="scheme-pills-group" role="group" aria-label="Color Scheme">
-              ${(Object.keys(COLOR_SCHEMES) as ColorSchemeId[])
-                .map(
-                  (id) =>
-                    `<button type="button" class="btn-picker ${
-                      this.colorScheme === id ? 'is-active' : ''
-                    }" data-scheme-choice="${id}">${COLOR_SCHEMES[id].name}</button>`
-                )
-                .join('')}
-            </div>
-          </div>
-          <div class="presets-row">
-            <span class="preset-label">Quick Presets:</span>
-            <button id="preset-default" class="btn btn-sm btn-secondary">Standard (U, D, L, R, F, B)</button>
-            <button id="preset-twohand" class="btn btn-sm btn-primary">Two-Hand Pro Speedcubing</button>
-          </div>
-          <p class="modal-intro">
-            Click any button to assign your preferred key (e.g. set <strong>R</strong> to <strong>D</strong>, or assign single dedicated keys to prime moves like <strong>R'</strong> or <strong>U'</strong> without holding Shift!).
-          </p>
-          <div id="keybind-conflict-warning" class="settings-warning" style="display: none;"></div>
-          <div class="keybinds-table-container">
-            <div class="keybinds-grid" id="keybinds-grid"></div>
           </div>
         </div>
         <div class="modal-footer">
@@ -424,6 +507,39 @@ export class SettingsManager {
           syncThemePills(mode);
         }
       });
+    });
+
+    modal.querySelectorAll<HTMLButtonElement>('[data-settings-page]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const page = btn.dataset.settingsPage as 'general' | 'keybinds';
+        if (page === 'general' || page === 'keybinds') {
+          this.setPage(page);
+        }
+      });
+    });
+
+    modal.querySelectorAll<HTMLButtonElement>('[data-sfx-profile]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const prof = btn.dataset.sfxProfile as TurnSoundProfile;
+        if (prof && prof in TURN_SOUND_PROFILES) {
+          soundEngine.setProfile(prof);
+          modal.querySelectorAll<HTMLButtonElement>('[data-sfx-profile]').forEach((b) => {
+            b.classList.toggle('is-active', b.dataset.sfxProfile === prof);
+          });
+          soundEngine.preview(prof);
+        }
+      });
+    });
+
+    modal.querySelector('#btn-sfx-preview')?.addEventListener('click', () => {
+      soundEngine.preview();
+    });
+
+    modal.querySelector<HTMLInputElement>('#modal-sfx-volume')?.addEventListener('input', (e) => {
+      const pct = parseInt((e.target as HTMLInputElement).value, 10);
+      soundEngine.setVolume(pct / 100);
+      const label = modal.querySelector<HTMLElement>('#modal-sfx-vol-val');
+      if (label) label.textContent = `${pct}%`;
     });
 
     window.addEventListener('eicube-themechange', (e) => {

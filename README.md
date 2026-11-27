@@ -1,7 +1,7 @@
 <h1 align="center">EiCube</h1>
 
 <p align="center">
-  <a href="https://github.com/eitophetamine9/EiCube/releases/tag/v1.0.3"><img src="https://img.shields.io/badge/Release-v1.0.3-3f6212?style=flat&logo=github&logoColor=white" alt="Release v1.0.3" /></a>
+  <a href="https://github.com/eitophetamine9/EiCube/releases/tag/v1.0.4"><img src="https://img.shields.io/badge/Release-v1.0.4-3f6212?style=flat&logo=github&logoColor=white" alt="Release v1.0.4" /></a>
   <a href="https://eicube.vercel.app"><img src="https://img.shields.io/badge/Deployment-Vercel-black?style=flat&logo=vercel&logoColor=white" alt="Live Deployment" /></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white" alt="TypeScript" /></a>
   <a href="https://threejs.org/"><img src="https://img.shields.io/badge/Three.js-000000?style=flat&logo=three.js&logoColor=white" alt="Three.js" /></a>
@@ -27,23 +27,21 @@ Unlike conventional digital cube simulators that lock rotations to static world 
 
 - **Live Production App**: [https://eicube.vercel.app](https://eicube.vercel.app)
 - **Technical Documentation**: [DOCUMENTATION.md](DOCUMENTATION.md)
-- **GitHub Release**: [Release v1.0.3](https://github.com/eitophetamine9/EiCube/releases/tag/v1.0.3)
+- **GitHub Release**: [Release v1.0.4](https://github.com/eitophetamine9/EiCube/releases/tag/v1.0.4)
 - **Source Repository**: [https://github.com/eitophetamine9/EiCube](https://github.com/eitophetamine9/EiCube)
 
 ---
 
 ## Key Features
 
-- **No-Login Editorial Landing Page (`v1.0.3`)**: Instant landing hub with a live interactive 3D showcase cube stage, architecture highlights, and one-click puzzle launch cards directly into `3x3`, `2x2`, `4x4`, or `Pyraminx`.
-- **Full-Sphere X / Y / Z Arcball Rotation & Drag Sensitivity (`v1.0.3`)**: Quaternion virtual sphere + hyperbolic roll engine (`SphereArcballControls`) lets you pitch, yaw, and twist smoothly across all 3 spatial axes with exponential momentum inertia and configurable Drag Sensitivity (`0.5x`–`5.0x`).
-- **Matrix Binary Dark & Daylight Studio Themes (`v1.0.3`)**: Deepened pine-emerald Dark Mode (`#040a06`) paired with a dual-theme animated `0`/`1` Matrix rain `<canvas>` backdrop correlated to the bright sage-sky Daylight theme (automatically static under `prefers-reduced-motion`).
-- **WCA 15s Inspection & Persistent Ao5 / Ao12 Stats (`v1.0.3`)**: Competition 15-second countdown with 8s/12s Web Audio tones, `+2` and `DNF` penalty handling, and persistent session history calculating Personal Best, Session Mean, WCA trimmed Ao5, and Ao12.
-- **OLL / PLL / PBL / Parity Algorithm Drills & Next-Move Hint (`v1.0.3`)**: Automatically invert and apply setup turns for speedcubing cases so you practice recognition and execution immediately, with optional step-by-step hints.
-- **Custom 3D Color Schemes & WebBLE Smart Cube Sync (`v1.0.3`)**: Switch live between `Classic Black Bezel`, `Stickerless Bright`, and `High-Contrast Carbon` finishes across cubes and Pyraminx, or pair GAN / Giiker / Moyu Bluetooth cubes over GATT (with Virtual Smart Turn testing).
-- **Dynamic Device Responsive Scaling**: Mathematical camera framing automatically scales distance and field-of-view based on device aspect ratio across desktop (`1440px`) and narrow phones (`320px`–`390px`).
-- **All Legal Axis Rotations, Slices & 4x4 Inner Layers**: Complete support for whole-cube rotations (`x`, `x'`, `x2`, `y`, `y'`, `y2`, `z`, `z'`, `z2`), slice turns (`M`, `M'`, `M2`, `E`, `E'`, `E2`, `S`, `S'`, `S2`), 4x4 inner middle slices (`2R`, `2L`, `2U`, `2D`, `2F`, `2B`), and wide turns (`Rw`, `Lw`, `Uw`, `Dw`, `Fw`, `Bw`).
-- **Beautified Moves Pad & Animated Move Glossary (`moves.html`)**: Clean category tabs paired with a **More Info** link to 64 custom looping 3D `.gif` animations and 1-click "Try in 3D" deep links.
-- **Realistic Solid 3D Pyraminx Model**: Regular tetrahedron geometry with deep tapered opaque backing wedges (`DoubleSide`), zero see-through gaps, and direct mouse/touch drag interaction.
+- **Speedcubing Turn Sound Effects & Volume Control (`v1.0.4`)**: Zero-latency Web Audio API sound synthesizer (`src/audio/soundEngine.ts`) with 3 tactile speedcube profiles (`Magnetic Snap`, `Crisp Clack`, `Soft Lubed`), `0%–100%` volume slider, preview button, and scramble-aware throttling across cubes and Pyraminx.
+- **Two-Page Studio Settings (`General` & `Custom Keybinds`) (`v1.0.4`)**: Dedicated General tab housing icon-only **Sun / Moon** theme toggles, Turn SFX & Volume, 6 IRL Cube Color Themes with live 6-swatch previews, and Drag Sensitivity, cleanly separated from Custom Keybinds.
+- **6 Real-Life (IRL) Cube Colorways (`v1.0.4`)**: Switch live between `Classic Black Bezel`, `Stickerless Bright`, `Primary Internals`, `Macaron Pastel`, `Carbon Contrast`, and `High-Contrast Night`.
+- **Streamlined Navigation, `Choose Puzzle` Dropdown & Learn GIFs (`v1.0.4`)**: 3-tab navigation (`Home | Puzzle | Learn Puzzles`), a clean `Choose Puzzle` dropdown menu in the Puzzle trainer, inline looping `.gif` turn animations inside `Learn Puzzles`, and an **EiCube — 3D cubing in browser.** landing hero.
+- **Full-Sphere X / Y / Z Arcball Rotation & Drag Sensitivity**: Quaternion virtual sphere + hyperbolic roll engine (`SphereArcballControls`) lets you pitch, yaw, and twist smoothly across all 3 spatial axes with exponential momentum inertia and configurable Drag Sensitivity (`0.5x`–`5.0x`).
+- **Matrix Binary Dark & Daylight Studio Themes**: Deepened pine-emerald Dark Mode (`#040a06`) paired with a dual-theme animated `0`/`1` Matrix rain `<canvas>` backdrop correlated to the bright sage-sky Daylight theme (automatically static under `prefers-reduced-motion`).
+- **WCA 15s Inspection & Persistent Ao5 / Ao12 Stats**: Competition 15-second countdown with 8s/12s Web Audio tones, `+2` and `DNF` penalty handling, and persistent session history calculating Personal Best, Session Mean, WCA trimmed Ao5, and Ao12.
+- **OLL / PLL / PBL / Parity Algorithm Drills & WebBLE Smart Cube Sync**: Auto-inverted drill setups with Next-Move Hints and Web Bluetooth GATT adapter for GAN / Giiker / Moyu smart cubes.
 
 > [!NOTE]
 > EiCube is built with vanilla DOM APIs for zero UI framework overhead, using Three.js as the sole runtime dependency.
@@ -68,8 +66,10 @@ For detailed technical specifications, mathematical equations, raycasting logic,
 
 ```
 src/
+├── audio/
+│   └── soundEngine.ts      # Web Audio turn SFX synthesizer (3 speedcube profiles + volume)
 ├── cube/
-│   ├── types.ts            # Type definitions, face normals, and 3D Color Scheme palettes
+│   ├── types.ts            # Type definitions, face normals, and 6 IRL Color Scheme palettes
 │   ├── CubeState.ts        # Pure logical representation supporting arbitrary cube sizes (2x2, 3x3, 4x4)
 │   ├── pyraminxState.ts    # Pure logical representation, moves, and scramble for Pyraminx
 │   ├── moves.ts            # Physical layer and axis rotation mappings
@@ -90,16 +90,15 @@ src/
 ├── ui/
 │   ├── theme.ts            # Polar Light / Pine-Emerald Dark theme switcher with custom events
 │   ├── matrixBackdrop.ts   # Dual-theme binary rain canvas backdrop respecting reduced motion
-│   ├── tabs.ts             # 4-way tab manager (Home, Puzzle, Other Puzzles, Learn Puzzles)
-│   ├── landing.ts          # Zero-login editorial landing page with live 3D Cube showcase
-│   ├── controls.ts         # Single-row trainer topbar, Tools drawer (Drills, Stats, WCA, BLE), Moves Pad
+│   ├── tabs.ts             # 3-way tab manager (Home, Puzzle, Learn Puzzles)
+│   ├── landing.ts          # Zero-login editorial landing page (EiCube — 3D cubing in browser)
+│   ├── controls.ts         # Single-row trainer topbar, Choose Puzzle dropdown, Tools drawer, Moves Pad
 │   ├── sessionStats.ts     # Persistent solve history, Ao5/Ao12 calculation, +2/DNF stats modal
 │   ├── drillModal.ts       # Inverted OLL/PLL/PBL/Parity algorithm drill selector
-│   ├── settings.ts         # Keybind rebinding modal, Drag Sensitivity, Color Scheme switcher
+│   ├── settings.ts         # Two-page Settings modal (General w/ Sun/Moon, SFX, Colors | Custom Keybinds)
 │   ├── tutorial.ts         # Multi-step onboarding overlay
 │   ├── tipsModal.ts        # Solving diagnostic and quick tips modal
-│   ├── otherCubes.ts       # Other Puzzles manager with "Solve this version" button
-│   ├── guideRenderer.ts    # Learn Puzzles guide with embedded YouTube video players
+│   ├── guideRenderer.ts    # Learn Puzzles guide with embedded videos and inline looping move GIFs
 │   └── toast.ts            # Notification and toast alert manager
 ├── tests/
 │   └── cube.test.ts        # Vitest suite (22 tests: puzzles, arcball XYZ, Ao5/Ao12, schemes, drills)

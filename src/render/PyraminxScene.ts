@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { SphereArcballControls } from './SphereArcballControls';
 import { PyraminxState, PyraColor, generatePyraminxScramble } from '../cube/pyraminxState';
 import { COLOR_SCHEMES, ColorSchemeId } from '../cube/types';
+import { soundEngine } from '../audio/soundEngine';
 
 // Regular tetrahedron dimensions
 const S = 2.4;
@@ -519,6 +520,7 @@ export class PyraminxScene {
     if (this.queue.length === 0) return;
     this.activeMove = this.queue.shift()!;
     this.animProgress = 0;
+    soundEngine.playTurn(Boolean(this.activeMove.isScramble));
 
     if (this.activeMove.isScramble) {
       this.animDuration = Math.min(45, this.baseDuration * 0.25);
