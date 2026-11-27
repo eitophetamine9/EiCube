@@ -256,7 +256,9 @@ export class LandingPageManager {
     if (!stageHost) return;
 
     this.showcaseState = new CubeState(3);
-    this.showcaseScene = new RubiksCubeScene(stageHost, this.showcaseState);
+    this.showcaseScene = new RubiksCubeScene(stageHost, this.showcaseState, {
+      enableSound: false,
+    });
     if (this.callbacks.initialSensitivity !== undefined) {
       this.showcaseScene.setRotateSpeed(this.callbacks.initialSensitivity);
     }

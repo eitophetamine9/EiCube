@@ -5,6 +5,7 @@ import { AnimationQueue, QueuedMove } from './AnimationQueue';
 import { Axis, CameraVectors, COLOR_SCHEMES, ColorSchemeId, Face, FaceOrientationMap, ResolvedTurn } from '../cube/types';
 import { resolveCameraFaces } from '../cube/cameraResolver';
 import { resolveTurn } from '../cube/moves';
+import { soundEngine } from '../audio/soundEngine';
 
 interface CubieMeshItem {
   id: string;
@@ -43,6 +44,7 @@ export class RubiksCubeScene {
   private bodyMaterial: THREE.MeshStandardMaterial | null = null;
   private stickerMaterials: Record<Face, THREE.MeshStandardMaterial> | null = null;
   private stickerMeshes: THREE.Mesh[] = [];
+  private enableSound: boolean = true;
 
   // Mouse & Touch Drag-to-Turn State
   private raycaster: THREE.Raycaster = new THREE.Raycaster();
@@ -57,6 +59,7 @@ export class RubiksCubeScene {
     callbacks?: {
       onSolvedChange?: (isSolved: boolean) => void;
       onMoveExecuted?: (notation: string, viewRelativeNotation: string) => void;
+      enableSound?: boolean;
     }
   ) {
     this.container = container;
@@ -64,6 +67,7 @@ export class RubiksCubeScene {
     this.size = cubeState.size;
     this.onSolvedChange = callbacks?.onSolvedChange;
     this.onMoveExecuted = callbacks?.onMoveExecuted;
+    this.enableSound = callbacks?.enableSound !== false;
 
     // Media query for reduced motion
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -246,6 +250,9 @@ export class RubiksCubeScene {
 
     this.queue.setCallbacks({
       onStart: (move: QueuedMove) => {
+        if (this.enableSound) {
+          soundEngine.playTurn(Boolean(move.isScramble));
+        }
         currentTurn = move.turn;
         affectedMeshes = [];
 
