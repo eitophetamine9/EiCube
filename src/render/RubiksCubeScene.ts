@@ -449,9 +449,13 @@ export class RubiksCubeScene {
         this.stickerMaterials![face]?.color.set(palette.cubeFaces[face]);
       });
     }
-    const stickerScale = palette.isStickerless ? 1.09 : 1.0;
+    const stickerScale = palette.isStickerless ? 1.12 : 1.0;
+    const stickerRoughness = scheme === 'pastel' ? 0.48 : 0.2;
     this.stickerMeshes.forEach((mesh) => {
       mesh.scale.set(stickerScale, stickerScale, 1);
+      if (mesh.material instanceof THREE.MeshStandardMaterial) {
+        mesh.material.roughness = stickerRoughness;
+      }
     });
   }
 
