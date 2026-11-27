@@ -4793,6 +4793,26 @@ body.moves-glossary-body {
   }
 }
 
+.keybind-puzzle-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.keybinds-section-heading {
+  grid-column: 1 / -1;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-olive-dark);
+  padding: 10px 2px 4px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

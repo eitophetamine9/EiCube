@@ -130,6 +130,7 @@ export class SettingsManager {
   private modalEl: HTMLElement | null = null;
   private isModalOpen: boolean = false;
   private activePage: 'general' | 'keybinds' = 'general';
+  private activeKeybindPuzzle: '3x3' | '2x2' | '4x4' | 'pyraminx' = '3x3';
   private listeningAction: string | null = null;
   private onKeybindsChange?: (keybinds: KeybindMap) => void;
   private onSensitivityChange?: (speed: number) => void;
@@ -301,6 +302,11 @@ export class SettingsManager {
     this.modalEl.setAttribute('aria-hidden', 'false');
     this.listeningAction = initialActionToRebind || null;
     if (initialActionToRebind) {
+      if (/^2[RLUDFB]/i.test(initialActionToRebind)) {
+        this.activeKeybindPuzzle = '4x4';
+      } else if (/^[ulrb]'?$/.test(initialActionToRebind)) {
+        this.activeKeybindPuzzle = 'pyraminx';
+      }
       this.setPage('keybinds');
     } else {
       this.setPage(this.activePage);
@@ -457,6 +463,12 @@ export class SettingsManager {
               <button id="preset-default" class="btn btn-sm btn-secondary">Standard (U, D, L, R, F, B)</button>
               <button id="preset-twohand" class="btn btn-sm btn-primary">Two-Hand Pro Speedcubing</button>
             </div>
+            <div class="keybind-puzzle-tabs" role="tablist" aria-label="Puzzle Keybind Sections">
+              <button type="button" class="btn-picker ${this.activeKeybindPuzzle === '3x3' ? 'is-active' : ''}" data-keybind-puzzle="3x3">3×3</button>
+              <button type="button" class="btn-picker ${this.activeKeybindPuzzle === '2x2' ? 'is-active' : ''}" data-keybind-puzzle="2x2">2×2</button>
+              <button type="button" class="btn-picker ${this.activeKeybindPuzzle === '4x4' ? 'is-active' : ''}" data-keybind-puzzle="4x4">4×4</button>
+              <button type="button" class="btn-picker ${this.activeKeybindPuzzle === 'pyraminx' ? 'is-active' : ''}" data-keybind-puzzle="pyraminx">Pyraminx</button>
+            </div>
             <p class="modal-intro">
               Click any button to assign your preferred key (e.g. set <strong>R</strong> to <strong>D</strong>, or assign single dedicated keys to prime moves like <strong>R'</strong> or <strong>U'</strong> without holding Shift!).
             </p>
@@ -514,6 +526,19 @@ export class SettingsManager {
         const page = btn.dataset.settingsPage as 'general' | 'keybinds';
         if (page === 'general' || page === 'keybinds') {
           this.setPage(page);
+        }
+      });
+    });
+
+    modal.querySelectorAll<HTMLButtonElement>('[data-keybind-puzzle]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const pz = btn.dataset.keybindPuzzle as '3x3' | '2x2' | '4x4' | 'pyraminx';
+        if (pz) {
+          this.activeKeybindPuzzle = pz;
+          modal.querySelectorAll<HTMLButtonElement>('[data-keybind-puzzle]').forEach((b) => {
+            b.classList.toggle('is-active', b.dataset.keybindPuzzle === pz);
+          });
+          this.renderKeybindRows();
         }
       });
     });
@@ -599,13 +624,16 @@ export class SettingsManager {
 
   private renderKeybindRows(): void {
     if (!this.modalEl) return;
+    this.modalEl.querySelectorAll<HTMLButtonElement>('[data-keybind-puzzle]').forEach((b) => {
+      b.classList.toggle('is-active', b.dataset.keybindPuzzle === this.activeKeybindPuzzle);
+    });
+
     const grid = this.modalEl.querySelector<HTMLElement>('#keybinds-grid');
     if (!grid) return;
 
     grid.innerHTML = '';
 
-    const actions = [
-      // Standard Face Moves
+    const faces = [
       { id: 'U', label: 'Up (U)', desc: 'Clockwise top layer' },
       { id: "U'", label: "Up Prime (U')", desc: 'Counter-clockwise top layer' },
       { id: 'D', label: 'Down (D)', desc: 'Clockwise bottom layer' },
@@ -618,21 +646,24 @@ export class SettingsManager {
       { id: "F'", label: "Front Prime (F')", desc: 'Counter-clockwise front layer' },
       { id: 'B', label: 'Back (B)', desc: 'Clockwise back layer' },
       { id: "B'", label: "Back Prime (B')", desc: 'Counter-clockwise back layer' },
-      // Slices
+    ];
+    const slices = [
       { id: 'M', label: 'Middle Slice (M)', desc: 'Between L and R (follows L downward)' },
       { id: "M'", label: "Middle Prime (M')", desc: 'Upward middle slice (follows R)' },
       { id: 'E', label: 'Equator Slice (E)', desc: 'Between U and D (follows D)' },
       { id: "E'", label: "Equator Prime (E')", desc: 'Opposite equator slice' },
       { id: 'S', label: 'Standing Slice (S)', desc: 'Between F and B (follows F)' },
       { id: "S'", label: "Standing Prime (S')", desc: 'Opposite standing slice' },
-      // Rotations
+    ];
+    const rotations = [
       { id: 'x', label: 'Cube Rotation X', desc: 'Roll forward (follows R)' },
       { id: "x'", label: "Cube Rotation X'", desc: 'Roll backward (follows L)' },
       { id: 'y', label: 'Cube Rotation Y', desc: 'Turn left (follows U)' },
       { id: "y'", label: "Cube Rotation Y'", desc: 'Turn right (follows D)' },
       { id: 'z', label: 'Cube Rotation Z', desc: 'Tilt clockwise (follows F)' },
       { id: "z'", label: "Cube Rotation Z'", desc: 'Tilt counter-clockwise (follows B)' },
-      // Wide moves
+    ];
+    const wide = [
       { id: 'Rw', label: 'Wide Right (Rw)', desc: 'Turn Right + Middle layers' },
       { id: "Rw'", label: "Wide Right Prime (Rw')", desc: 'Counter Right + Middle layers' },
       { id: 'Lw', label: 'Wide Left (Lw)', desc: 'Turn Left + Middle layers' },
@@ -645,7 +676,8 @@ export class SettingsManager {
       { id: "Fw'", label: "Wide Front Prime (Fw')", desc: 'Counter Front + Standing layers' },
       { id: 'Bw', label: 'Wide Back (Bw)', desc: 'Turn Back + Standing layers' },
       { id: "Bw'", label: "Wide Back Prime (Bw')", desc: 'Counter Back + Standing layers' },
-      // 4x4 Inner Middle Slices
+    ];
+    const inner4x4 = [
       { id: '2R', label: 'Inner Right (2R)', desc: 'Inner layer adjacent to Right' },
       { id: "2R'", label: "Inner Right Prime (2R')", desc: 'Counter inner Right layer' },
       { id: '2L', label: 'Inner Left (2L)', desc: 'Inner layer adjacent to Left' },
@@ -658,7 +690,8 @@ export class SettingsManager {
       { id: "2F'", label: "Inner Front Prime (2F')", desc: 'Counter inner Front layer' },
       { id: '2B', label: 'Inner Back (2B)', desc: 'Inner layer adjacent to Back' },
       { id: "2B'", label: "Inner Back Prime (2B')", desc: 'Counter inner Back layer' },
-      // Pyraminx tips
+    ];
+    const pyraTips = [
       { id: 'u', label: 'Pyraminx Top Tip (u)', desc: 'Top corner tip' },
       { id: "u'", label: "Pyraminx Top Tip Prime (u')", desc: 'Counter top tip' },
       { id: 'l', label: 'Pyraminx Left Tip (l)', desc: 'Left corner tip' },
@@ -668,8 +701,53 @@ export class SettingsManager {
       { id: 'b', label: 'Pyraminx Back Tip (b)', desc: 'Back corner tip' },
       { id: "b'", label: "Pyraminx Back Tip Prime (b')", desc: 'Counter back tip' },
     ];
+    const pyraLayers = [
+      { id: 'U', label: 'Pyraminx Top Layer (U)', desc: 'Axial rotation around top vertex' },
+      { id: "U'", label: "Pyraminx Top Layer Prime (U')", desc: 'Counter-clockwise top layer' },
+      { id: 'L', label: 'Pyraminx Left Layer (L)', desc: 'Axial rotation around left vertex' },
+      { id: "L'", label: "Pyraminx Left Layer Prime (L')", desc: 'Counter-clockwise left layer' },
+      { id: 'R', label: 'Pyraminx Right Layer (R)', desc: 'Axial rotation around right vertex' },
+      { id: "R'", label: "Pyraminx Right Layer Prime (R')", desc: 'Counter-clockwise right layer' },
+      { id: 'B', label: 'Pyraminx Back Layer (B)', desc: 'Axial rotation around back vertex' },
+      { id: "B'", label: "Pyraminx Back Layer Prime (B')", desc: 'Counter-clockwise back layer' },
+    ];
 
-    actions.forEach((act) => {
+    const sectionsByPuzzle: Record<
+      '3x3' | '2x2' | '4x4' | 'pyraminx',
+      Array<{ title: string; items: Array<{ id: string; label: string; desc: string }> }>
+    > = {
+      '3x3': [
+        { title: '3×3 Outer Face Turns', items: faces },
+        { title: 'Middle Slices (M, E, S)', items: slices },
+        { title: 'Wide Two-Layer Turns', items: wide },
+        { title: 'Cube Rotations (x, y, z)', items: rotations },
+      ],
+      '2x2': [
+        { title: '2×2 Outer Face Turns', items: faces },
+        { title: 'Cube Rotations (x, y, z)', items: rotations },
+      ],
+      '4x4': [
+        { title: '4×4 Outer Face Turns', items: faces },
+        { title: '4×4 Inner Middle Slices (2R–2B)', items: inner4x4 },
+        { title: 'Middle Slices (M, E, S)', items: slices },
+        { title: 'Wide Two-Layer Turns', items: wide },
+        { title: 'Cube Rotations (x, y, z)', items: rotations },
+      ],
+      pyraminx: [
+        { title: 'Pyraminx Axial Layers (U, L, R, B)', items: pyraLayers },
+        { title: 'Pyraminx Corner Tips (u, l, r, b)', items: pyraTips },
+      ],
+    };
+
+    const sections = sectionsByPuzzle[this.activeKeybindPuzzle];
+
+    sections.forEach((sec) => {
+      const heading = document.createElement('div');
+      heading.className = 'keybinds-section-heading';
+      heading.textContent = sec.title;
+      grid.appendChild(heading);
+
+      sec.items.forEach((act) => {
       const row = document.createElement('div');
       row.className = 'keybind-item';
       const isListening = this.listeningAction === act.id;
@@ -692,6 +770,7 @@ export class SettingsManager {
       });
 
       grid.appendChild(row);
+      });
     });
   }
 }

@@ -13,12 +13,52 @@ function resolveGuideGif(notationOrCode: string, puzzle: GuidePuzzleCategory): M
     .map((t) => t.replace(/2$/, ''))
     .filter(Boolean);
 
+  if (puzzle === '2x2') {
+    const firstFace = cleanTokens.find((t) => /^[RLUDFB]'?$/.test(t)) || 'R';
+    const slug = firstFace.replace("'", '_prime');
+    return {
+      id: `2x2-${slug}`,
+      notation: firstFace,
+      title: `2x2 ${firstFace} Turn`,
+      category: 'faces',
+      puzzleTag: '2x2',
+      direction: firstFace.endsWith("'") ? 'Counter-Clockwise' : 'Clockwise',
+      layersDescription: `2x2x2 outer layer turn (${firstFace})`,
+      speedcubingTip: 'Execute smoothly on the 2x2 cube.',
+      gifPath: `./gifs/moves/2x2_${slug}.gif`,
+      tryPuzzle: '3x3',
+    };
+  }
+
+  if (puzzle === '4x4') {
+    const innerPool = MOVES_GLOSSARY.filter((m) => m.category === 'inner4x4');
+    for (const tok of cleanTokens) {
+      const exactInner = innerPool.find((m) => m.notation === tok);
+      if (exactInner) return exactInner;
+    }
+    const rawFaceToken = cleanTokens.find((t) => /^[RLUDFB](?:w)?'?$/i.test(t)) || 'R';
+    const baseLetter = rawFaceToken[0].toUpperCase();
+    const isPrime = rawFaceToken.endsWith("'");
+    const slug = `${baseLetter}${isPrime ? '_prime' : ''}`;
+    const notation = `${baseLetter}${isPrime ? "'" : ''}`;
+    return {
+      id: `4x4-${slug}`,
+      notation,
+      title: `4x4 ${notation} Turn`,
+      category: 'faces',
+      puzzleTag: '4x4',
+      direction: isPrime ? 'Counter-Clockwise' : 'Clockwise',
+      layersDescription: `4x4x4 outer layer turn (${notation})`,
+      speedcubingTip: 'Execute cleanly on the 4x4 cube.',
+      gifPath: `./gifs/moves/4x4_${slug}.gif`,
+      tryPuzzle: '4x4',
+    };
+  }
+
   const preferredPool =
     puzzle === 'pyraminx'
       ? MOVES_GLOSSARY.filter((m) => m.category === 'pyraminx')
-      : puzzle === '4x4'
-        ? MOVES_GLOSSARY.filter((m) => m.category !== 'pyraminx')
-        : MOVES_GLOSSARY.filter((m) => m.category !== 'pyraminx' && m.category !== 'inner4x4');
+      : MOVES_GLOSSARY.filter((m) => m.category !== 'pyraminx' && m.category !== 'inner4x4');
 
   for (const tok of cleanTokens) {
     const exact = preferredPool.find((m) => m.notation === tok);
