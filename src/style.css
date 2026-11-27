@@ -4813,6 +4813,19 @@ body.moves-glossary-body {
   border-bottom: 1px solid var(--border-subtle);
 }
 
+.tools-theme-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.tools-schemes-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

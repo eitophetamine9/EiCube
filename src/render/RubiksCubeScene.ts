@@ -441,21 +441,25 @@ export class RubiksCubeScene {
   setColorScheme(scheme: ColorSchemeId): void {
     this.colorScheme = scheme;
     const palette = COLOR_SCHEMES[scheme];
+    const isMattePastel = scheme === 'pastel';
     if (this.bodyMaterial) {
       this.bodyMaterial.color.set(palette.bodyColor);
+      this.bodyMaterial.roughness = isMattePastel ? 0.85 : 0.35;
+      this.bodyMaterial.metalness = isMattePastel ? 0.0 : 0.1;
     }
     if (this.stickerMaterials) {
       (Object.keys(palette.cubeFaces) as Face[]).forEach((face) => {
-        this.stickerMaterials![face]?.color.set(palette.cubeFaces[face]);
+        const mat = this.stickerMaterials![face];
+        if (mat) {
+          mat.color.set(palette.cubeFaces[face]);
+          mat.roughness = isMattePastel ? 0.88 : 0.2;
+          mat.metalness = isMattePastel ? 0.0 : 0.05;
+        }
       });
     }
     const stickerScale = palette.isStickerless ? 1.12 : 1.0;
-    const stickerRoughness = scheme === 'pastel' ? 0.48 : 0.2;
     this.stickerMeshes.forEach((mesh) => {
       mesh.scale.set(stickerScale, stickerScale, 1);
-      if (mesh.material instanceof THREE.MeshStandardMaterial) {
-        mesh.material.roughness = stickerRoughness;
-      }
     });
   }
 
