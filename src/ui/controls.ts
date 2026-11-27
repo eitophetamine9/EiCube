@@ -7,6 +7,8 @@ import { toast } from './toast';
 import { SessionStatsManager, SolvePenalty, formatSolveTime } from './sessionStats';
 import { DrillCaseSelection, DrillModal } from './drillModal';
 import { SmartCubeClient, isBluetoothSupported } from '../cube/smartCube';
+import { COLOR_SCHEMES, ColorSchemeId } from '../cube/types';
+import { applyTheme, getStoredTheme, ThemeMode } from './theme';
 
 export type TrainerPuzzleType = '3x3' | '2x2' | '4x4' | 'pyraminx';
 
@@ -253,6 +255,40 @@ export class ControlsManager {
                   <input type="range" id="pov-slider" min="0.5" max="5.0" step="0.1" value="${this.settings.getCameraSensitivity().toFixed(1)}" title="Drag sensitivity" aria-label="Drag sensitivity" />
                   <span id="pov-val" class="speed-val">${this.settings.getCameraSensitivity().toFixed(1)}×</span>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tools-section">
+            <div class="tools-section-heading">Themes & Cube Colors</div>
+            <div class="tools-theme-bar">
+              <div class="theme-icons-group" role="group" aria-label="Site Theme">
+                <button type="button" class="btn-picker btn-theme-icon ${getStoredTheme() === 'light' ? 'is-active' : ''}" data-tools-theme="light" title="Daylight Theme" aria-label="Daylight Theme">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                  </svg>
+                </button>
+                <button type="button" class="btn-picker btn-theme-icon ${getStoredTheme() === 'dark' ? 'is-active' : ''}" data-tools-theme="dark" title="Dark Matrix Theme" aria-label="Dark Matrix Theme">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                  </svg>
+                </button>
+              </div>
+              <div class="tools-schemes-pills" role="group" aria-label="Quick Cube Color Theme">
+                ${(Object.keys(COLOR_SCHEMES) as ColorSchemeId[])
+                  .map((id) => {
+                    const p = COLOR_SCHEMES[id];
+                    return `<button type="button" class="btn btn-sm ${this.settings.getColorScheme() === id ? 'btn-primary' : 'btn-secondary'}" data-tools-scheme="${id}">${p.name.split(' ')[0]}</button>`;
+                  })
+                  .join('')}
               </div>
             </div>
           </div>
@@ -733,6 +769,41 @@ export class ControlsManager {
     this.container.querySelector('#btn-tools-settings')?.addEventListener('click', () => {
       setToolsOpen(false);
       this.settings.open();
+    });
+
+    this.container.querySelectorAll<HTMLButtonElement>('[data-tools-theme]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.toolsTheme as ThemeMode;
+        if (mode === 'light' || mode === 'dark') {
+          applyTheme(mode);
+          this.container.querySelectorAll<HTMLButtonElement>('[data-tools-theme]').forEach((b) => {
+            b.classList.toggle('is-active', b.dataset.toolsTheme === mode);
+          });
+        }
+      });
+    });
+
+    this.container.querySelectorAll<HTMLButtonElement>('[data-tools-scheme]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const scheme = btn.dataset.toolsScheme as ColorSchemeId;
+        if (scheme && scheme in COLOR_SCHEMES) {
+          this.settings.setColorScheme(scheme);
+          this.container.querySelectorAll<HTMLButtonElement>('[data-tools-scheme]').forEach((b) => {
+            const active = b.dataset.toolsScheme === scheme;
+            b.classList.toggle('btn-primary', active);
+            b.classList.toggle('btn-secondary', !active);
+          });
+        }
+      });
+    });
+
+    window.addEventListener('eicube-themechange', (e) => {
+      const mode = (e as CustomEvent<{ theme: ThemeMode }>).detail?.theme;
+      if (mode) {
+        this.container.querySelectorAll<HTMLButtonElement>('[data-tools-theme]').forEach((b) => {
+          b.classList.toggle('is-active', b.dataset.toolsTheme === mode);
+        });
+      }
     });
 
     this.container.querySelector('#btn-toggle-wca')?.addEventListener('click', () => {
