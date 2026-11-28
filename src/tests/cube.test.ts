@@ -477,14 +477,13 @@ describe("Rubik's Cube Pure Logic", () => {
     expect(summary.ao12).toBe(15500);
   });
 
-  it('provides 6 IRL Color Scheme palettes, SFX profiles, and reversible Drill setups', () => {
+  it('provides 5 IRL Color Scheme palettes, SFX profiles, and reversible Drill setups', () => {
     expect(Object.keys(COLOR_SCHEMES)).toEqual([
       'classic',
       'stickerless',
       'primary',
       'pastel',
       'carbon',
-      'contrast',
     ]);
     for (const scheme of Object.values(COLOR_SCHEMES)) {
       expect(Object.keys(scheme.cubeFaces).length).toBe(6);

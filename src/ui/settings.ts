@@ -188,9 +188,13 @@ export class SettingsManager {
 
   loadColorScheme(): ColorSchemeId {
     try {
-      const raw = localStorage.getItem(SCHEME_STORAGE_KEY) as ColorSchemeId | null;
+      const raw = localStorage.getItem(SCHEME_STORAGE_KEY);
+      if (raw === 'contrast') {
+        localStorage.setItem(SCHEME_STORAGE_KEY, 'pastel');
+        return 'pastel';
+      }
       if (raw && raw in COLOR_SCHEMES) {
-        return raw;
+        return raw as ColorSchemeId;
       }
     } catch {
       // Ignore
