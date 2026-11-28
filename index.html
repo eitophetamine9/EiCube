@@ -79,6 +79,15 @@
           </svg>
           Learn Puzzles
         </button>
+        <button class="nav-tab" data-tab-target="help" role="tab" aria-selected="false" aria-controls="tab-help-panel"
+          id="tab-help-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+            <circle cx="12" cy="13" r="4"></circle>
+          </svg>
+          Help with Cube
+        </button>
       </nav>
 
       <!-- Right group: Help dropdown (?), Settings gear icon, Star Repo pill, and Mobile burger toggle -->
@@ -204,6 +213,17 @@
             </span>
             <span class="link-label">Learn Puzzles & Video Guides</span>
           </button>
+
+          <button class="mobile-nav-link" data-tab-target="help">
+            <span class="link-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+            </span>
+            <span class="link-label">Help with Cube</span>
+          </button>
         </nav>
       </div>
 
@@ -291,6 +311,13 @@
     <section id="tab-learn-panel" class="tab-panel" role="tabpanel" aria-labelledby="tab-learn-btn" aria-hidden="true">
       <div id="guide-mount" class="guide-mount">
         <!-- Learning Guide mounts here -->
+      </div>
+    </section>
+
+    <!-- Panel 3: Help with Cube (Physical Cube Scanner, 3D Solver & Move GIFs) -->
+    <section id="tab-help-panel" class="tab-panel" role="tabpanel" aria-labelledby="tab-help-btn" aria-hidden="true">
+      <div id="help-cube-mount" class="help-cube-mount">
+        <!-- Help with Cube mounts here -->
       </div>
     </section>
   </main>

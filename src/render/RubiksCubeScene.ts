@@ -422,6 +422,15 @@ export class RubiksCubeScene {
     this.onSolvedChange?.(true);
   }
 
+  setCubeState(newState: CubeState): void {
+    this.queue.clear();
+    this.size = newState.size;
+    this.cubeState = newState.clone();
+    this.buildCubies();
+    this.updateCameraDistance();
+    this.onSolvedChange?.(this.cubeState.isSolved());
+  }
+
   getCubeState(): CubeState {
     return this.cubeState;
   }

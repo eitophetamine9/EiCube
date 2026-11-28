@@ -1,4 +1,11 @@
-export type TabId = 'home' | 'cube' | 'learn';
+export type TabId = 'home' | 'cube' | 'learn' | 'help';
+
+const TAB_PANEL_MAP: Record<TabId, string> = {
+  home: 'tab-home-panel',
+  cube: 'tab-cube-panel',
+  learn: 'tab-learn-panel',
+  help: 'tab-help-panel',
+};
 
 export class TabManager {
   private activeTab: TabId = 'home';
@@ -26,23 +33,15 @@ export class TabManager {
       btn.classList.toggle('is-active', isSelected);
     });
 
-    // Update panels
-    const homePanel = document.getElementById('tab-home-panel');
-    const cubePanel = document.getElementById('tab-cube-panel');
-    const learnPanel = document.getElementById('tab-learn-panel');
-
-    if (homePanel) {
-      homePanel.classList.toggle('is-active', tab === 'home');
-      homePanel.setAttribute('aria-hidden', tab === 'home' ? 'false' : 'true');
-    }
-    if (cubePanel) {
-      cubePanel.classList.toggle('is-active', tab === 'cube');
-      cubePanel.setAttribute('aria-hidden', tab === 'cube' ? 'false' : 'true');
-    }
-    if (learnPanel) {
-      learnPanel.classList.toggle('is-active', tab === 'learn');
-      learnPanel.setAttribute('aria-hidden', tab === 'learn' ? 'false' : 'true');
-    }
+    // Update panels uniformly
+    (Object.keys(TAB_PANEL_MAP) as TabId[]).forEach((id) => {
+      const panel = document.getElementById(TAB_PANEL_MAP[id]);
+      if (panel) {
+        const isCurrent = id === tab;
+        panel.classList.toggle('is-active', isCurrent);
+        panel.setAttribute('aria-hidden', isCurrent ? 'false' : 'true');
+      }
+    });
 
     this.onTabChange?.(tab);
   }

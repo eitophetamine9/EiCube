@@ -179,3 +179,117 @@ export class CubeState {
     return assignedColors.size === 6;
   }
 }
+
+/** 3x3 face net: 9 stickers per face [0..8] in top-to-bottom, left-to-right reading order. */
+export type FaceStickersNet = Record<Face, Face[]>;
+
+export const FACE_NET_SLOTS: Record<Face, Vector3Tuple[]> = {
+  U: [
+    [-1, 1, -1], [0, 1, -1], [1, 1, -1],
+    [-1, 1, 0], [0, 1, 0], [1, 1, 0],
+    [-1, 1, 1], [0, 1, 1], [1, 1, 1],
+  ],
+  D: [
+    [-1, -1, 1], [0, -1, 1], [1, -1, 1],
+    [-1, -1, 0], [0, -1, 0], [1, -1, 0],
+    [-1, -1, -1], [0, -1, -1], [1, -1, -1],
+  ],
+  F: [
+    [-1, 1, 1], [0, 1, 1], [1, 1, 1],
+    [-1, 0, 1], [0, 0, 1], [1, 0, 1],
+    [-1, -1, 1], [0, -1, 1], [1, -1, 1],
+  ],
+  B: [
+    [1, 1, -1], [0, 1, -1], [-1, 1, -1],
+    [1, 0, -1], [0, 0, -1], [-1, 0, -1],
+    [1, -1, -1], [0, -1, -1], [-1, -1, -1],
+  ],
+  R: [
+    [1, 1, 1], [1, 1, 0], [1, 1, -1],
+    [1, 0, 1], [1, 0, 0], [1, 0, -1],
+    [1, -1, 1], [1, -1, 0], [1, -1, -1],
+  ],
+  L: [
+    [-1, 1, -1], [-1, 1, 0], [-1, 1, 1],
+    [-1, 0, -1], [-1, 0, 0], [-1, 0, 1],
+    [-1, -1, -1], [-1, -1, 0], [-1, -1, 1],
+  ],
+};
+
+export function createSolvedFaceNet(): FaceStickersNet {
+  return {
+    U: Array(9).fill('U'),
+    D: Array(9).fill('D'),
+    F: Array(9).fill('F'),
+    B: Array(9).fill('B'),
+    R: Array(9).fill('R'),
+    L: Array(9).fill('L'),
+  };
+}
+
+export function extractFaceNet(cube: CubeState): FaceStickersNet {
+  if (cube.size !== 3) {
+    throw new Error('extractFaceNet only supports 3x3 cubes');
+  }
+  const net = createSolvedFaceNet();
+  const faces = Object.keys(FACE_NET_SLOTS) as Face[];
+
+  for (const face of faces) {
+    const expectedNormal = FACE_NORMALS[face];
+    const slots = FACE_NET_SLOTS[face];
+    net[face] = slots.map(([sx, sy, sz]) => {
+      const cubie = cube.cubies.find(
+        (c) =>
+          Math.abs(c.coords[0] - sx) < 0.05 &&
+          Math.abs(c.coords[1] - sy) < 0.05 &&
+          Math.abs(c.coords[2] - sz) < 0.05
+      );
+      const sticker = cubie?.stickers.find(
+        (s) =>
+          Math.abs(s.normal[0] - expectedNormal[0]) < 0.05 &&
+          Math.abs(s.normal[1] - expectedNormal[1]) < 0.05 &&
+          Math.abs(s.normal[2] - expectedNormal[2]) < 0.05
+      );
+      return sticker ? sticker.color : face;
+    });
+  }
+
+  return net;
+}
+
+export function createCubeStateFromFaceNet(net: FaceStickersNet): CubeState {
+  const stickerMap = new Map<string, StickerState[]>();
+  const faces = Object.keys(FACE_NET_SLOTS) as Face[];
+
+  for (const face of faces) {
+    const normal = FACE_NORMALS[face];
+    const slots = FACE_NET_SLOTS[face];
+    const colors = net[face];
+    slots.forEach(([x, y, z], idx) => {
+      const key = `${x},${y},${z}`;
+      const list = stickerMap.get(key) || [];
+      list.push({
+        normal: [...normal] as Vector3Tuple,
+        color: colors[idx] || face,
+      });
+      stickerMap.set(key, list);
+    });
+  }
+
+  const cubies: CubieState[] = [];
+  for (let x = -1; x <= 1; x++) {
+    for (let y = -1; y <= 1; y++) {
+      for (let z = -1; z <= 1; z++) {
+        if (x === 0 && y === 0 && z === 0) continue;
+        const key = `${x},${y},${z}`;
+        cubies.push({
+          id: `cubie_${x}_${y}_${z}`,
+          coords: [x, y, z],
+          stickers: stickerMap.get(key) || [],
+        });
+      }
+    }
+  }
+
+  return new CubeState(3, cubies);
+}
