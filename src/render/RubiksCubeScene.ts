@@ -422,6 +422,15 @@ export class RubiksCubeScene {
     this.onSolvedChange?.(true);
   }
 
+  setCubeState(newState: CubeState): void {
+    this.queue.clear();
+    this.size = newState.size;
+    this.cubeState = newState.clone();
+    this.buildCubies();
+    this.updateCameraDistance();
+    this.onSolvedChange?.(this.cubeState.isSolved());
+  }
+
   getCubeState(): CubeState {
     return this.cubeState;
   }
@@ -441,19 +450,18 @@ export class RubiksCubeScene {
   setColorScheme(scheme: ColorSchemeId): void {
     this.colorScheme = scheme;
     const palette = COLOR_SCHEMES[scheme];
-    const isMattePastel = scheme === 'pastel';
     if (this.bodyMaterial) {
       this.bodyMaterial.color.set(palette.bodyColor);
-      this.bodyMaterial.roughness = isMattePastel ? 0.85 : 0.35;
-      this.bodyMaterial.metalness = isMattePastel ? 0.0 : 0.1;
+      this.bodyMaterial.roughness = 0.35;
+      this.bodyMaterial.metalness = 0.1;
     }
     if (this.stickerMaterials) {
       (Object.keys(palette.cubeFaces) as Face[]).forEach((face) => {
         const mat = this.stickerMaterials![face];
         if (mat) {
           mat.color.set(palette.cubeFaces[face]);
-          mat.roughness = isMattePastel ? 0.88 : 0.2;
-          mat.metalness = isMattePastel ? 0.0 : 0.05;
+          mat.roughness = 0.2;
+          mat.metalness = 0.05;
         }
       });
     }

@@ -12,6 +12,7 @@ import { toast } from './ui/toast';
 import { initThemeControls } from './ui/theme';
 import { MatrixBackdrop } from './ui/matrixBackdrop';
 import { LandingPageManager } from './ui/landing';
+import { HelpCubeManager } from './ui/helpCube';
 
 document.addEventListener('DOMContentLoaded', () => {
   initThemeControls();
@@ -79,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 3. Settings Manager (Keybinds + Drag Sensitivity + Theme + SFX + Color Schemes)
   let landingPage: LandingPageManager | null = null;
+  let helpCube: HelpCubeManager | null = null;
   const settings = new SettingsManager(
     () => {
       controls?.refreshKeybindLabels();
@@ -87,12 +89,14 @@ document.addEventListener('DOMContentLoaded', () => {
       cubeScene.setRotateSpeed(sensitivity);
       pyraScene?.setRotateSpeed(sensitivity);
       landingPage?.setCameraSensitivity(sensitivity);
+      helpCube?.setCameraSensitivity(sensitivity);
       controls?.refreshSensitivityDisplay();
     },
     (scheme) => {
       cubeScene.setColorScheme(scheme);
       pyraScene?.setColorScheme(scheme);
       landingPage?.setColorScheme(scheme);
+      helpCube?.setColorScheme(scheme);
     }
   );
   cubeScene.setRotateSpeed(settings.getCameraSensitivity());
@@ -118,7 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // 5. Tab Manager & Landing Page
   const tabManager = new TabManager((tab) => {
     landingPage?.setActive(tab === 'home');
-    if (tab === 'cube') {
+    helpCube?.setActive(tab === 'help');
+    if (tab === 'cube' || tab === 'help') {
       window.dispatchEvent(new Event('resize'));
     }
   });
@@ -163,6 +168,30 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   });
+
+  // 7. Help with Cube (Physical Cube Scanner, 3D Solve Guide & Move GIFs)
+  const helpMount = document.getElementById('help-cube-mount');
+  if (helpMount) {
+    helpCube = new HelpCubeManager(helpMount, {
+      getCurrentTrainerCube: () =>
+        controls.getActivePuzzle() === '3x3' ? cubeScene.getCubeState() : null,
+      getColorScheme: () => settings.getColorScheme(),
+      getCameraSensitivity: () => settings.getCameraSensitivity(),
+      onOpenInTrainer: (scannedState) => {
+        controls.setTrainerPuzzle('3x3');
+        switchTrainerPuzzle('3x3');
+        cubeScene.setCubeState(scannedState);
+        tabManager.setTab('cube');
+        toast.show('Loaded physical cube into 3x3 Trainer!');
+      },
+      onGoToSmartCube: () => {
+        controls.setTrainerPuzzle('3x3');
+        switchTrainerPuzzle('3x3');
+        tabManager.setTab('cube');
+        setTimeout(() => controls.openSmartCubeTools(), 60);
+      },
+    });
+  }
 
   // 8. Onboarding & Tips Modals
   const tutorial = new TutorialOverlay();
@@ -314,7 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
     controls.setTrainerPuzzle(reqPuzzle);
     switchTrainerPuzzle(reqPuzzle);
     tabManager.setTab('cube');
-  } else if (reqTab === 'cube' || reqTab === 'learn') {
+  } else if (reqTab === 'cube' || reqTab === 'learn' || reqTab === 'help') {
     tabManager.setTab(reqTab);
   }
   if (reqTryMove) {

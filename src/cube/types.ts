@@ -61,8 +61,7 @@ export type ColorSchemeId =
   | 'stickerless'
   | 'primary'
   | 'pastel'
-  | 'carbon'
-  | 'contrast';
+  | 'carbon';
 
 export interface ColorSchemePalette {
   id: ColorSchemeId;
@@ -137,21 +136,21 @@ export const COLOR_SCHEMES: Record<ColorSchemeId, ColorSchemePalette> = {
   pastel: {
     id: 'pastel',
     name: 'Macaron Pastel',
-    bodyColor: '#9e9890',
-    isStickerless: true,
+    bodyColor: '#090b0e',
+    isStickerless: false,
     cubeFaces: {
-      U: '#ffffff',
-      D: '#f7d863',
-      F: '#45cfb0',
-      B: '#3ab5f2',
-      R: '#ee7a9b',
-      L: '#f5975c',
+      U: '#f8fafc',
+      D: '#fef08a',
+      F: '#34d399',
+      B: '#38bdf8',
+      R: '#fb7185',
+      L: '#fbbf24',
     },
     pyraFaces: {
-      U: '#f7d863',
-      L: '#45cfb0',
-      R: '#ee7a9b',
-      B: '#3ab5f2',
+      U: '#fef08a',
+      L: '#34d399',
+      R: '#fb7185',
+      B: '#38bdf8',
     },
   },
   carbon: {
@@ -172,26 +171,6 @@ export const COLOR_SCHEMES: Record<ColorSchemeId, ColorSchemePalette> = {
       L: '#15803d',
       R: '#b91c1c',
       B: '#1d4ed8',
-    },
-  },
-  contrast: {
-    id: 'contrast',
-    name: 'High-Contrast Night',
-    bodyColor: '#090b0e',
-    isStickerless: false,
-    cubeFaces: {
-      U: '#f8fafc',
-      D: '#fef08a',
-      F: '#34d399',
-      B: '#38bdf8',
-      R: '#fb7185',
-      L: '#fbbf24',
-    },
-    pyraFaces: {
-      U: '#fef08a',
-      L: '#34d399',
-      R: '#fb7185',
-      B: '#38bdf8',
     },
   },
 };

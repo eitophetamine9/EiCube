@@ -93,6 +93,14 @@ export class ControlsManager {
     return this.activePuzzle;
   }
 
+  openSmartCubeTools(): void {
+    this.blePopoverOpen = true;
+    const popover = this.container.querySelector<HTMLElement>('#tools-popover');
+    const trigger = this.container.querySelector<HTMLButtonElement>('#btn-tools-menu');
+    popover?.classList.add('is-open');
+    trigger?.setAttribute('aria-expanded', 'true');
+  }
+
   setTrainerPuzzle(puzzle: TrainerPuzzleType, skipNotify: boolean = false): void {
     if (this.activePuzzle === puzzle) return;
     this.activePuzzle = puzzle;
@@ -298,6 +306,7 @@ export class ControlsManager {
               <span class="tools-section-heading">Smart Cube (WebBLE)</span>
               <span id="ble-status-badge" class="ble-status-text">Disconnected</span>
             </div>
+            <p class="smartcube-speed-hint">Zero-latency real-time turn sync for physical speedcubes (GAN, Giiker, Moyu).</p>
             <div class="ble-popover-actions">
               <button type="button" id="btn-ble-connect" class="btn btn-sm btn-primary">Connect Cube</button>
               <button type="button" id="btn-ble-disconnect" class="btn btn-sm btn-secondary" style="display: none;">Disconnect</button>

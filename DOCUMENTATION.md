@@ -39,8 +39,10 @@ src/
 ├── audio/
 │   └── soundEngine.ts      # Web Audio turn SFX synthesizer (Magnetic Snap, Crisp Clack, Soft Lubed)
 ├── cube/
-│   ├── types.ts            # Type definitions, face normals, 6 IRL Color Scheme palettes
-│   ├── CubeState.ts        # Pure logical representation supporting arbitrary cube sizes (2x2, 3x3, 4x4)
+│   ├── types.ts            # Type definitions, face normals, 5 IRL Color Scheme palettes
+│   ├── CubeState.ts        # Pure logical representation (2x2, 3x3, 4x4) + 54-sticker net conversion
+│   ├── colorClassifier.ts  # CIE Lab color sampler, center-anchor calibration & re-classification
+│   ├── solver3x3.ts        # 54-sticker parity validator & deterministic 7-stage 3x3 solver
 │   ├── pyraminxState.ts    # Pure logical representation, moves, and scramble for Pyraminx
 │   ├── moves.ts            # Physical layer and axis rotation mappings
 │   ├── notation.ts         # Parser for notation strings, multipliers, and inversions
@@ -49,20 +51,21 @@ src/
 │   └── smartCube.ts        # WebBLE GATT smart cube client (GAN / Giiker / Moyu) + virtual tester
 ├── render/
 │   ├── SphereArcballControls.ts # Full-sphere X/Y/Z quaternion arcball controls with inertia
-│   ├── RubiksCubeScene.ts  # Three.js cube scene, raycasting, touch drag, color scheme switching
+│   ├── RubiksCubeScene.ts  # Three.js cube scene, raycasting, touch drag, custom state loading
 │   ├── PyraminxScene.ts    # Three.js regular tetrahedron puzzle renderer with speedcube borders
 │   └── AnimationQueue.ts   # Eased animation queue with dynamic speed scaling
 ├── content/
 │   ├── guideData.ts        # 3x3 beginner method, notation guide, and CFOP data
 │   ├── otherCubesData.ts   # Structured guides and algorithms for 3x3, 2x2, 4x4, and Pyraminx
-│   ├── movesGlossaryData.ts # 64-move WCA & Pyraminx notation glossary with animated GIF metadata
+│   ├── movesGlossaryData.ts # 64-move WCA & Pyraminx notation glossary with solver GIF lookup
 │   └── videoData.ts        # Curated YouTube video tutorials with metadata and chapter timestamps
 ├── ui/
 │   ├── theme.ts            # Daylight / Pine-Emerald Dark persistence and custom change events
 │   ├── matrixBackdrop.ts   # Dual-theme animated binary matrix background canvas
-│   ├── tabs.ts             # 3-way tab manager (Home, Puzzle, Learn Puzzles)
+│   ├── tabs.ts             # 4-way tab manager (Home, Puzzle, Learn Puzzles, Help with Cube)
 │   ├── landing.ts          # Zero-login editorial landing page (EiCube — 3D cubing in browser)
 │   ├── controls.ts         # Single-row trainer topbar, Choose Puzzle dropdown, Tools popover, Moves Pad
+│   ├── helpCube.ts         # Help with Cube physical 3x3 scanner, 3D playback & collapsible GIF guide
 │   ├── sessionStats.ts     # LocalStorage solve history, Ao5/Ao12 calculation, stats modal
 │   ├── drillModal.ts       # Inverted setup OLL/PLL/PBL/Parity drill trainer modal
 │   ├── settings.ts         # Two-page Settings modal (General w/ Sun/Moon, SFX, Colors | Custom Keybinds)
@@ -71,7 +74,7 @@ src/
 │   ├── guideRenderer.ts    # Learn Puzzles guide with embedded videos and inline looping move GIFs
 │   └── toast.ts            # Notification and toast alert manager
 ├── tests/
-│   └── cube.test.ts        # Vitest suite (22 tests) covering puzzles, arcball XYZ, WCA averages, drills
+│   └── cube.test.ts        # Vitest suite (24 tests) covering puzzles, solver, classifier, schemes, drills
 ├── main.ts                 # Application entry point, query param demonstration, and tab orchestration
 ├── movesPage.ts            # Dedicated moves.html encyclopedia page controller
 └── style.css               # Daylight & Pine-Emerald Matrix design system, responsive dock, modals
@@ -250,7 +253,7 @@ The onboarding tutorial (`TutorialOverlay`) guides new users through website nav
 
 ## 6. Testing & Quality Assurance
 
-EiCube includes an automated Vitest unit test suite with 22 tests (`src/tests/cube.test.ts`):
+EiCube includes an automated Vitest unit test suite with 24 tests (`src/tests/cube.test.ts`):
 
 1. **Move Identity Inverses**: Verifies that applying $X$ followed by $X'$ returns the cube to an identity state ($X \cdot X' = I$).
 2. **Cycle Periodicity**: Verifies that repeating any face turn 4 times leaves the state unchanged ($X^4 = I$).
@@ -260,7 +263,8 @@ EiCube includes an automated Vitest unit test suite with 22 tests (`src/tests/cu
 6. **Notation Parser**: Verifies parsing of single moves, prime modifiers (`'`), double turns (`2`), and algorithm repetitions (`(R U R' U') x2`).
 7. **Data Schema Integrity**: Validates video IDs, start timestamps, and algorithm strings in content dictionaries.
 8. **Full-Sphere X / Y / Z Arcball Kinematics (`SphereArcballControls`)**: Validates pitch (`X`), yaw (`Y`), and perimeter roll (`Z`) quaternion outputs with zero NaN singularities.
-9. **WCA Ao5/Ao12 Statistics, Color Schemes & Drill Inversion**: Validates trimmed average math with `+2`/`DNF` handling, complete palette coverage across `classic`, `stickerless`, and `contrast`, and exact drill setup/solution round-trips.
+9. **WCA Ao5/Ao12 Statistics, Color Schemes & Drill Inversion**: Validates trimmed average math with `+2`/`DNF` handling, complete palette coverage across `classic`, `stickerless`, `primary`, `pastel`, and `carbon`, and exact drill setup/solution round-trips.
+10. **Physical 3x3 Net Reconstruction, Parity Validation, CIE Lab Classification & Solver**: Validates bidirectional 54-sticker `CubeState` net extraction/reconstruction, edge-flip and corner-twist parity diagnostics, solving 40 randomized 20-move scrambles back to solved state, center-calibrated RGB classification, and `getMoveGifMeta` resolution.
 
 Execute the test suite:
 

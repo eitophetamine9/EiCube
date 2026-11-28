@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { CubeState } from '../cube/CubeState';
+import { CubeState, createCubeStateFromFaceNet, createSolvedFaceNet, extractFaceNet } from '../cube/CubeState';
+import { solveCube3x3, validateFaceNet } from '../cube/solver3x3';
+import { classifyRgbColor, reclassifyAllFacesWithCenters, STANDARD_FACE_RGB } from '../cube/colorClassifier';
+import { MOVES_GLOSSARY, MOVE_CATEGORIES, getMoveGifMeta } from '../content/movesGlossaryData';
 import { resolveTurn } from '../cube/moves';
 import { parseAlgorithm, invertAlgorithm } from '../cube/notation';
 import { generateScramble } from '../cube/scramble';
@@ -10,7 +13,6 @@ import { PyraminxState, generatePyraminxScramble } from '../cube/pyraminxState';
 import { OTHER_CUBES_GUIDES } from '../content/otherCubesData';
 import { PUZZLE_VIDEOS } from '../content/videoData';
 import { SettingsManager, DEFAULT_KEYBINDS, TWOHAND_SPEEDCUBE_KEYBINDS } from '../ui/settings';
-import { MOVES_GLOSSARY, MOVE_CATEGORIES } from '../content/movesGlossaryData';
 import { calculateWcaAverage, summarizePuzzleStats, SolveRecord } from '../ui/sessionStats';
 import { buildDrillMoves } from '../ui/drillModal';
 import { clampVolume, TURN_SOUND_PROFILES } from '../audio/soundEngine';
@@ -477,14 +479,13 @@ describe("Rubik's Cube Pure Logic", () => {
     expect(summary.ao12).toBe(15500);
   });
 
-  it('provides 6 IRL Color Scheme palettes, SFX profiles, and reversible Drill setups', () => {
+  it('provides 5 IRL Color Scheme palettes, SFX profiles, and reversible Drill setups', () => {
     expect(Object.keys(COLOR_SCHEMES)).toEqual([
       'classic',
       'stickerless',
       'primary',
       'pastel',
       'carbon',
-      'contrast',
     ]);
     for (const scheme of Object.values(COLOR_SCHEMES)) {
       expect(Object.keys(scheme.cubeFaces).length).toBe(6);
@@ -513,6 +514,85 @@ describe("Rubik's Cube Pure Logic", () => {
       cube.applyTurn(turn.axis, turn.layers, turn.angle);
     }
     expect(cube.isSolved()).toBe(true);
+  });
+
+  it('extracts/reconstructs 54-sticker nets, detects parity errors, and solves 40 random scrambles', () => {
+    const solved = new CubeState(3);
+    const solvedNet = extractFaceNet(solved);
+    expect(validateFaceNet(solvedNet).valid).toBe(true);
+    const immediateSolve = solveCube3x3(solvedNet);
+    expect(immediateSolve.solvable).toBe(true);
+    expect(immediateSolve.alreadySolved).toBe(true);
+
+    // Detect count mismatch
+    const badCounts = createSolvedFaceNet();
+    badCounts.F[0] = 'R';
+    const countDiag = validateFaceNet(badCounts);
+    expect(countDiag.valid).toBe(false);
+    expect(countDiag.diagnostics[0]).toContain('count mismatch');
+
+    // Detect single flipped edge parity error (swap U[7] and F[1] on solved net)
+    const flippedEdge = createSolvedFaceNet();
+    flippedEdge.U[7] = 'F';
+    flippedEdge.F[1] = 'U';
+    const flipDiag = validateFaceNet(flippedEdge);
+    expect(flipDiag.valid).toBe(false);
+    expect(flipDiag.diagnostics.join(' ')).toContain('Edge flip parity');
+
+    // Detect single twisted corner error (twist UFR: U[8]->F, F[2]->R, R[0]->U)
+    const twistedCorner = createSolvedFaceNet();
+    twistedCorner.U[8] = 'F';
+    twistedCorner.F[2] = 'R';
+    twistedCorner.R[0] = 'U';
+    const twistDiag = validateFaceNet(twistedCorner);
+    expect(twistDiag.valid).toBe(false);
+    expect(twistDiag.diagnostics.join(' ')).toContain('Corner twist error');
+
+    // Stress-test 40 randomized scrambles
+    for (let s = 0; s < 40; s++) {
+      const scr = generateScramble(20, 3);
+      const cube = new CubeState(3);
+      for (const m of scr) {
+        const t = resolveTurn(m, undefined, 3);
+        cube.applyTurn(t.axis, t.layers, t.angle);
+      }
+      const net = extractFaceNet(cube);
+      const roundTrip = createCubeStateFromFaceNet(net);
+      expect(extractFaceNet(roundTrip)).toEqual(net);
+
+      const res = solveCube3x3(net);
+      expect(res.diagnostics).toEqual([]);
+      expect(res.solvable).toBe(true);
+      expect(res.stages.length).toBeGreaterThan(0);
+
+      for (const m of res.moves) {
+        const t = resolveTurn(m, undefined, 3);
+        roundTrip.applyTurn(t.axis, t.layers, t.angle);
+      }
+      expect(roundTrip.isSolved(true)).toBe(true);
+    }
+  });
+
+  it('classifies RGB sticker colors and resolves 3x3 solver move GIF paths', () => {
+    (['U', 'D', 'F', 'B', 'R', 'L'] as const).forEach((face) => {
+      expect(classifyRgbColor(STANDARD_FACE_RGB[face])).toBe(face);
+    });
+
+    const sampledFaces = {
+      U: Array(9).fill(STANDARD_FACE_RGB.U),
+      D: Array(9).fill(STANDARD_FACE_RGB.D),
+      F: Array(9).fill(STANDARD_FACE_RGB.F),
+      B: Array(9).fill(STANDARD_FACE_RGB.B),
+      R: Array(9).fill(STANDARD_FACE_RGB.R),
+      L: Array(9).fill(STANDARD_FACE_RGB.L),
+    };
+    const reclassified = reclassifyAllFacesWithCenters(sampledFaces);
+    expect(reclassified.F).toEqual(Array(9).fill('F'));
+
+    expect(getMoveGifMeta("R'")?.gifPath).toBe('./gifs/moves/R_prime.gif');
+    expect(getMoveGifMeta('R2')?.gifPath).toBe('./gifs/moves/R.gif');
+    expect(getMoveGifMeta('R2')?.repeatCount).toBe(2);
+    expect(getMoveGifMeta('L')?.repeatCount).toBe(1);
   });
 });
 

@@ -887,3 +887,51 @@ export const MOVES_GLOSSARY: MoveGlossaryItem[] = [
     isPrime: true,
   },
 ];
+
+export interface MoveGifMeta {
+  notation: string;
+  gifPath: string;
+  repeatCount: 1 | 2;
+  description: string;
+}
+
+const VALID_3X3_GIF_BASES = new Set([
+  'R', 'L', 'U', 'D', 'F', 'B',
+  'M', 'E', 'S',
+  'x', 'y', 'z',
+  'Rw', 'Lw', 'Uw', 'Dw', 'Fw', 'Bw',
+]);
+
+/**
+ * Resolves any 3x3 move token (e.g. R, R', R2, U2, x, y') to its existing
+ * looping move GIF asset in public/gifs/moves/.
+ */
+export function getMoveGifMeta(moveNotation: string): MoveGifMeta | null {
+  const clean = moveNotation.trim();
+  if (!clean) return null;
+
+  const isDouble = clean.endsWith('2');
+  const isPrime = clean.endsWith("'");
+  const base = isDouble || isPrime ? clean.slice(0, -1) : clean;
+
+  // Normalize wide lowercase tokens like r -> Rw if needed
+  const normalizedBase =
+    base.length === 1 && 'rludfb'.includes(base) ? `${base.toUpperCase()}w` : base;
+
+  if (!VALID_3X3_GIF_BASES.has(normalizedBase)) {
+    return null;
+  }
+
+  const fileKey = isPrime ? `${normalizedBase}_prime` : normalizedBase;
+  const entry = MOVES_GLOSSARY.find((m) => m.notation === `${normalizedBase}${isPrime ? "'" : ''}`);
+  const description = isDouble
+    ? `${entry?.title ?? `${normalizedBase} Face`} (180 deg double turn)`
+    : entry?.direction ?? `${normalizedBase} turn`;
+
+  return {
+    notation: clean,
+    gifPath: gif(fileKey),
+    repeatCount: isDouble ? 2 : 1,
+    description,
+  };
+}
