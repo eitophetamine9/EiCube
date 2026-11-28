@@ -531,6 +531,23 @@ describe("Rubik's Cube Pure Logic", () => {
     expect(countDiag.valid).toBe(false);
     expect(countDiag.diagnostics[0]).toContain('count mismatch');
 
+    // Detect single flipped edge parity error (swap U[7] and F[1] on solved net)
+    const flippedEdge = createSolvedFaceNet();
+    flippedEdge.U[7] = 'F';
+    flippedEdge.F[1] = 'U';
+    const flipDiag = validateFaceNet(flippedEdge);
+    expect(flipDiag.valid).toBe(false);
+    expect(flipDiag.diagnostics.join(' ')).toContain('Edge flip parity');
+
+    // Detect single twisted corner error (twist UFR: U[8]->F, F[2]->R, R[0]->U)
+    const twistedCorner = createSolvedFaceNet();
+    twistedCorner.U[8] = 'F';
+    twistedCorner.F[2] = 'R';
+    twistedCorner.R[0] = 'U';
+    const twistDiag = validateFaceNet(twistedCorner);
+    expect(twistDiag.valid).toBe(false);
+    expect(twistDiag.diagnostics.join(' ')).toContain('Corner twist error');
+
     // Stress-test 40 randomized scrambles
     for (let s = 0; s < 40; s++) {
       const scr = generateScramble(20, 3);

@@ -1,5 +1,5 @@
 import { Face } from './types';
-import { CubeState, FACE_NET_SLOTS, FaceStickersNet, createCubeStateFromFaceNet, createSolvedFaceNet } from './CubeState';
+import { CubeState, FACE_NET_SLOTS, FaceStickersNet, createCubeStateFromFaceNet } from './CubeState';
 import { resolveTurn } from './moves';
 
 export interface SolveStage {
@@ -121,15 +121,6 @@ function netToArr(net: FaceStickersNet): Face[] {
     }
   }
   return arr;
-}
-
-function arrToNet(arr: Face[]): FaceStickersNet {
-  const net = createSolvedFaceNet();
-  for (const face of FACES) {
-    const base = FACE_BASE_IDX[face];
-    net[face] = arr.slice(base, base + 9);
-  }
-  return net;
 }
 
 function applyMoveArr(arr: Face[], move: SolverMove): Face[] {
