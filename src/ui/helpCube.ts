@@ -165,7 +165,7 @@ export class HelpCubeManager {
 
             <div id="help-webcam-pane" class="help-input-pane ${this.inputMode === 'webcam' ? 'is-active' : ''}">
               <div class="help-latency-disclaimer" role="note">
-                <strong>Note for Speedcubers:</strong> Browser webcam color tracking runs frame-by-frame and has noticeable latency during fast turns. For real-time, zero-latency turn capture while solving, use a <strong>Bluetooth Smart Cube</strong> on the main solving page instead.
+                <p style="margin: 0;"><strong>Note for Speedcubers:</strong> Browser webcam color tracking runs frame-by-frame and has noticeable latency during fast turns. For real-time, zero-latency turn capture while solving, use a <strong>Bluetooth Smart Cube</strong> on the main solving page instead.</p>
                 <button type="button" class="btn btn-xs btn-secondary" id="help-btn-goto-smartcube">Connect Smart Cube on Puzzle Page</button>
               </div>
               <div id="help-webcam-stage"></div>

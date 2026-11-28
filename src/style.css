@@ -4843,6 +4843,8 @@ body.moves-glossary-body {
 
 .help-cube-shell {
   max-width: 1320px;
+  width: 100%;
+  min-width: 0;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -4899,6 +4901,7 @@ body.moves-glossary-body {
 }
 
 .help-card {
+  min-width: 0;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: 16px;
@@ -5585,13 +5588,17 @@ body.moves-glossary-body {
   }
 
   .help-cube-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
 @media (max-width: 600px) {
   .help-upload-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
+  }
+
+  .help-net-cross {
+    grid-template-columns: repeat(4, minmax(48px, 1fr));
   }
 
   .help-3d-viewport {
